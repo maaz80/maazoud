@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: 'Poppins', sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Poppins', sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: 'Poppins', sans-serif;
+}
+
+.product-content h1 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.product-content h2 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+.product-content p {
+  font-size: 16px;
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+
+.product-content ul {
+  padding-left: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.product-content li {
+  list-style: disc;
+  margin-bottom: 5px;
+}
+
+@media screen and (max-width: 768px) {
+  .product-content h1 {
+    line-height: 35px;
+  }
+}
+
+.product-content strong {
+  font-weight: 800;
+}
+
+.product-content h1 strong {
+  font-weight: 900;
+}
+
+.product-content h2 strong {
+  font-weight: 800;
+}
+
+.product-content img {
+  max-width: 100%;
+  height: auto;
+  content-visibility: auto;
+  aspect-ratio: attr(width) / attr(height);
+}
