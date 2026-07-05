@@ -6,15 +6,15 @@ import { getImageAlt } from "../utils/imageHelper";
 
 export default function CategoryCard({ category }) {
   return (
-    <Link 
+    <Link
       href={`/category/${category.slug}`}
       className="group block overflow-hidden text-center cursor-pointer"
     >
       {/* Category Image Container */}
       <div className="relative aspect-square w-full bg-stone-100 overflow-hidden rounded-md border border-stone-200 transition-all group-hover:border-[#8c6239] group-hover:shadow-md">
-        <img 
-          src={category.image} 
-          alt={getImageAlt(category.image, category.name)} 
+        <img
+          src={category.image}
+          alt={getImageAlt(category.image, category.name)}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Soft elegant overlay */}
@@ -22,7 +22,7 @@ export default function CategoryCard({ category }) {
       </div>
 
       {/* Category Name below */}
-      <h3 className="mt-4 text-sm font-semibold uppercase tracking-wider text-stone-900 group-hover:text-[#8c6239] transition-colors">
+      <h3 className="mt-1 md:mt-4 text-[11px] md:text-sm font-semibold uppercase tracking-wider text-stone-900 group-hover:text-[#8c6239] transition-colors">
         {category.name}
       </h3>
     </Link>

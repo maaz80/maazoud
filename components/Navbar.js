@@ -107,7 +107,9 @@ export default function Navbar() {
               />
               <div className="flex-1 min-w-0">
                 <span className="text-[8px] uppercase font-bold tracking-widest text-[#8c6239] block leading-none mb-1">
-                  {(prod.category || "Attar").replace("-", " ")}
+                  {Array.isArray(prod.category)
+                    ? prod.category.map(c => c.replace("-", " ")).join(", ")
+                    : (prod.category ? prod.category.replace("-", " ") : "Attar")}
                 </span>
                 <span className="text-xs font-bold text-stone-900 block truncate">
                   {prod.name}
