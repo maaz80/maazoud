@@ -103,7 +103,7 @@ export default function Navbar() {
               <img 
                 src={prod.image} 
                 alt={prod.name} 
-                className="w-8 h-10 object-cover rounded border border-stone-100 bg-stone-50 flex-shrink-0"
+                className="w-10 h-10 object-cover rounded border border-stone-100 bg-stone-50 shrink-0"
               />
               <div className="flex-1 min-w-0">
                 <span className="text-[8px] uppercase font-bold tracking-widest text-[#8c6239] block leading-none mb-1">
@@ -115,7 +115,7 @@ export default function Navbar() {
                   {prod.name}
                 </span>
               </div>
-              <div className="text-right flex-shrink-0 pl-2">
+              <div className="text-right shrink-0 pl-2">
                 <span className="text-xs font-black text-stone-900">
                   Rs. {prod.price3mloffer}
                 </span>
@@ -137,8 +137,8 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           
           {/* Left Group: Logo & Search Bar */}
-          <div className="flex items-center gap-6 md:flex-grow">
-            <Link href="/" className="flex-shrink-0 flex items-center">
+          <div className="flex items-center gap-6 md:grow">
+            <Link href="/" className="shrink-0 flex items-center">
               <img 
                 src="/maazoud-logo-no-bg.png" 
                 alt="Maaz Oud Logo" 
@@ -147,7 +147,7 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop Search wrapper */}
-            <div ref={desktopRef} className="hidden md:flex flex-grow max-w-md relative">
+            <div ref={desktopRef} className="hidden md:flex grow max-w-md relative">
               <form 
                 onSubmit={handleSearchSubmit} 
                 className="w-full relative flex items-center"
@@ -182,7 +182,7 @@ export default function Navbar() {
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+          <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
             
             {/* Mobile search toggle */}
             <button
