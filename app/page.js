@@ -8,7 +8,7 @@ import ProductCard from "../components/ProductCard";
 import BlogsSection from "../components/BlogsSection";
 import { CATEGORIES, PRODUCTS } from "../utils/mockData";
 import { FaChevronLeft, FaChevronRight, FaTimes } from "react-icons/fa";
-import { supabase } from "../utils/supabase";
+import { useCart } from "../context/CartContext";
 
 // Category Skeleton Loader
 const CategorySkeleton = () => (
@@ -45,59 +45,23 @@ function HomeContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filterSearch, setFilterSearch] = useState("");
   
-  // Dynamic State
-  const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    globalCategories,
+    globalProducts,
+    categoriesLoading,
+    productsLoading,
+    fetchGlobalCategories,
+    fetchGlobalProducts
+  } = useCart();
 
-  // Load Categories & Products from Supabase on mount
+  // Load Categories & Products from global context cache on mount
   useEffect(() => {
-    const fetchDbData = async () => {
-      setLoading(true);
-      try {
-        const [catRes, prodRes] = await Promise.all([
-          supabase.from("categories").select("*"),
-          supabase.from("products").select("*").order("created_at", { ascending: false })
-        ]);
-        
-        // If DB has data, load it. If empty/error, fall back to mock data
-        if (catRes.data && catRes.data.length > 0) {
-          setCategories(catRes.data);
-        } else {
-          setCategories(CATEGORIES);
-        }
-
-        if (prodRes.data && prodRes.data.length > 0) {
-          // Map DB keys to match UI product schemas
-          const mapped = prodRes.data.map(p => {
-            const orig = p.price3mlorig || p.price3mloffer;
-            const offer = p.price3mloffer;
-            const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
-            return {
-              ...p,
-              id: p.id,
-              slug: p.id,
-              price: offer,
-              originalPrice: orig,
-              discount: discount,
-              size: "3ml",
-              category: p.category || "top-selling"
-            };
-          });
-          setProducts(mapped);
-        } else {
-          setProducts(PRODUCTS);
-        }
-      } catch (err) {
-        console.error("Error loading Supabase tables:", err.message);
-        setCategories(CATEGORIES);
-        setProducts(PRODUCTS);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDbData();
+    Promise.all([fetchGlobalCategories(), fetchGlobalProducts()]);
   }, []);
+
+  const categories = globalCategories.length > 0 ? globalCategories : CATEGORIES;
+  const products = globalProducts.length > 0 ? globalProducts : PRODUCTS;
+  const loading = (categoriesLoading || productsLoading) && (globalCategories.length === 0 || globalProducts.length === 0);
 
   // Keep filterSearch state in sync with URL search query
   useEffect(() => {

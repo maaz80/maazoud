@@ -5,16 +5,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiShoppingBag, FiPackage, FiX } from "react-icons/fi";
 import { useCart } from "../context/CartContext";
-import { supabase } from "../utils/supabase";
 
 export default function Navbar() {
   const router = useRouter();
-  const { cartCount, setIsCartOpen, setIsOrdersOpen, setIsLoginOpen, user, logoutUser } = useCart();
+  const { 
+    cartCount, 
+    setIsCartOpen, 
+    setIsOrdersOpen, 
+    setIsLoginOpen, 
+    user, 
+    logoutUser,
+    globalProducts,
+    fetchGlobalProducts
+  } = useCart();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
   // Real-time Search Suggestions states
-  const [allProducts, setAllProducts] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   
   const desktopRef = useRef(null);
@@ -22,19 +29,7 @@ export default function Navbar() {
 
   // Fetch all products once on mount to enable ultra-fast zero-latency local search filtering
   useEffect(() => {
-    const fetchSearchCatalog = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("products")
-          .select("id, name, image, price3mloffer, category");
-        
-        if (error) throw error;
-        if (data) setAllProducts(data);
-      } catch (err) {
-        console.error("Error loading search catalog:", err.message);
-      }
-    };
-    fetchSearchCatalog();
+    fetchGlobalProducts();
   }, []);
 
   // Close suggestions dropdown when clicking outside
@@ -55,7 +50,7 @@ export default function Navbar() {
     setSearchQuery(val);
     if (val.trim().length >= 2) {
       const query = val.toLowerCase().trim();
-      const filtered = allProducts.filter(prod => 
+      const filtered = globalProducts.filter(prod => 
         prod.name.toLowerCase().includes(query)
       ).slice(0, 5); // Limit suggestions to top 5 items
       setSuggestions(filtered);

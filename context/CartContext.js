@@ -14,6 +14,84 @@ export function CartProvider({ children }) {
   const [showCheckout, setShowCheckout] = useState(false);
   const [user, setUser] = useState(null); // null means guest
 
+  const [globalBanners, setGlobalBanners] = useState([]);
+  const [globalCategories, setGlobalCategories] = useState([]);
+  const [globalProducts, setGlobalProducts] = useState([]);
+  const [bannersLoading, setBannersLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
+
+  const fetchGlobalBanners = async (force = false) => {
+    if (globalBanners.length > 0 && !force) return globalBanners;
+    setBannersLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("banners")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      if (data) setGlobalBanners(data);
+      return data || [];
+    } catch (e) {
+      console.error("Error fetching banners:", e.message);
+      return [];
+    } finally {
+      setBannersLoading(false);
+    }
+  };
+
+  const fetchGlobalCategories = async (force = false) => {
+    if (globalCategories.length > 0 && !force) return globalCategories;
+    setCategoriesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      if (data) setGlobalCategories(data);
+      return data || [];
+    } catch (e) {
+      console.error("Error fetching categories:", e.message);
+      return [];
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  const fetchGlobalProducts = async (force = false) => {
+    if (globalProducts.length > 0 && !force) return globalProducts;
+    setProductsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+
+      let formatted = (data || []).map(p => ({
+        ...p,
+        id: p.id,
+        slug: p.id,
+        price: p.price3mloffer,
+        originalPrice: p.price3mlorig || p.price3mloffer,
+        discount: p.price3mlorig > p.price3mloffer 
+          ? Math.round(((p.price3mlorig - p.price3mloffer) / p.price3mlorig) * 100)
+          : 0,
+        size: "3ml",
+        category: p.category || "top-selling"
+      }));
+
+      if (data) setGlobalProducts(formatted);
+      return formatted;
+    } catch (e) {
+      console.error("Error fetching products:", e.message);
+      return [];
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
   // Load orders from localStorage on mount, cart loading is managed in auth hook
   useEffect(() => {
     const savedOrders = localStorage.getItem("maazoud_orders");
@@ -377,6 +455,15 @@ export function CartProvider({ children }) {
         clearCart,
         placeOrder,
         saveOrders,
+        globalBanners,
+        globalCategories,
+        globalProducts,
+        bannersLoading,
+        categoriesLoading,
+        productsLoading,
+        fetchGlobalBanners,
+        fetchGlobalCategories,
+        fetchGlobalProducts,
       }}
     >
       {children}

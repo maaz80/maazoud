@@ -5,38 +5,20 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
 import { getImageAlt } from "../utils/imageHelper";
+import { useCart } from "../context/CartContext";
 import { BANNERS } from "../utils/mockData";
-import { supabase } from "../utils/supabase";
 
 export default function Carousel() {
-  const [banners, setBanners] = useState([]);
+  const { globalBanners, bannersLoading, fetchGlobalBanners } = useCart();
   const [current, setCurrent] = useState(0);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch banners from Supabase
+  // Fetch banners from Supabase dynamically via global context cache
   useEffect(() => {
-    const fetchBanners = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("banners")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        if (data && data.length > 0) {
-          setBanners(data);
-        } else {
-          setBanners(BANNERS);
-        }
-      } catch (err) {
-        console.error("Error loading banners:", err.message);
-        setBanners(BANNERS);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBanners();
+    fetchGlobalBanners();
   }, []);
+
+  const banners = globalBanners.length > 0 ? globalBanners : BANNERS;
+  const loading = bannersLoading && globalBanners.length === 0;
 
   // Auto slide effect
   useEffect(() => {
