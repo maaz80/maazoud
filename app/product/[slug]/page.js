@@ -360,8 +360,65 @@ export default function ProductDetailPage() {
     }
   });
 
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "image": product.images && product.images.length > 0 ? product.images : [product.image],
+    "description": product.description ? product.description.replace(/<[^>]*>/g, '').slice(0, 160).trim() : "",
+    "sku": product.id,
+    "mpn": product.id,
+    "brand": {
+      "@type": "Brand",
+      "name": "Maaz Oud"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": `https://maazoud.in/product/${slug}`,
+      "priceCurrency": "INR",
+      "price": currentPrice,
+      "priceValidUntil": "2030-12-31",
+      "itemCondition": "https://schema.org/NewCondition",
+      "availability": "https://schema.org/InStock",
+      "seller": {
+        "@type": "Organization",
+        "name": "Maaz Oud"
+      }
+    },
+    ...(reviews.length > 0 ? {
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": averageRating,
+        "reviewCount": reviews.length,
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "review": reviews.slice(0, 5).map((r) => ({
+        "@type": "Review",
+        "author": {
+          "@type": "Person",
+          "name": r.name
+        },
+        "datePublished": new Date(r.created_at || Date.now()).toISOString().split("T")[0],
+        "reviewBody": r.comment,
+        "name": r.title,
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": r.rating,
+          "bestRating": "5",
+          "worstRating": "1"
+        }
+      }))
+    } : {})
+  };
+
   return (
     <div className="bg-white min-h-screen pb-12 pt-4 font-sans">
+      {/* Product Schema JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3 md:space-y-8">
 
         {/* Navigation */}

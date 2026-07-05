@@ -6,10 +6,13 @@ import BlogsSection from "../../components/BlogsSection";
 export const metadata = {
   title: "About Our Heritage | Traditional Attar Distillation",
   description: "Discover the journey of Maaz Oud. Learn about our traditional Kannauj & Kanpur distillation processes, organic ingredients, and pure alcohol-free attars.",
+  alternates: {
+    canonical: "/about"
+  },
   openGraph: {
     title: "About Our Heritage | Traditional Attar Distillation | Maaz Oud",
     description: "Discover the journey of Maaz Oud. Learn about our traditional Kannauj & Kanpur distillation processes, organic ingredients, and pure alcohol-free attars.",
-    url: "https://maazoud.vercel.app/about",
+    url: "https://maazoud.in/about",
     siteName: "Maaz Oud",
     type: "website",
     locale: "en_US",

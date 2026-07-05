@@ -19,11 +19,14 @@ export async function generateMetadata({ params }) {
       return {
         title,
         description: cleanDesc,
+        alternates: {
+          canonical: `/blog/${slug}`
+        },
         openGraph: {
           title,
           description: cleanDesc,
           type: "article",
-          url: `https://maazoud.vercel.app/blog/${slug}`,
+          url: `https://maazoud.in/blog/${slug}`,
           siteName: "Maaz Oud",
           images: [
             {
@@ -49,7 +52,10 @@ export async function generateMetadata({ params }) {
   
   return {
     title: "Maaz Oud Journal | Fragrance Guides & Heritage",
-    description: "Read our latest articles on pure oud extraction, attar heritage, and fragrance guides."
+    description: "Read our latest articles on pure oud extraction, attar heritage, and fragrance guides.",
+    alternates: {
+      canonical: "/blog"
+    }
   };
 }
 

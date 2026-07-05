@@ -13,15 +13,18 @@ export async function generateMetadata({ params }) {
     if (category) {
       const title = `${category.name} Attars Collection | Premium Fragrances`;
       const description = category.description || `Explore our exquisite collection of premium, 100% pure alcohol-free ${category.name} attars and luxury perfume oils at Maaz Oud.`;
-      const imageUrl = category.image || "https://maazoud.vercel.app/maazoud-logo.png";
+      const imageUrl = category.image || "https://maazoud.in/maazoud-logo.png";
       return {
         title,
         description,
+        alternates: {
+          canonical: `/category/${slug}`
+        },
         openGraph: {
           title: `${title} | Maaz Oud`,
           description,
           type: "website",
-          url: `https://maazoud.vercel.app/category/${slug}`,
+          url: `https://maazoud.in/category/${slug}`,
           siteName: "Maaz Oud",
           images: [
             {
@@ -47,7 +50,10 @@ export async function generateMetadata({ params }) {
   
   return {
     title: "Premium Attars Collection",
-    description: "Shop luxury attars and organic pure perfume oils by category."
+    description: "Shop luxury attars and organic pure perfume oils by category.",
+    alternates: {
+      canonical: "/category"
+    }
   };
 }
 

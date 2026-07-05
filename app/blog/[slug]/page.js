@@ -111,7 +111,7 @@ export default function BlogDetailPage() {
                 "name": "Maaz Oud",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://maazoud.vercel.app/maazoud-logo-no-bg.png",
+                  "url": "https://maazoud.in/maazoud-logo-no-bg.png",
                 },
               },
             },

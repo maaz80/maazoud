@@ -5,10 +5,13 @@ import { FaArrowLeft, FaShieldAlt } from "react-icons/fa";
 export const metadata = {
   title: "Privacy Policy & Secure Shopping",
   description: "Read the Privacy Policy of Maaz Oud. Learn how we securely protect customer accounts, OTP verification codes, and transaction details.",
+  alternates: {
+    canonical: "/privacy-policy"
+  },
   openGraph: {
     title: "Privacy Policy & Secure Shopping | Maaz Oud",
     description: "Read the Privacy Policy of Maaz Oud. Learn how we securely protect customer accounts, OTP verification codes, and transaction details.",
-    url: "https://maazoud.vercel.app/privacy-policy",
+    url: "https://maazoud.in/privacy-policy",
     siteName: "Maaz Oud",
     type: "website",
     locale: "en_US",

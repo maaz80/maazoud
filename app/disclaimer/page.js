@@ -5,10 +5,13 @@ import { FaArrowLeft, FaExclamationTriangle } from "react-icons/fa";
 export const metadata = {
   title: "Disclaimer & Skin Sensitivity Info",
   description: "Read the Disclaimer of Maaz Oud. Learn about fragrance development on different skin chemistries and our skin safety patch testing guidance.",
+  alternates: {
+    canonical: "/disclaimer"
+  },
   openGraph: {
     title: "Disclaimer & Skin Sensitivity Info | Maaz Oud",
     description: "Read the Disclaimer of Maaz Oud. Learn about fragrance development on different skin chemistries and our skin safety patch testing guidance.",
-    url: "https://maazoud.vercel.app/disclaimer",
+    url: "https://maazoud.in/disclaimer",
     siteName: "Maaz Oud",
     type: "website",
     locale: "en_US",
