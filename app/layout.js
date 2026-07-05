@@ -113,7 +113,7 @@ export default function RootLayout({ children }) {
       <body className={`${poppins.className} min-h-full flex flex-col bg-white text-stone-900`}>
         <CartProvider>
           <Navbar />
-          <main className="flex-grow">{children}</main>
+          <main className="grow">{children}</main>
           <Footer />
           <CartDrawer />
           <OrdersModal />
