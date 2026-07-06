@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { getImageAlt } from "../utils/imageHelper";
+import { getImageAlt, getImageSrcSet } from "../utils/imageHelper";
 
 export default function CategoryCard({ category }) {
   return (
@@ -14,6 +14,8 @@ export default function CategoryCard({ category }) {
       <div className="relative aspect-square w-full bg-stone-100 overflow-hidden rounded-md border border-stone-200 transition-all group-hover:border-[#8c6239] group-hover:shadow-md">
         <img
           src={category.image}
+          srcSet={getImageSrcSet(category.image)}
+          sizes="(max-width: 640px) 160px, 300px"
           alt={getImageAlt(category.image, category.name)}
           width={300}
           height={300}
