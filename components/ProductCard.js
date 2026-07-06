@@ -33,9 +33,9 @@ export default function ProductCard({ product }) {
       {/* Product Image & Gallery Slider */}
       <Link href={`/product/${product.slug}`} className="relative aspect-4/4 w-full overflow-hidden block group/img bg-stone-50 border-b border-stone-100">
         <img
-          src={getOptimizedImageUrl(gallery[activeImgIndex], 400)}
+          src={getOptimizedImageUrl(gallery[activeImgIndex], 320)}
           srcSet={getImageSrcSet(gallery[activeImgIndex])}
-          sizes="(max-width: 640px) 200px, 400px"
+          sizes="(max-width: 640px) 160px, 320px"
           alt={getImageAlt(gallery[activeImgIndex], product.name)}
           width={300}
           height={300}

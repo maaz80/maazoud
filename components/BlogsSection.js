@@ -77,7 +77,7 @@ export default function BlogsSection() {
                 <img
                   src={getOptimizedImageUrl(blog.image, 400)}
                   srcSet={getImageSrcSet(blog.image)}
-                  sizes="(max-width: 640px) 400px, 400px"
+                  sizes="(max-width: 768px) 100vw, 400px"
                   alt={getImageAlt(blog.image, blog.title)}
                   width={400}
                   height={225}

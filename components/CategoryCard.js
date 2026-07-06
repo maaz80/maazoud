@@ -13,9 +13,9 @@ export default function CategoryCard({ category }) {
       {/* Category Image Container */}
       <div className="relative aspect-square w-full bg-stone-100 overflow-hidden rounded-md border border-stone-200 transition-all group-hover:border-[#8c6239] group-hover:shadow-md">
         <img
-          src={getOptimizedImageUrl(category.image, 400)}
+          src={getOptimizedImageUrl(category.image, 320)}
           srcSet={getImageSrcSet(category.image)}
-          sizes="(max-width: 640px) 200px, 400px"
+          sizes="(max-width: 640px) 160px, 320px"
           alt={getImageAlt(category.image, category.name)}
           width={300}
           height={300}

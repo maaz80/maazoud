@@ -24,10 +24,10 @@ export const getImageAlt = (url, fallback = "Maaz Oud Fragrance") => {
 export const getOptimizedImageUrl = (url, width) => {
   if (!url || typeof url !== 'string') return url;
   
-  // If it's a Supabase storage URL, dynamically resize it to target width and transform to webp with quality 60
+  // If it's a Supabase storage URL, dynamically resize it to target width and transform to webp with quality 50
   if (url.includes("supabase.co/storage/v1/object/public/")) {
     const renderUrl = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-    return `${renderUrl}?width=${width}&format=webp&quality=60`;
+    return `${renderUrl}?width=${width}&format=webp&quality=50`;
   }
   
   // For local images, if width is 200 or less, we can return the mobile version
@@ -46,13 +46,13 @@ export const getOptimizedImageUrl = (url, width) => {
 export const getImageSrcSet = (url) => {
   if (!url || typeof url !== 'string') return undefined;
   
-  // For Supabase storage URL (Generate 200w and 400w sizes in WebP format with quality 60)
+  // For Supabase storage URL (Generate 160w, 320w and 640w sizes in WebP format with quality 50)
   if (url.includes("supabase.co/storage/v1/object/public/")) {
     const renderUrl = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-    return `${renderUrl}?width=200&format=webp&quality=60 200w, ${renderUrl}?width=400&format=webp&quality=60 400w`;
+    return `${renderUrl}?width=160&format=webp&quality=50 160w, ${renderUrl}?width=320&format=webp&quality=50 320w, ${renderUrl}?width=640&format=webp&quality=50 640w`;
   }
   
-  // Local images under /images/ (Map to 200w for mobile-version and 400w for standard version)
+  // Local images under /images/ (Map to 160w and 320w for mobile-version, and 640w for standard version)
   if (url.startsWith("/images/") && (url.endsWith(".webp") || url.endsWith(".jpg") || url.endsWith(".png") || url.endsWith(".jpeg"))) {
     if (url.includes("_mobile")) {
       return undefined;
@@ -60,7 +60,7 @@ export const getImageSrcSet = (url) => {
     const dotIndex = url.lastIndexOf(".");
     const base = url.substring(0, dotIndex);
     const ext = url.substring(dotIndex);
-    return `${base}_mobile${ext} 200w, ${url} 400w`;
+    return `${base}_mobile${ext} 160w, ${base}_mobile${ext} 320w, ${url} 640w`;
   }
   
   return undefined;
@@ -69,10 +69,10 @@ export const getImageSrcSet = (url) => {
 export const getBannerSrcSet = (url) => {
   if (!url || typeof url !== 'string') return undefined;
   
-  // For Supabase storage URL (Generate 600w and 1200w sizes in WebP format with quality 60)
+  // For Supabase storage URL (Generate 600w, 900w and 1200w sizes in WebP format with quality 50)
   if (url.includes("supabase.co/storage/v1/object/public/")) {
     const renderUrl = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-    return `${renderUrl}?width=600&format=webp&quality=60 600w, ${renderUrl}?width=1200&format=webp&quality=60 1200w`;
+    return `${renderUrl}?width=600&format=webp&quality=50 600w, ${renderUrl}?width=900&format=webp&quality=50 900w, ${renderUrl}?width=1200&format=webp&quality=50 1200w`;
   }
 
   // Local banners under /images/
@@ -83,7 +83,7 @@ export const getBannerSrcSet = (url) => {
     const dotIndex = url.lastIndexOf(".");
     const base = url.substring(0, dotIndex);
     const ext = url.substring(dotIndex);
-    return `${base}_mobile${ext} 600w, ${url} 1200w`;
+    return `${base}_mobile${ext} 600w, ${url} 900w, ${url} 1200w`;
   }
   
   return undefined;
