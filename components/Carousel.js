@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import Link from "next/link";
-import { getImageAlt, getBannerSrcSet } from "../utils/imageHelper";
+import { getImageAlt, getBannerSrcSet, getOptimizedImageUrl } from "../utils/imageHelper";
 import { useCart } from "../context/CartContext";
 import { BANNERS } from "../utils/mockData";
 
@@ -58,7 +58,7 @@ export default function Carousel() {
           const content = (
             <div className="w-full h-full shrink-0 relative flex items-center cursor-pointer">
               <img 
-                src={banner.image} 
+                src={getOptimizedImageUrl(banner.image, 1200)} 
                 srcSet={getBannerSrcSet(banner.image)}
                 alt={getImageAlt(banner.image, banner.title || "Banner Image")} 
                 fetchpriority={banners.indexOf(banner) === 0 ? "high" : "low"}

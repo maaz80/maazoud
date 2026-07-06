@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useCart } from "../context/CartContext";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
-import { getImageAlt, getImageSrcSet } from "../utils/imageHelper";
+import { getImageAlt, getImageSrcSet, getOptimizedImageUrl } from "../utils/imageHelper";
 export default function ProductCard({ product }) {
   const { cart, addToCart } = useCart();
   const size = product.size || "3ml";
@@ -33,7 +33,7 @@ export default function ProductCard({ product }) {
       {/* Product Image & Gallery Slider */}
       <Link href={`/product/${product.slug}`} className="relative aspect-4/4 w-full overflow-hidden block group/img bg-stone-50 border-b border-stone-100">
         <img
-          src={gallery[activeImgIndex]}
+          src={getOptimizedImageUrl(gallery[activeImgIndex], 300)}
           srcSet={getImageSrcSet(gallery[activeImgIndex])}
           sizes="(max-width: 640px) 160px, 300px"
           alt={getImageAlt(gallery[activeImgIndex], product.name)}

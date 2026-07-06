@@ -6,7 +6,7 @@ import Link from "next/link";
 import { PRODUCTS } from "../../../utils/mockData";
 import ProductCard from "../../../components/ProductCard";
 import BlogsSection from "../../../components/BlogsSection";
-import { getImageAlt, getImageSrcSet } from "../../../utils/imageHelper";
+import { getImageAlt, getImageSrcSet, getOptimizedImageUrl } from "../../../utils/imageHelper";
 import { useCart } from "../../../context/CartContext";
 import { FaArrowLeft, FaArrowRight, FaStar, FaRegStar, FaShoppingBag, FaPlus, FaMinus } from "react-icons/fa";
 import { supabase } from "../../../utils/supabase";
@@ -439,7 +439,7 @@ export default function ProductDetailPage() {
           <div className="space-y-4 w-full">
             <div className="relative aspect-4/4 w-full rounded-md border border-stone-200 overflow-hidden bg-stone-50 shadow-sm group">
               <img
-                src={(product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image}
+                src={getOptimizedImageUrl((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image, 600)}
                 srcSet={getImageSrcSet((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image)}
                 sizes="(max-width: 640px) 400px, 600px"
                 alt={getImageAlt((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image, product.name)}
@@ -490,7 +490,7 @@ export default function ProductDetailPage() {
                       }`}
                   >
                     <img 
-                      src={img} 
+                      src={getOptimizedImageUrl(img, 100)} 
                       width={56}
                       height={64}
                       loading="lazy"

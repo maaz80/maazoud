@@ -31,7 +31,7 @@ export const metadata = {
     siteName: "Maaz Oud",
     images: [
       {
-        url: "/maazoud-logo.png",
+        url: "/maazoud-logo.webp",
         width: 1200,
         height: 630,
         alt: "Maaz Oud Luxury Perfumes"
@@ -44,7 +44,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Maaz Oud | Luxury Pure Attars & Organic Oud Perfumes",
     description: "Experience the ultimate luxury of pure Cambodian Oud, Indian Agarwood, non-alcoholic botanical attars, and premium natural fragrances.",
-    images: ["/maazoud-logo.png"],
+    images: ["/maazoud-logo.webp"],
   },
   robots: {
     index: true,
@@ -88,9 +88,9 @@ export default function RootLayout({ children }) {
               "@type": "Store",
               "name": "Maaz Oud",
               "url": "https://maazoud.in",
-              "logo": "https://maazoud.in/maazoud-logo.png",
+              "logo": "https://maazoud.in/maazoud-logo.webp",
               "description": "Experience the ultimate luxury of pure Cambodian Oud, Indian Agarwood, non-alcoholic botanical attars, and premium natural fragrances.",
-              "image": "https://maazoud.in/maazoud-logo.png",
+              "image": "https://maazoud.in/maazoud-logo.webp",
               "telephone": "+919616584237",
               "priceRange": "$$",
               "address": {

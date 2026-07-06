@@ -138,7 +138,7 @@ export default function Navbar() {
           <div className="flex items-center gap-6 md:grow">
             <Link href="/" className="shrink-0 flex items-center">
               <img 
-                src="/maazoud-logo-no-bg.png" 
+                src="/maazoud-logo-no-bg.webp" 
                 alt="Maaz Oud Logo" 
                 width={56}
                 height={56}
