@@ -35,6 +35,9 @@ export default function ProductCard({ product }) {
         <img
           src={gallery[activeImgIndex]}
           alt={getImageAlt(gallery[activeImgIndex], product.name)}
+          width={300}
+          height={300}
+          loading="lazy"
           className="w-full h-full object-cover transition-all duration-300"
         />
         {/* Soft overlay */}

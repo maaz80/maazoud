@@ -441,6 +441,10 @@ export default function ProductDetailPage() {
               <img
                 src={(product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image}
                 alt={getImageAlt((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image, product.name)}
+                width={600}
+                height={600}
+                fetchpriority="high"
+                loading="eager"
                 className="w-full h-full object-cover transition-all duration-300"
               />
 
@@ -483,7 +487,14 @@ export default function ProductDetailPage() {
                         : "border-stone-200 hover:border-stone-400"
                       }`}
                   >
-                    <img src={img} className="w-full h-full object-cover" alt={getImageAlt(img, `${product.name} thumbnail ${idx + 1}`)} />
+                    <img 
+                      src={img} 
+                      width={56}
+                      height={64}
+                      loading="lazy"
+                      className="w-full h-full object-cover" 
+                      alt={getImageAlt(img, `${product.name} thumbnail ${idx + 1}`)} 
+                    />
                   </button>
                 ))}
               </div>

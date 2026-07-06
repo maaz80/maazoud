@@ -15,6 +15,9 @@ export default function CategoryCard({ category }) {
         <img
           src={category.image}
           alt={getImageAlt(category.image, category.name)}
+          width={300}
+          height={300}
+          loading="lazy"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Soft elegant overlay */}

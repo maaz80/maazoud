@@ -98,6 +98,9 @@ export default function Navbar() {
               <img 
                 src={prod.image} 
                 alt={prod.name} 
+                width={40}
+                height={40}
+                loading="lazy"
                 className="w-10 h-10 object-cover rounded border border-stone-100 bg-stone-50 shrink-0"
               />
               <div className="flex-1 min-w-0">
@@ -137,6 +140,10 @@ export default function Navbar() {
               <img 
                 src="/maazoud-logo-no-bg.png" 
                 alt="Maaz Oud Logo" 
+                width={56}
+                height={56}
+                fetchpriority="high"
+                loading="eager"
                 className="h-14 w-auto object-contain hover:opacity-90 transition-opacity" 
               />
             </Link>
