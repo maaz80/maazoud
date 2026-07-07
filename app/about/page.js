@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { FaArrowLeft, FaGem, FaFlask, FaShippingFast } from "react-icons/fa";
 import BlogsSection from "../../components/BlogsSection";
 
@@ -28,9 +29,17 @@ export default function AboutPage() {
   return (
     <div className="bg-stone-50 font-sans min-h-screen text-stone-900 pb-16">
       
-      {/* Hero Header */}
       <div className="relative bg-stone-950 text-white py-16 md:py-24 overflow-hidden border-b border-stone-850">
-        <div className="absolute inset-0 z-0 bg-[url('/images/oud_banner_1.jpg')] bg-cover bg-center opacity-20 blur-[1px]"></div>
+        <div className="absolute inset-0 z-0">
+          <Image 
+            src="/images/oud_banner_1.jpg" 
+            alt="Traditional Attar Distillation Heritage" 
+            fill
+            priority
+            fetchPriority="high"
+            className="w-full h-full object-cover opacity-20 blur-[1px]"
+          />
+        </div>
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-4">
           <Link 
             href="/" 
