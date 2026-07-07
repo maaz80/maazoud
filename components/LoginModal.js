@@ -100,6 +100,7 @@ export default function LoginModal() {
             alt="Maaz Oud Logo" 
             width={56}
             height={56}
+            quality={60}
             className="h-14 mx-auto w-14 object-contain"
           />
           <h2 className="text-xs font-bold text-stone-900 uppercase tracking-widest pt-2">
