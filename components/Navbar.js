@@ -158,13 +158,13 @@ export default function Navbar() {
                   placeholder="Search premium attars..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-md py-2 pl-4 pr-10 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] focus:border-[#8c6239] text-sm transition-all"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-md py-2 pl-4 pr-18 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] focus:border-[#8c6239] text-sm transition-all"
                 />
                 {searchQuery ? (
                   <button 
                     type="button" 
                     onClick={handleClearSearch}
-                    className="absolute right-10 text-stone-400 hover:text-stone-600 transition-colors p-1 cursor-pointer"
+                    className="absolute right-9 w-9 h-9 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-colors cursor-pointer focus:outline-none"
                     aria-label="Clear Search"
                   >
                     <FiX size={14} />
@@ -172,7 +172,7 @@ export default function Navbar() {
                 ) : null}
                 <button 
                   type="submit" 
-                  className="absolute right-3 text-stone-500 hover:text-[#8c6239] transition-colors cursor-pointer"
+                  className="absolute right-0.5 w-9 h-9 flex items-center justify-center text-stone-500 hover:text-[#8c6239] transition-colors cursor-pointer focus:outline-none"
                   aria-label="Submit Search"
                 >
                   <FiSearch size={16} />
@@ -257,14 +257,14 @@ export default function Navbar() {
                 placeholder="Search premium attars..."
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full bg-white border border-stone-200 rounded-md py-2.5 pl-4 pr-10 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] focus:border-[#8c6239] text-sm"
+                className="w-full bg-white border border-stone-200 rounded-md py-2.5 pl-4 pr-18 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] focus:border-[#8c6239] text-sm"
                 autoFocus
               />
               {searchQuery && (
                 <button 
                   type="button" 
                   onClick={handleClearSearch}
-                  className="absolute right-12 text-stone-400 p-1 cursor-pointer"
+                  className="absolute right-9 w-9 h-9 flex items-center justify-center text-stone-400 cursor-pointer focus:outline-none"
                   aria-label="Clear Search"
                 >
                   <FiX size={16} />
@@ -272,7 +272,7 @@ export default function Navbar() {
               )}
               <button 
                 type="submit" 
-                className="absolute right-4 text-stone-500 hover:text-[#8c6239] cursor-pointer"
+                className="absolute right-0.5 w-9 h-9 flex items-center justify-center text-stone-500 hover:text-[#8c6239] cursor-pointer focus:outline-none"
                 aria-label="Submit Search"
               >
                 <FiSearch size={18} />
