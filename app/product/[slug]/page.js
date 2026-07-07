@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { PRODUCTS } from "../../../utils/mockData";
 import ProductCard from "../../../components/ProductCard";
 import BlogsSection from "../../../components/BlogsSection";
-import { getImageAlt, getImageSrcSet, getOptimizedImageUrl } from "../../../utils/imageHelper";
+import { getImageAlt } from "../../../utils/imageHelper";
 import { useCart } from "../../../context/CartContext";
 import { FaArrowLeft, FaArrowRight, FaStar, FaRegStar, FaShoppingBag, FaPlus, FaMinus } from "react-icons/fa";
 import { supabase } from "../../../utils/supabase";
@@ -438,15 +439,13 @@ export default function ProductDetailPage() {
           {/* Left: Product Image Carousel */}
           <div className="space-y-4 w-full">
             <div className="relative aspect-4/4 w-full rounded-md border border-stone-200 overflow-hidden bg-stone-50 shadow-sm group">
-              <img
-                src={getOptimizedImageUrl((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image, 600)}
-                srcSet={getImageSrcSet((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image)}
-                sizes="(max-width: 640px) 400px, 600px"
+              <Image
+                src={(product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image}
                 alt={getImageAlt((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image, product.name)}
                 width={600}
                 height={600}
-                fetchpriority="high"
-                loading="eager"
+                priority
+                sizes="(max-width: 640px) 400px, 600px"
                 className="w-full h-full object-cover transition-all duration-300"
               />
 
@@ -489,11 +488,10 @@ export default function ProductDetailPage() {
                         : "border-stone-200 hover:border-stone-400"
                       }`}
                   >
-                    <img 
-                      src={getOptimizedImageUrl(img, 100)} 
+                    <Image 
+                      src={img} 
                       width={56}
                       height={64}
-                      loading="lazy"
                       className="w-full h-full object-cover" 
                       alt={getImageAlt(img, `${product.name} thumbnail ${idx + 1}`)} 
                     />

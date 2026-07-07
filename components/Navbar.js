@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiShoppingBag, FiPackage, FiX } from "react-icons/fi";
 import { useCart } from "../context/CartContext";
@@ -137,13 +138,12 @@ export default function Navbar() {
           {/* Left Group: Logo & Search Bar */}
           <div className="flex items-center gap-6 md:grow">
             <Link href="/" className="shrink-0 flex items-center">
-              <img 
+              <Image 
                 src="/maazoud-logo-no-bg.webp" 
                 alt="Maaz Oud Logo" 
                 width={56}
                 height={56}
-                fetchpriority="high"
-                loading="eager"
+                priority
                 className="h-14 w-auto object-contain hover:opacity-90 transition-opacity" 
               />
             </Link>

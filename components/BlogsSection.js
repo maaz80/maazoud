@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "../utils/supabase";
-import { getImageAlt, getImageSrcSet, getOptimizedImageUrl } from "../utils/imageHelper";
+import { getImageAlt } from "../utils/imageHelper";
 
 export default function BlogsSection() {
   const [blogs, setBlogs] = useState([]);
@@ -74,14 +75,12 @@ export default function BlogsSection() {
               className="group flex flex-col bg-white border border-stone-200 rounded-md overflow-hidden hover:shadow-md transition-all h-full"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-stone-50 border-b border-stone-100">
-                <img
-                  src={getOptimizedImageUrl(blog.image, 400)}
-                  srcSet={getImageSrcSet(blog.image)}
-                  sizes="(max-width: 768px) 100vw, 400px"
+                <Image
+                  src={blog.image}
                   alt={getImageAlt(blog.image, blog.title)}
                   width={400}
                   height={225}
-                  loading="lazy"
+                  sizes="(max-width: 768px) 100vw, 400px"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />

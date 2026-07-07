@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import Link from "next/link";
-import { getImageAlt, getBannerSrcSet, getOptimizedImageUrl } from "../utils/imageHelper";
+import Image from "next/image";
+import { getImageAlt } from "../utils/imageHelper";
 import { useCart } from "../context/CartContext";
 import { BANNERS } from "../utils/mockData";
 
-export default function Carousel() {
+export default function Carousel({ initialBanners = [] }) {
   const { globalBanners, bannersLoading, fetchGlobalBanners } = useCart();
   const [current, setCurrent] = useState(0);
 
@@ -16,8 +17,10 @@ export default function Carousel() {
     fetchGlobalBanners();
   }, []);
 
-  const banners = globalBanners.length > 0 ? globalBanners : BANNERS;
-  const loading = bannersLoading && globalBanners.length === 0;
+  const banners = globalBanners.length > 0 
+    ? globalBanners 
+    : (initialBanners.length > 0 ? initialBanners : BANNERS);
+  const loading = bannersLoading && globalBanners.length === 0 && initialBanners.length === 0;
 
   // Auto slide effect
   useEffect(() => {
@@ -54,17 +57,16 @@ export default function Carousel() {
         className="flex w-full h-full transition-transform duration-700 ease-out"
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
-        {banners.map((banner) => {
+        {banners.map((banner, index) => {
           const content = (
             <div className="w-full h-full shrink-0 relative flex items-center cursor-pointer">
-              <img 
-                src={getOptimizedImageUrl(banner.image, 1200)} 
-                srcSet={getBannerSrcSet(banner.image)}
+              <Image 
+                src={banner.image} 
                 alt={getImageAlt(banner.image, banner.title || "Banner Image")} 
-                fetchpriority={banners.indexOf(banner) === 0 ? "high" : "low"}
-                loading={banners.indexOf(banner) === 0 ? "eager" : "lazy"}
-                className="absolute inset-0 w-full h-full object-cover" 
+                fill
+                priority={index === 0}
                 sizes="100vw"
+                className="absolute inset-0 w-full h-full object-cover" 
               />
             </div>
           );

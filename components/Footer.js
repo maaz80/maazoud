@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaInstagram, FaWhatsapp, FaYoutube } from "react-icons/fa";
 import { supabase } from "../utils/supabase";
 import { CATEGORIES } from "../utils/mockData";
@@ -36,9 +37,11 @@ export default function Footer() {
           
           {/* Column 1: Brand Info */}
           <div className="space-y-4">
-            <img 
-              src="/maazoud-logo-no-bg.png" 
+            <Image 
+              src="/maazoud-logo-no-bg.webp" 
               alt="Maaz Oud Logo" 
+              width={56}
+              height={56}
               className="h-14 w-auto object-contain"
             />
             <p className="text-sm text-stone-500 max-w-xs leading-relaxed font-light">

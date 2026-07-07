@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import ProductCard from "../../../components/ProductCard";
 import { CATEGORIES, PRODUCTS } from "../../../utils/mockData";
 import { FaChevronLeft, FaChevronRight, FaArrowLeft } from "react-icons/fa";
@@ -145,9 +146,11 @@ export default function CategoryPage() {
       <div className="relative bg-stone-950 text-white py-16 md:py-24 overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
-          <img 
+          <Image 
             src={category.image} 
             alt={category.name} 
+            fill
+            priority
             className="w-full h-full object-cover opacity-25 blur-[1px]"
           />
           <div className="absolute inset-0 bg-stone-950/720" />
