@@ -145,13 +145,11 @@ export default async function ProductDetailPage({ params }) {
   const data = await getProductData(slug);
 
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white text-stone-600 font-sans">Loading product...</div>}>
-      <ProductClient 
-        slug={slug} 
-        initialProduct={data.product} 
-        initialReviews={data.reviews} 
-        initialRelatedProducts={data.relatedProducts} 
-      />
-    </Suspense>
+    <ProductClient 
+      slug={slug} 
+      initialProduct={data.product} 
+      initialReviews={data.reviews} 
+      initialRelatedProducts={data.relatedProducts} 
+    />
   );
 }

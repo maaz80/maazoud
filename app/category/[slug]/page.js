@@ -47,12 +47,10 @@ export default async function CategoryPage({ params }) {
   const data = await getCategoryData(slug);
 
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white text-stone-600 font-sans">Loading category...</div>}>
-      <CategoryClient 
-        slug={slug} 
-        initialCategory={data.category} 
-        initialProducts={data.products} 
-      />
-    </Suspense>
+    <CategoryClient 
+      slug={slug} 
+      initialCategory={data.category} 
+      initialProducts={data.products} 
+    />
   );
 }

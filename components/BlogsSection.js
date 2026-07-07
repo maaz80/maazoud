@@ -78,9 +78,10 @@ export default function BlogsSection() {
                 <Image
                   src={blog.image}
                   alt={getImageAlt(blog.image, blog.title)}
-                  width={400}
-                  height={225}
-                  sizes="(max-width: 768px) 100vw, 400px"
+                  width={350}
+                  height={197}
+                  quality={65}
+                  sizes="(max-width: 768px) 100vw, 320px"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
