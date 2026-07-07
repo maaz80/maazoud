@@ -519,7 +519,7 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-1.5 text-stone-700 shrink-0 mt-0.5">
                 <FaStar className="text-amber-500" size={14} />
                 <span className="font-bold">{averageRating}</span>
-                <span className="text-stone-400">({totalReviews} reviews)</span>
+                <span className="text-stone-600">({totalReviews} reviews)</span>
               </div>
             </div>
 
@@ -528,7 +528,7 @@ export default function ProductDetailPage() {
               <h1 className="text-2xl md:text-3xl font-serif font-bold text-stone-900 leading-tight">
                 {product.name}
               </h1>
-              <span className="inline-block text-xs font-medium text-stone-500 bg-stone-100 px-3 py-1 rounded">
+              <span className="inline-block text-xs font-medium text-stone-600 bg-stone-100 px-3 py-1 rounded">
                 Base Size: {product.size || "3ml"}
               </span>
             </div>
@@ -538,7 +538,7 @@ export default function ProductDetailPage() {
               <span className="text-3xl font-extrabold text-stone-900">Rs. {currentPrice}</span>
               {currentOriginalPrice > currentPrice && (
                 <>
-                  <span className="text-sm text-stone-400 line-through">Rs. {currentOriginalPrice}</span>
+                  <span className="text-sm text-stone-600 line-through">Rs. {currentOriginalPrice}</span>
                   <span className="text-xs text-[#8c6239] font-bold">
                     You save Rs. {currentOriginalPrice - currentPrice}
                   </span>
@@ -810,7 +810,7 @@ export default function ProductDetailPage() {
                             Verified Buyer
                           </span>
                         </div>
-                        <span className="text-[10px] text-stone-400 font-light block">
+                        <span className="text-[10px] text-stone-600 font-light block">
                           Reviewed on {rev.date}
                         </span>
                       </div>

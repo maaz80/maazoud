@@ -88,7 +88,7 @@ export default function ProductCard({ product }) {
       {/* Product Details */}
       <div className="p-4 flex flex-col grow">
         {/* Category tag */}
-        <div className="text-[10px] text-stone-400 uppercase tracking-widest font-semibold mb-1 line-clamp-1 md:line-clamp-2">
+        <div className="text-[10px] text-stone-600 uppercase tracking-widest font-semibold mb-1 line-clamp-1 md:line-clamp-2">
           {Array.isArray(product.category)
             ? product.category.map(c => c.replace("-", " ")).join(", ")
             : (product.category ? product.category.replace("-", " ") : "")}
@@ -102,7 +102,7 @@ export default function ProductCard({ product }) {
         </Link>
 
         {/* Size Badge */}
-        <span className="text-xs text-stone-500 mt-1 font-light block">
+        <span className="text-xs text-stone-600 mt-1 font-light block">
           Size: {product.size}
         </span>
 
@@ -113,7 +113,7 @@ export default function ProductCard({ product }) {
           </span>
           {product.originalPrice > product.price && (
             <>
-              <span className="text-xs text-stone-400 line-through">
+              <span className="text-xs text-stone-600 line-through">
                 Rs. {product.originalPrice}
               </span>
             </>

@@ -129,7 +129,7 @@ function HomeContent({ initialBanners, initialCategories, initialProducts }) {
               Shop by Category
             </h2>
             <div className="w-16 h-0.5 bg-[#8c6239] mx-auto" />
-            <p className="text-xs text-stone-500 max-w-md mx-auto leading-relaxed">
+            <p className="text-xs text-stone-600 max-w-md mx-auto leading-relaxed">
               Explore our curated ranges meticulously blended for diverse preferences and seasons.
             </p>
           </div>
@@ -154,7 +154,7 @@ function HomeContent({ initialBanners, initialCategories, initialProducts }) {
               <h2 className="text-xl md:text-2xl font-serif font-bold text-stone-900">
                 {filterSearch ? `Search Results for "${filterSearch}"` : "Our Attar Collection"}
               </h2>
-              <p className="text-xs text-stone-400 mt-1">
+              <p className="text-xs text-stone-600 mt-1">
                 Showing {filteredProducts.length} premium creations
               </p>
             </div>
@@ -247,7 +247,7 @@ function HomeContent({ initialBanners, initialCategories, initialProducts }) {
               Frequently Asked Questions
             </h2>
             <div className="w-16 h-0.5 bg-[#8c6239] mx-auto" />
-            <p className="text-xs text-stone-500 max-w-md mx-auto leading-relaxed">
+            <p className="text-xs text-stone-600 max-w-md mx-auto leading-relaxed">
               Everything you need to know about our premium attars, shipping, and quality assurance.
             </p>
           </div>

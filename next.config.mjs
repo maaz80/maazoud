@@ -4,8 +4,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'fdfvzzqiyyhkowftegpl.supabase.co',
-        pathname: '/storage/v1/**',
+        hostname: 'fdfvzzqiyyhxowftegpl.supabase.co',
       },
     ],
     minimumCacheTTL: 31536000, // 1 year cache

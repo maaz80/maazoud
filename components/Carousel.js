@@ -105,18 +105,22 @@ export default function Carousel({ initialBanners = [] }) {
 
       {/* Indicators */}
       {banners.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2.5 z-20">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-1 z-20">
           {banners.map((_, index) => (
             <button 
               key={index}
               onClick={() => setCurrent(index)}
-              className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
-                current === index 
-                  ? "bg-[#8c6239] w-8" 
-                  : "bg-white/50 hover:bg-white"
-              }`}
+              className="w-8 h-8 flex items-center justify-center cursor-pointer focus:outline-none"
               aria-label={`Go to slide ${index + 1}`}
-            />
+            >
+              <span 
+                className={`h-2.5 rounded-full transition-all ${
+                  current === index 
+                    ? "bg-[#8c6239] w-8" 
+                    : "bg-white/50 hover:bg-white w-2.5"
+                }`}
+              />
+            </button>
           ))}
         </div>
       )}
