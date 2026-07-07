@@ -96,12 +96,11 @@ export default function Navbar() {
               onClick={() => handleSuggestionClick(prod.id)}
               className="flex items-center gap-3.5 p-3 hover:bg-stone-50 transition-colors cursor-pointer text-left"
             >
-              <img 
+              <Image 
                 src={prod.image} 
                 alt={prod.name} 
                 width={40}
                 height={40}
-                loading="lazy"
                 className="w-10 h-10 object-cover rounded border border-stone-100 bg-stone-50 shrink-0"
               />
               <div className="flex-1 min-w-0">

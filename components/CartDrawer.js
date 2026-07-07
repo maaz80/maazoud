@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { FaTimes, FaPlus, FaMinus, FaTrash, FaLock, FaSpinner } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
 
@@ -259,9 +260,11 @@ export default function CartDrawer() {
                   key={item.cartItemId}
                   className="flex gap-4 p-3 border border-stone-100 rounded-md hover:border-stone-200 transition-all"
                 >
-                  <img 
+                  <Image 
                     src={item.product.image} 
                     alt={item.product.name} 
+                    width={80}
+                    height={80}
                     className="w-20 h-20 object-cover rounded bg-stone-50 border border-stone-100 shrink-0"
                   />
                   <div className="flex-1 min-w-0">

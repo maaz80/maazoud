@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { FiX } from "react-icons/fi";
+import Image from "next/image";
 import { useCart } from "../context/CartContext";
 
 export default function LoginModal() {
@@ -94,9 +95,11 @@ export default function LoginModal() {
 
         {/* Heading */}
         <div className="text-center space-y-2">
-          <img 
-            src="/maazoud-logo-no-bg.png" 
+          <Image 
+            src="/maazoud-logo-no-bg.webp" 
             alt="Maaz Oud Logo" 
+            width={56}
+            height={56}
             className="h-14 mx-auto w-auto object-contain"
           />
           <h2 className="text-xs font-bold text-stone-900 uppercase tracking-widest pt-2">

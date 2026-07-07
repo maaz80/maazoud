@@ -2,6 +2,7 @@
 
 import React from "react";
 import { FaTimes, FaBoxOpen } from "react-icons/fa";
+import Image from "next/image";
 import { useCart } from "../context/CartContext";
 
 export default function OrdersModal() {
@@ -109,9 +110,11 @@ export default function OrdersModal() {
                     {order.items && order.items.map((item, idx) => (
                       <div key={item.cartItemId || idx} className="flex justify-between items-center gap-2 text-xs">
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          <img 
+                          <Image 
                             src={item.product?.image || "/images/placeholder.jpg"} 
                             alt={item.product?.name || "Oud Product"} 
+                            width={40}
+                            height={48}
                             className="w-10 h-12 object-cover rounded bg-white border border-stone-200 flex-shrink-0"
                           />
                           <div className="min-w-0 flex-1">

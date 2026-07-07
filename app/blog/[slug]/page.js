@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { FaArrowLeft, FaClock, FaCalendarAlt } from "react-icons/fa";
 import { supabase } from "../../../utils/supabase";
 import BlogsSection from "../../../components/BlogsSection";
@@ -165,9 +166,11 @@ export default function BlogDetailPage() {
 
         {/* Cover Image */}
         <div className="relative aspect-video w-full rounded-md border border-stone-200 overflow-hidden bg-stone-50 shadow-sm">
-          <img
+          <Image
             src={blog.image}
             alt={getImageAlt(blog.image, blog.title)}
+            fill
+            priority
             className="w-full h-full object-cover"
           />
         </div>
