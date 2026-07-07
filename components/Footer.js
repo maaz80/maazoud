@@ -42,7 +42,7 @@ export default function Footer() {
               alt="Maaz Oud Logo" 
               width={56}
               height={56}
-              className="h-14 w-auto object-contain"
+              className="h-14 w-14 object-contain"
             />
             <p className="text-sm text-stone-600 max-w-xs leading-relaxed font-light">
               Crafting premium and alcohol-free attars for perfume connoisseurs. Experience long-lasting fragrances compiled to perfection.
