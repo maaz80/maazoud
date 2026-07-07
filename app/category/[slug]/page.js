@@ -177,7 +177,7 @@ export default function CategoryPage() {
 
       {/* Products Listing Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-        
+        <h2 className="sr-only">Products in {category.name}</h2>
         {categoryProducts.length === 0 ? (
           <div className="py-16 text-center space-y-4">
             <p className="text-stone-500 font-light">

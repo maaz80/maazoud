@@ -96,9 +96,9 @@ export default function ProductCard({ product }) {
 
         {/* Product Name with Line Clamp */}
         <Link href={`/product/${product.slug}`}>
-          <h4 className="text-sm font-medium text-stone-900 group-hover:text-[#8c6239] transition-colors line-clamp-1 min-h-5 leading-snug">
+          <h3 className="text-sm font-medium text-stone-900 group-hover:text-[#8c6239] transition-colors line-clamp-1 min-h-5 leading-snug">
             {product.name}
-          </h4>
+          </h3>
         </Link>
 
         {/* Size Badge */}
