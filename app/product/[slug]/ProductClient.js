@@ -428,11 +428,12 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
               <Image
                 src={(product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image}
                 alt={getImageAlt((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image, product.name)}
-                width={700}
-                height={700}
+                width={640}
+                height={640}
                 priority
+                fetchPriority="high"
                 quality={65}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 700px"
+                sizes="(max-width: 768px) 100vw, 640px"
                 className="w-full h-full object-cover transition-all duration-300"
               />
 
@@ -591,9 +592,9 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
             </div>
 
             <div className="border-t border-stone-100 pt-6 space-y-2 text-left">
-              <h3 className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+              <h2 className="text-xs font-bold text-stone-700 uppercase tracking-wider">
                 Product Description
-              </h3>
+              </h2>
               <div
                 className="text-sm text-stone-600 font-light leading-relaxed prose prose-stone max-w-none product-content"
                 dangerouslySetInnerHTML={{ __html: product.description }}
@@ -916,7 +917,7 @@ function ProductFAQ({ product }) {
         }}
       />
 
-      <h3 className="text-lg font-serif font-bold text-stone-900 mb-4">Frequently Asked Questions</h3>
+      <h2 className="text-lg font-serif font-bold text-stone-900 mb-4">Frequently Asked Questions</h2>
       <div className="space-y-3">
         {faqItems.map((item, idx) => {
           const isOpen = openIndex === idx;
