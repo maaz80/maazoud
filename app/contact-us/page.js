@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { FaArrowLeft, FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaClock } from "react-icons/fa";
 import BlogsSection from "../../components/BlogsSection";
 
@@ -67,7 +68,16 @@ export default function ContactPage() {
       
       {/* Hero Header */}
       <div className="relative bg-stone-950 text-white py-16 md:py-24 overflow-hidden border-b border-stone-850">
-        <div className="absolute inset-0 z-0 bg-[url('/images/oud_banner_2.jpg')] bg-cover bg-center opacity-20 blur-[1px]"></div>
+        <div className="absolute inset-0 z-0">
+          <Image 
+            src="/images/oud_banner_2.jpg" 
+            alt="Contact Our Team Banner" 
+            fill
+            priority
+            fetchPriority="high"
+            className="w-full h-full object-cover opacity-20 blur-[1px]"
+          />
+        </div>
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-4">
           <Link 
             href="/" 
@@ -140,7 +150,7 @@ export default function ContactPage() {
           </div>
           
           <div className="bg-stone-900 text-stone-300 p-6 rounded-lg shadow-sm border border-stone-850 space-y-3">
-            <span className="text-[10px] uppercase font-bold text-[#8c6239] tracking-widest block">Direct Support & Consultations</span>
+            <span className="text-[10px] uppercase font-bold text-[#d4b28c] tracking-widest block">Direct Support & Consultations</span>
             <p className="text-xs leading-relaxed font-light">
               Are you looking for custom attar bottles, wedding gifting hampers, or bulk requirements? Or are you facing any issues with your order, payment, or delivery?
             </p>
