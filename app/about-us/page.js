@@ -8,12 +8,12 @@ export const metadata = {
   title: "About Our Heritage | Traditional Attar Distillation",
   description: "Discover the journey of Maaz Oud. Learn about our traditional Kannauj & Kanpur distillation processes, organic ingredients, and pure alcohol-free attars.",
   alternates: {
-    canonical: "/about"
+    canonical: "/about-us"
   },
   openGraph: {
     title: "About Our Heritage | Traditional Attar Distillation | Maaz Oud",
     description: "Discover the journey of Maaz Oud. Learn about our traditional Kannauj & Kanpur distillation processes, organic ingredients, and pure alcohol-free attars.",
-    url: "https://maazoud.in/about",
+    url: "https://maazoud.in/about-us",
     siteName: "Maaz Oud",
     type: "website",
     locale: "en_US",
@@ -111,7 +111,7 @@ export default function AboutPage() {
 
         {/* Founder note */}
         <section className="bg-stone-900 text-stone-100 p-8 rounded-lg shadow-md space-y-4">
-          <span className="text-[10px] uppercase font-bold text-[#8c6239] tracking-widest block">Founder's Note</span>
+          <span className="text-[10px] uppercase font-bold text-[#d4b28c] tracking-widest block">Founder's Note</span>
           <p className="text-sm font-serif italic text-stone-300 leading-relaxed">
             "As a software developer, I value precision, system design, and reliability. I run Maaz Oud with the exact same dedication. It is a side business built on my love for premium fragrances. We strive to bring the finest, longest-lasting, and completely alcohol-free attars straight to you at an accessible luxury point."
           </p>

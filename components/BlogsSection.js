@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "../utils/supabase";
-import { getImageAlt } from "../utils/imageHelper";
+import { getImageAlt, getOptimizedImageUrl } from "../utils/imageHelper";
 
 export default function BlogsSection() {
   const [blogs, setBlogs] = useState([]);
@@ -76,7 +76,7 @@ export default function BlogsSection() {
             >
               <div className="relative aspect-video w-full overflow-hidden bg-stone-50 border-b border-stone-100">
                 <Image
-                  src={blog.image}
+                  src={getOptimizedImageUrl(blog.image, 640)}
                   alt={getImageAlt(blog.image, blog.title)}
                   width={320}
                   height={180}

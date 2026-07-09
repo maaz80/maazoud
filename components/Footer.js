@@ -80,7 +80,7 @@ export default function Footer() {
             <h3 className="text-xs font-semibold uppercase tracking-wider text-black mb-4">Customer Services</h3>
             <ul className="space-y-2 text-sm text-stone-550">
               <li>
-                <Link href="/about" className="hover:text-[#8c6239] text-stone-600 hover:underline transition-all">About Us</Link>
+                <Link href="/about-us" className="hover:text-[#8c6239] text-stone-600 hover:underline transition-all">About Us</Link>
               </li>
               <li>
                 <Link href="/shipping-policy" className="hover:text-[#8c6239] text-stone-600 hover:underline transition-all">Shipping & Returns</Link>
@@ -92,7 +92,7 @@ export default function Footer() {
                 <Link href="/disclaimer" className="hover:text-[#8c6239] text-stone-600 hover:underline transition-all">Disclaimer Policy</Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-[#8c6239] text-stone-600 hover:underline transition-all">Contact Us</Link>
+                <Link href="/contact-us" className="hover:text-[#8c6239] text-stone-600 hover:underline transition-all">Contact Us</Link>
               </li>
             </ul>
           </div>

@@ -8,8 +8,8 @@ export default async function sitemap() {
   // 1. Static pages
   const staticUrls = [
     "",
-    "/about",
-    "/contact",
+    "/about-us",
+    "/contact-us",
     "/shipping-policy",
     "/disclaimer",
     "/privacy-policy",

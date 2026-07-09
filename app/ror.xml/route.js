@@ -11,14 +11,14 @@ export async function GET() {
       <ror:resourceOf>sitemap</ror:resourceOf>
     </item>
     <item>
-      <link>${baseUrl}/about</link>
+      <link>${baseUrl}/about-us</link>
       <title>About Our Heritage | Traditional Attar Distillation</title>
       <ror:updatePeriod>week</ror:updatePeriod>
       <ror:sortOrder>2</ror:sortOrder>
       <ror:resourceOf>sitemap</ror:resourceOf>
     </item>
     <item>
-      <link>${baseUrl}/contact</link>
+      <link>${baseUrl}/contact-us</link>
       <title>Contact Us | Customer Support &amp; Gifting Queries</title>
       <ror:updatePeriod>week</ror:updatePeriod>
       <ror:sortOrder>2</ror:sortOrder>

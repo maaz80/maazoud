@@ -4,8 +4,8 @@ export async function GET() {
   const baseUrl = "https://maazoud.in";
   const urls = [
     `${baseUrl}/`,
-    `${baseUrl}/about`,
-    `${baseUrl}/contact`,
+    `${baseUrl}/about-us`,
+    `${baseUrl}/contact-us`,
     `${baseUrl}/shipping-policy`,
     `${baseUrl}/disclaimer`,
     `${baseUrl}/privacy-policy`
