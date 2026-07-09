@@ -6,14 +6,25 @@ export const revalidate = 0; // Dynamic server rendering or revalidation as need
 
 async function getCategoryData(slug) {
   try {
-    const [catRes, prodRes] = await Promise.all([
-      supabase.from("categories").select("*").eq("id", slug).single(),
-      supabase.from("products").select("*").contains("category", [slug]).order("created_at", { ascending: false })
-    ]);
+    const { data: categoryData, error: catErr } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("slug", slug)
+      .single();
+
+    if (catErr || !categoryData) {
+      return { category: null, products: [] };
+    }
+
+    const { data: prodData } = await supabase
+      .from("products")
+      .select("*")
+      .contains("category", [categoryData.id])
+      .order("created_at", { ascending: false });
 
     let products = [];
-    if (prodRes.data) {
-      products = prodRes.data.map(p => {
+    if (prodData) {
+      products = prodData.map(p => {
         const orig = p.price3mlorig || p.price3mloffer;
         const offer = p.price3mloffer;
         const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
@@ -31,7 +42,7 @@ async function getCategoryData(slug) {
     }
 
     return {
-      category: catRes.data || null,
+      category: categoryData,
       products: products
     };
   } catch (e) {

@@ -34,47 +34,58 @@ export default function CategoryClient({ slug, initialCategory, initialProducts 
   useEffect(() => {
     const fetchCategoryData = async () => {
       if (!slug) return;
-      if (category && category.id === slug) {
+      if (category && category.slug === slug) {
         setLoading(false);
         return;
       }
       
       setLoading(true);
       try {
-        const [catRes, prodRes] = await Promise.all([
-          supabase.from("categories").select("*").eq("id", slug).single(),
-          supabase.from("products").select("*").contains("category", [slug]).order("created_at", { ascending: false })
-        ]);
+        const { data: catData } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("slug", slug)
+          .single();
 
-        if (catRes.data) {
-          setCategory(catRes.data);
-        } else {
+        let activeCategory = catData;
+        if (!activeCategory) {
           const foundMockCat = CATEGORIES.find((cat) => cat.slug === slug);
-          setCategory(foundMockCat || null);
+          activeCategory = foundMockCat || null;
         }
+        setCategory(activeCategory);
 
-        if (prodRes.data && prodRes.data.length > 0) {
-          const mapped = prodRes.data.map(p => {
-            const orig = p.price3mlorig || p.price3mloffer;
-            const offer = p.price3mloffer;
-            const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
-            return {
-              ...p,
-              id: p.id,
-              slug: p.id,
-              price: offer,
-              originalPrice: orig,
-              discount: discount,
-              size: "3ml",
-              category: p.category || "top-selling"
-            };
-          });
-          setCategoryProducts(mapped);
+        if (activeCategory) {
+          const { data: prodData } = await supabase
+            .from("products")
+            .select("*")
+            .contains("category", [activeCategory.id])
+            .order("created_at", { ascending: false });
+
+          if (prodData && prodData.length > 0) {
+            const mapped = prodData.map(p => {
+              const orig = p.price3mlorig || p.price3mloffer;
+              const offer = p.price3mloffer;
+              const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
+              return {
+                ...p,
+                id: p.id,
+                slug: p.id,
+                price: offer,
+                originalPrice: orig,
+                discount: discount,
+                size: "3ml",
+                category: p.category || "top-selling"
+              };
+            });
+            setCategoryProducts(mapped);
+          } else {
+            const foundMockProducts = PRODUCTS.filter((prod) => 
+              Array.isArray(prod.category) ? prod.category.includes(slug) : prod.category === slug
+            );
+            setCategoryProducts(foundMockProducts);
+          }
         } else {
-          const foundMockProducts = PRODUCTS.filter((prod) => 
-            Array.isArray(prod.category) ? prod.category.includes(slug) : prod.category === slug
-          );
-          setCategoryProducts(foundMockProducts);
+          setCategoryProducts([]);
         }
       } catch (err) {
         console.error("Error loading category page:", err.message);
