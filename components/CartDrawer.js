@@ -24,15 +24,15 @@ const loadRazorpayScript = () => {
 
 export default function CartDrawer() {
   const router = useRouter();
-  const { 
-    cart, 
-    isCartOpen, 
-    setIsCartOpen, 
-    updateQuantity, 
-    removeFromCart, 
+  const {
+    cart,
+    isCartOpen,
+    setIsCartOpen,
+    updateQuantity,
+    removeFromCart,
     cartSubtotal,
     deliveryCharge,
-    cartTotal, 
+    cartTotal,
     placeOrder,
     showCheckout,
     setShowCheckout
@@ -48,7 +48,7 @@ export default function CartDrawer() {
   });
 
   const [errors, setErrors] = useState({});
-  const [paymentMethod, setPaymentMethod] = useState("COD"); // COD, ONLINE
+  const [paymentMethod, setPaymentMethod] = useState("ONLINE");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   if (!isCartOpen) return null;
@@ -101,7 +101,7 @@ export default function CartDrawer() {
   const resetCheckout = () => {
     setFormData({ name: "", phone: "", address: "", city: "", state: "", pincode: "" });
     setErrors({});
-    setPaymentMethod("COD");
+    setPaymentMethod("ONLINE");
     setShowCheckout(false);
   };
 
@@ -109,7 +109,7 @@ export default function CartDrawer() {
   const handleRazorpayPayment = async (fullAddress) => {
     setIsPlacingOrder(true);
     const scriptLoaded = await loadRazorpayScript();
-    
+
     if (!scriptLoaded) {
       alert("Failed to load Razorpay payment helper. Please check your internet connection.");
       setIsPlacingOrder(false);
@@ -174,36 +174,13 @@ export default function CartDrawer() {
 
     const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`;
 
-    if (paymentMethod === "COD") {
-      setIsPlacingOrder(true);
-      try {
-        const orderId = await placeOrder({
-          address: fullAddress,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
-          paymentMethod: "Cash on Delivery",
-          name: formData.name,
-          phone: formData.phone
-        });
-        resetCheckout();
-        setIsCartOpen(false);
-        router.push(`/order-success?orderId=${orderId}`);
-      } catch (err) {
-        alert("Failed to place order: " + err.message);
-      } finally {
-        setIsPlacingOrder(false);
-      }
-    } else {
-      // Launch Razorpay popup directly
-      await handleRazorpayPayment(fullAddress);
-    }
+    await handleRazorpayPayment(fullAddress);
   };
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden font-sans">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={() => {
           if (!isPlacingOrder) {
@@ -215,13 +192,13 @@ export default function CartDrawer() {
 
       <div className="absolute inset-y-0 right-0 max-w-full flex">
         <div className="w-screen max-w-md bg-white shadow-xl flex flex-col h-full relative">
-          
+
           {/* Header */}
           <div className="px-6 py-5 border-b border-stone-200 flex items-center justify-between">
             <h2 className="text-lg font-bold text-stone-900 uppercase tracking-wider">
               {showCheckout ? "Checkout Details" : "Shopping Cart"}
             </h2>
-            <button 
+            <button
               disabled={isPlacingOrder}
               onClick={() => {
                 setIsCartOpen(false);
@@ -256,13 +233,13 @@ export default function CartDrawer() {
               </div>
             ) : !showCheckout ? (
               cart.map((item) => (
-                <div 
+                <div
                   key={item.cartItemId}
                   className="flex gap-4 p-3 border border-stone-100 rounded-md hover:border-stone-200 transition-all"
                 >
-                  <Image 
-                    src={item.product.image} 
-                    alt={item.product.name} 
+                  <Image
+                    src={item.product.image}
+                    alt={item.product.name}
                     width={80}
                     height={80}
                     className="w-20 h-20 object-cover rounded bg-stone-50 border border-stone-100 shrink-0"
@@ -277,7 +254,7 @@ export default function CartDrawer() {
                     <span className="text-xs font-bold text-stone-900 block mt-1">
                       Rs. {item.price}
                     </span>
-                    
+
                     {/* Quantity Controls */}
                     <div className="flex items-center space-x-3 mt-3">
                       <div className="flex items-center border border-stone-200 rounded">
@@ -333,7 +310,7 @@ export default function CartDrawer() {
                 <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-2">
                   Delivery Details
                 </h3>
-                
+
                 {/* Full Name */}
                 <div>
                   <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">
@@ -430,40 +407,15 @@ export default function CartDrawer() {
                   {errors.pincode && <p className="text-[10px] text-red-500 mt-1">{errors.pincode}</p>}
                 </div>
 
-                {/* Payment Method Selector */}
+                {/* Payment Method */}
                 <div className="space-y-2 pt-2 border-t border-stone-100">
                   <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider">
                     Payment Method *
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      // { id: "COD", name: "Cash on Delivery" },
-                      { id: "ONLINE", name: "Pay Online" }
-                    ].map((method) => (
-                      <button
-                        key={method.id}
-                        type="button"
-                        onClick={() => setPaymentMethod(method.id)}
-                        className={`py-2 px-1.5 border text-center text-[10px] font-bold uppercase tracking-wider rounded transition-all cursor-pointer ${
-                          paymentMethod === method.id
-                            ? "border-black bg-black text-white"
-                            : "border-stone-200 bg-white text-stone-700 hover:border-stone-400"
-                        }`}
-                      >
-                        {method.name}
-                      </button>
-                    ))}
-                  </div>
-                  
-                  {/* Helper message */}
                   <div className="p-3 bg-stone-50 rounded border border-stone-100 text-[10px] text-stone-500 leading-normal font-light">
-                    {paymentMethod === "COD" ? (
-                      <p>Pay with cash upon delivery of your items.</p>
-                    ) : (
-                      <p className="text-[#8c6239] font-medium flex items-center gap-1">
-                        <FaLock size={8} /> Pay securely via Razorpay (UPI, Cards, GPay, PhonePe).
-                      </p>
-                    )}
+                    <p className="text-[#8c6239] font-medium flex items-center gap-1">
+                      <FaLock size={8} /> Pay securely via Razorpay (UPI, Cards, GPay, PhonePe).
+                    </p>
                   </div>
                 </div>
 
@@ -480,7 +432,7 @@ export default function CartDrawer() {
                     type="submit"
                     className="flex-1 py-2.5 bg-black text-white hover:bg-[#8c6239] text-[10px] font-bold uppercase tracking-wider rounded transition-all cursor-pointer"
                   >
-                    {paymentMethod === "COD" ? "Confirm Order" : "Pay & Confirm"}
+                    Pay & Confirm
                   </button>
                 </div>
               </form>
