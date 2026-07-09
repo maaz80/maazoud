@@ -10,6 +10,16 @@ function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") || "ORD-XXXXXX";
 
+  const deliveryDate = (() => {
+    const delivery = new Date();
+    delivery.setDate(delivery.getDate() + 7);
+    return delivery.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+  })();
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fdf8f3_0%,#f6efe8_45%,#f1e6da_100%)] flex items-center justify-center p-4 sm:p-6 font-sans">
       <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-[0_20px_70px_-25px_rgba(0,0,0,0.35)]">
@@ -46,9 +56,9 @@ function OrderSuccessContent() {
               <span className="text-stone-500">Order reference</span>
               <span className="font-mono font-semibold text-stone-800">{orderId}</span>
             </div>
-            <div className="mt-3 flex items-center gap-2 text-[10px] md:text-xs font-medium uppercase tracking-[0.0em] md:tracking-[0.2em] text-stone-500">
+            <div className="mt-3 flex items-center gap-2 text-[10px] md:text-xs font-medium uppercase tracking-wide text-stone-500">
               <FaTruck className="text-[#8c6239]" />
-              Estimated delivery in 4-5 working days
+              Order will be delivered before {deliveryDate}
             </div>
           </div>
 

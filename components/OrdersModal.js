@@ -24,6 +24,20 @@ export default function OrdersModal() {
     return order.date || "N/A";
   };
 
+  const getDeliveryDate = (order) => {
+    const baseDate = order.created_at ? new Date(order.created_at) : new Date();
+    if (Number.isNaN(baseDate.getTime())) {
+      return new Date();
+    }
+    const deliveryDate = new Date(baseDate);
+    deliveryDate.setDate(deliveryDate.getDate() + 7);
+    return deliveryDate.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+  };
+
   const getOrderAddress = (order) => {
     if (order.address) return order.address;
     if (order.shippingAddress) return order.shippingAddress;
@@ -44,20 +58,20 @@ export default function OrdersModal() {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 font-sans">
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={() => setIsOrdersOpen(false)}
       />
 
       {/* Modal Card */}
       <div className="relative bg-white rounded-lg max-w-2xl w-full shadow-xl overflow-hidden z-10 border border-stone-200">
-        
+
         {/* Header */}
         <div className="px-6 py-5 border-b border-stone-200 flex items-center justify-between">
           <h2 className="text-lg font-bold text-stone-900 uppercase tracking-wider">
             My Orders
           </h2>
-          <button 
+          <button
             onClick={() => setIsOrdersOpen(false)}
             className="p-1 text-stone-400 hover:text-stone-600 transition-colors cursor-pointer"
             aria-label="Close orders modal"
@@ -84,8 +98,8 @@ export default function OrdersModal() {
           ) : (
             <div className="space-y-6">
               {orders.map((order) => (
-                <div 
-                  key={order.id} 
+                <div
+                  key={order.id}
                   className="border border-stone-200 rounded-md p-4 bg-stone-50 hover:bg-stone-100/50 transition-all space-y-4"
                 >
                   {/* Order Details Header */}
@@ -110,12 +124,12 @@ export default function OrdersModal() {
                     {order.items && order.items.map((item, idx) => (
                       <div key={item.cartItemId || idx} className="flex justify-between items-center gap-2 text-xs">
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          <Image 
-                            src={item.product?.image || "/images/placeholder.jpg"} 
-                            alt={item.product?.name || "Oud Product"} 
+                          <Image
+                            src={item.product?.image || "/images/placeholder.jpg"}
+                            alt={item.product?.name || "Oud Product"}
                             width={40}
                             height={48}
-                            className="w-10 h-12 object-cover rounded bg-white border border-stone-200 flex-shrink-0"
+                            className="w-10 h-12 object-cover rounded bg-white border border-stone-200 shrink-0"
                           />
                           <div className="min-w-0 flex-1">
                             <span className="font-semibold text-stone-900 block truncate" title={item.product?.name}>
@@ -126,7 +140,7 @@ export default function OrdersModal() {
                             </span>
                           </div>
                         </div>
-                        <span className="font-bold text-stone-900 text-right flex-shrink-0 ml-2">
+                        <span className="ml-2 text-right font-bold text-stone-900 shrink-0">
                           Rs. {item.price * item.quantity}
                         </span>
                       </div>
@@ -135,15 +149,18 @@ export default function OrdersModal() {
 
                   {/* Order Total & Info */}
                   <div className="border-t border-stone-200 pt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 space-y-1">
                       <span className="text-[10px] text-stone-400 block uppercase tracking-wider mb-0.5">
                         Shipping Address
                       </span>
-                      <span className="text-stone-600 font-light block break-words">
+                      <span className="block font-light text-stone-600 wrap-break-word">
                         {getOrderAddress(order)}
                       </span>
+                      <span className="text-[10px] text-[#8c6239] font-semibold block">
+                        Order will be delivered before {getDeliveryDate(order)}
+                      </span>
                     </div>
-                    <div className="text-left sm:text-right flex-shrink-0">
+                    <div className="shrink-0 text-left sm:text-right">
                       <span className="text-[10px] text-stone-400 block uppercase tracking-wider mb-0.5">
                         Total Amount
                       </span>
