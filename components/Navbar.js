@@ -9,22 +9,23 @@ import { useCart } from "../context/CartContext";
 
 export default function Navbar() {
   const router = useRouter();
-  const { 
-    cartCount, 
-    setIsCartOpen, 
-    setIsOrdersOpen, 
-    setIsLoginOpen, 
-    user, 
+  const {
+    cartCount,
+    orders,
+    setIsCartOpen,
+    setIsOrdersOpen,
+    setIsLoginOpen,
+    user,
     logoutUser,
     globalProducts,
     fetchGlobalProducts
   } = useCart();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Real-time Search Suggestions states
   const [suggestions, setSuggestions] = useState([]);
-  
+
   const desktopRef = useRef(null);
   const mobileRef = useRef(null);
 
@@ -51,7 +52,7 @@ export default function Navbar() {
     setSearchQuery(val);
     if (val.trim().length >= 2) {
       const query = val.toLowerCase().trim();
-      const filtered = globalProducts.filter(prod => 
+      const filtered = globalProducts.filter(prod =>
         prod.name.toLowerCase().includes(query)
       ).slice(0, 5); // Limit suggestions to top 5 items
       setSuggestions(filtered);
@@ -84,6 +85,10 @@ export default function Navbar() {
     router.push("/");
   };
 
+  const pendingOrdersCount = orders.filter(
+    (order) => String(order.status || "").toLowerCase() !== "delivered"
+  ).length;
+
   const renderSuggestionsDropdown = () => {
     if (searchQuery.trim().length < 2) return null;
 
@@ -96,9 +101,9 @@ export default function Navbar() {
               onClick={() => handleSuggestionClick(prod.id)}
               className="flex items-center gap-3.5 p-3 hover:bg-stone-50 transition-colors cursor-pointer text-left"
             >
-              <Image 
-                src={prod.image} 
-                alt={prod.name} 
+              <Image
+                src={prod.image}
+                alt={prod.name}
                 width={40}
                 height={40}
                 className="w-10 h-10 object-cover rounded border border-stone-100 bg-stone-50 shrink-0"
@@ -133,25 +138,25 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 bg-white border-b border-stone-200 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          
+
           {/* Left Group: Logo & Search Bar */}
           <div className="flex items-center gap-6 md:grow">
             <Link href="/" className="shrink-0 flex items-center">
-              <Image 
-                src="/maazoud-logo-no-bg.webp" 
-                alt="Maaz Oud Logo" 
+              <Image
+                src="/maazoud-logo-no-bg.webp"
+                alt="Maaz Oud Logo"
                 width={56}
                 height={56}
                 priority
                 quality={60}
-                className="h-14 w-14 object-contain hover:opacity-90 transition-opacity" 
+                className="h-14 w-14 object-contain hover:opacity-90 transition-opacity"
               />
             </Link>
 
             {/* Desktop Search wrapper */}
             <div ref={desktopRef} className="hidden md:flex grow max-w-md relative">
-              <form 
-                onSubmit={handleSearchSubmit} 
+              <form
+                onSubmit={handleSearchSubmit}
                 className="w-full relative flex items-center"
               >
                 <input
@@ -162,8 +167,8 @@ export default function Navbar() {
                   className="w-full bg-stone-50 border border-stone-200 rounded-md py-2 pl-4 pr-18 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] focus:border-[#8c6239] text-sm transition-all"
                 />
                 {searchQuery ? (
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={handleClearSearch}
                     className="absolute right-9 w-9 h-9 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-colors cursor-pointer focus:outline-none"
                     aria-label="Clear Search"
@@ -171,8 +176,8 @@ export default function Navbar() {
                     <FiX size={14} />
                   </button>
                 ) : null}
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="absolute right-0.5 w-9 h-9 flex items-center justify-center text-stone-500 hover:text-[#8c6239] transition-colors cursor-pointer focus:outline-none"
                   aria-label="Submit Search"
                 >
@@ -185,7 +190,7 @@ export default function Navbar() {
 
           {/* Right: Actions */}
           <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
-            
+
             {/* Mobile search toggle */}
             <button
               onClick={() => {
@@ -207,6 +212,11 @@ export default function Navbar() {
               aria-label="My Orders"
             >
               <FiPackage size={20} />
+              {pendingOrdersCount > 0 && (
+                <span className="absolute top-1 right-1 bg-[#8c6239] text-white text-[10px] font-bold min-w-5 h-5 px-1 flex items-center justify-center rounded-full border-2 border-white">
+                  {pendingOrdersCount}
+                </span>
+              )}
             </button>
 
             {/* Cart Icon */}
@@ -262,8 +272,8 @@ export default function Navbar() {
                 autoFocus
               />
               {searchQuery && (
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={handleClearSearch}
                   className="absolute right-9 w-9 h-9 flex items-center justify-center text-stone-400 cursor-pointer focus:outline-none"
                   aria-label="Clear Search"
@@ -271,8 +281,8 @@ export default function Navbar() {
                   <FiX size={16} />
                 </button>
               )}
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="absolute right-0.5 w-9 h-9 flex items-center justify-center text-stone-500 hover:text-[#8c6239] cursor-pointer focus:outline-none"
                 aria-label="Submit Search"
               >

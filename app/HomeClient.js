@@ -119,7 +119,7 @@ function HomeContent({ initialBanners, initialCategories, initialProducts }) {
       <Carousel initialBanners={initialBanners} />
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-12 space-y-6 md:space-y-16">
         <h1 className="sr-only">Maaz Oud | Luxury Pure Attars & Organic Oud Perfumes</h1>
         
         {/* 2. Categories Section */}
