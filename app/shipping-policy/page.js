@@ -79,7 +79,7 @@ export default function ShippingPolicyPage() {
           </div>
           
           <div className="text-xs text-stone-600 font-light leading-relaxed space-y-4">
-            <div className="p-4 bg-red-50 border border-red-150 rounded text-red-800 font-medium">
+            <div className="p-4 bg-stone-50 border border-stone-200 rounded text-stone-800 font-medium">
               Important: All products sold on Maaz Oud are non-returnable, non-exchangeable, and non-refundable.
             </div>
             <p>

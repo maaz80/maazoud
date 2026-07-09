@@ -8,6 +8,7 @@ import { CATEGORIES, PRODUCTS } from "../../../utils/mockData";
 import { FaChevronLeft, FaChevronRight, FaArrowLeft } from "react-icons/fa";
 import BlogsSection from "../../../components/BlogsSection";
 import { supabase } from "../../../utils/supabase";
+import { getOptimizedImageUrl } from "../../../utils/imageHelper";
 
 // Skeleton Loader for Product Grid
 const ProductSkeleton = () => (
@@ -158,7 +159,7 @@ export default function CategoryClient({ slug, initialCategory, initialProducts 
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <Image 
-            src={category.image} 
+            src={getOptimizedImageUrl(category.image, 1200)} 
             alt={category.name} 
             fill
             priority
