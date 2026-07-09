@@ -1,18 +1,9 @@
 import { NextResponse } from 'next/server';
 
 export function proxy(request) {
-  const host = request.headers.get('host') || '';
-  const url = request.nextUrl.clone();
-
-  // Redirect www.maazoud.in -> maazoud.in (SEO Best Practice)
-  if (host.startsWith('www.maazoud.in') || host.startsWith('www.localhost')) {
-    const newHost = host.replace(/^www\./, '');
-    url.host = newHost;
-    
-    // Use 301 Permanent Redirect (great for passing link juice / authority to main domain)
-    return NextResponse.redirect(url, 301);
-  }
-
+  // Domain redirects are handled at Vercel's infrastructure level
+  // (Settings → Domains). No app-level redirect needed.
+  // Vercel config: maazoud.in → 308 → www.maazoud.in (primary)
   return NextResponse.next();
 }
 

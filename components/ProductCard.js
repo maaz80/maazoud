@@ -34,12 +34,12 @@ export default function ProductCard({ product }) {
       {/* Product Image & Gallery Slider */}
       <Link href={`/product/${product.slug}`} className="relative aspect-4/4 w-full overflow-hidden block group/img bg-stone-50 border-b border-stone-100">
         <Image
-          src={getOptimizedImageUrl(gallery[activeImgIndex], 400)}
+          src={gallery[activeImgIndex]}
           alt={getImageAlt(gallery[activeImgIndex], product.name)}
           width={300}
           height={300}
           sizes="(max-width: 640px) 160px, 320px"
-          className="w-full h-full object-contain transition-all duration-300"
+          className="w-full h-full object-cover transition-all duration-300"
         />
         {/* Soft overlay */}
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover/img:opacity-100 transition-opacity" />
