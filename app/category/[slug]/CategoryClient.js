@@ -163,6 +163,7 @@ export default function CategoryClient({ slug, initialCategory, initialProducts 
             alt={category.name} 
             fill
             priority
+            fetchPriority="high"
             className="w-full h-full object-cover opacity-25 blur-[1px]"
           />
           <div className="absolute inset-0 bg-stone-950/70" />

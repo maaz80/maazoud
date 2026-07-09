@@ -39,7 +39,7 @@ export default function ProductCard({ product }) {
           width={300}
           height={300}
           sizes="(max-width: 640px) 160px, 320px"
-          className="w-full h-full object-cover transition-all duration-300"
+          className="w-full h-full object-contain transition-all duration-300"
         />
         {/* Soft overlay */}
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover/img:opacity-100 transition-opacity" />

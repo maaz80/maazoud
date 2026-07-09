@@ -434,7 +434,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                 fetchPriority="high"
                 quality={65}
                 sizes="(max-width: 768px) 100vw, 640px"
-                className="w-full h-full object-cover transition-all duration-300"
+                className="w-full h-full object-contain transition-all duration-300"
               />
 
               {product.images && product.images.length > 1 && (
@@ -479,7 +479,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                       width={56}
                       height={64}
                       quality={60}
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-contain" 
                       alt={getImageAlt(img, `${product.name} thumbnail ${idx + 1}`)} 
                     />
                   </button>
