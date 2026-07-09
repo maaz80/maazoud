@@ -437,7 +437,7 @@ export default function CartDrawer() {
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { id: "COD", name: "Cash on Delivery" },
+                      // { id: "COD", name: "Cash on Delivery" },
                       { id: "ONLINE", name: "Pay Online" }
                     ].map((method) => (
                       <button
