@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { FaTimes, FaPlus, FaMinus, FaTrash, FaLock, FaSpinner } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
+import { supabase } from "../utils/supabase";
 
 // Razorpay Script Loader Helper
 const loadRazorpayScript = () => {
@@ -26,6 +27,7 @@ export default function CartDrawer() {
   const router = useRouter();
   const {
     cart,
+    orders,
     isCartOpen,
     setIsCartOpen,
     updateQuantity,
@@ -33,7 +35,8 @@ export default function CartDrawer() {
     cartSubtotal,
     deliveryCharge,
     cartTotal,
-    placeOrder,
+    clearCart,
+    saveOrders,
     showCheckout,
     setShowCheckout
   } = useCart();
@@ -48,7 +51,6 @@ export default function CartDrawer() {
   });
 
   const [errors, setErrors] = useState({});
-  const [paymentMethod, setPaymentMethod] = useState("ONLINE");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   if (!isCartOpen) return null;
@@ -101,7 +103,6 @@ export default function CartDrawer() {
   const resetCheckout = () => {
     setFormData({ name: "", phone: "", address: "", city: "", state: "", pincode: "" });
     setErrors({});
-    setPaymentMethod("ONLINE");
     setShowCheckout(false);
   };
 
@@ -117,13 +118,32 @@ export default function CartDrawer() {
     }
 
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_your_razorpay_key_here";
+    const checkoutItems = cart.map((item) => ({
+      productId: item.product.id,
+      quantity: item.quantity,
+      selectedSize: item.selectedSize || "3ml",
+    }));
+
+    const { data: razorpayOrder, error: createError } = await supabase.functions.invoke("razorpay-checkout", {
+      body: {
+        action: "create_order",
+        items: checkoutItems,
+      },
+    });
+
+    if (createError || !razorpayOrder?.razorpayOrderId) {
+      alert(createError?.message || razorpayOrder?.error || "Could not create Razorpay order.");
+      setIsPlacingOrder(false);
+      return;
+    }
 
     const options = {
       key: keyId,
-      amount: cartTotal * 100, // in paise
+      amount: razorpayOrder.amount,
       currency: "INR",
       name: "Maaz Oud",
       description: "Premium Attars Order Checkout",
+      order_id: razorpayOrder.razorpayOrderId,
       prefill: {
         name: formData.name,
         contact: formData.phone,
@@ -134,18 +154,35 @@ export default function CartDrawer() {
       },
       handler: async function (response) {
         try {
-          const orderId = await placeOrder({
-            address: fullAddress,
-            city: formData.city,
-            state: formData.state,
-            pincode: formData.pincode,
-            paymentMethod: `Razorpay Online (Payment ID: ${response.razorpay_payment_id})`,
-            name: formData.name,
-            phone: formData.phone
+          const { data: verifiedOrder, error: verifyError } = await supabase.functions.invoke("razorpay-checkout", {
+            body: {
+              action: "verify_payment",
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              customer: {
+                name: formData.name,
+                phone: formData.phone,
+                address: fullAddress,
+                city: formData.city,
+                state: formData.state,
+                pincode: formData.pincode,
+              },
+              items: checkoutItems,
+            },
           });
+
+          if (verifyError || !verifiedOrder?.orderId) {
+            throw new Error(verifyError?.message || verifiedOrder?.error || "Payment verification failed.");
+          }
+
+          if (verifiedOrder.order) {
+            saveOrders([verifiedOrder.order, ...orders]);
+          }
+          await clearCart();
           resetCheckout();
           setIsCartOpen(false);
-          router.push(`/order-success?orderId=${orderId}`);
+          router.push(`/order-success?orderId=${verifiedOrder.orderId}`);
         } catch (err) {
           alert("Error placing order: " + err.message);
         } finally {

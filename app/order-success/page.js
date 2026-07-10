@@ -62,20 +62,20 @@ function OrderSuccessContent() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          {/* <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-stone-200 bg-white p-3 text-center shadow-sm">
               <FaCheckCircle className="mx-auto mb-2 text-green-600" />
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-700">Confirmed</p>
             </div>
-            {/* <div className="rounded-xl border border-stone-200 bg-white p-3 text-center shadow-sm">
+            <div className="rounded-xl border border-stone-200 bg-white p-3 text-center shadow-sm">
               <FaBoxOpen className="mx-auto mb-2 text-[#8c6239]" />
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-700">Packed</p>
             </div>
             <div className="rounded-xl border border-stone-200 bg-white p-3 text-center shadow-sm">
               <FaTruck className="mx-auto mb-2 text-[#8c6239]" />
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-700">Delivered</p>
-            </div> */}
-          </div>
+            </div>
+          </div> */}
 
           <div className="mt-6 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-left shadow-sm">
             <p className="text-sm text-stone-600">
