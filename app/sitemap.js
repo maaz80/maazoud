@@ -2,6 +2,11 @@ import { supabase } from "../utils/supabase";
 
 export const revalidate = 0; // Force dynamic sitemap on every request
 
+const buildCanonicalUrl = (baseUrl, path = "") => {
+  const normalizedPath = path === "" ? "/" : String(path);
+  return new URL(normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`, baseUrl).toString();
+};
+
 export default async function sitemap() {
   const baseUrl = "https://maazoud.in";
 
@@ -14,7 +19,7 @@ export default async function sitemap() {
     "/disclaimer",
     "/privacy-policy",
   ].map((route) => ({
-    url: `${baseUrl}${route}`,
+    url: buildCanonicalUrl(baseUrl, route),
     lastModified: new Date().toISOString().split("T")[0],
     changeFrequency: route === "" ? "daily" : "weekly",
     priority: route === "" ? 1.0 : 0.8,
@@ -24,7 +29,7 @@ export default async function sitemap() {
     // 2. Dynamic Categories
     const { data: categories } = await supabase.from("categories").select("slug, image");
     const categoryUrls = (categories || []).map((cat) => ({
-      url: `${baseUrl}/category/${cat.slug}`,
+      url: buildCanonicalUrl(baseUrl, `/category/${cat.slug}`),
       lastModified: new Date().toISOString().split("T")[0],
       changeFrequency: "weekly",
       priority: 0.7,
@@ -37,14 +42,14 @@ export default async function sitemap() {
       const productImages = [];
       if (prod.image) productImages.push(prod.image);
       if (prod.images && Array.isArray(prod.images)) {
-        prod.images.forEach(img => {
+        prod.images.forEach((img) => {
           if (img && !productImages.includes(img)) {
             productImages.push(img);
           }
         });
       }
       return {
-        url: `${baseUrl}/product/${prod.id}`,
+        url: buildCanonicalUrl(baseUrl, `/product/${prod.id}`),
         lastModified: new Date().toISOString().split("T")[0],
         changeFrequency: "daily",
         priority: 0.9,
@@ -55,7 +60,7 @@ export default async function sitemap() {
     // 4. Dynamic Blogs
     const { data: blogs } = await supabase.from("blogs").select("slug, image");
     const blogUrls = (blogs || []).map((blog) => ({
-      url: `${baseUrl}/blog/${blog.slug}`,
+      url: buildCanonicalUrl(baseUrl, `/blog/${blog.slug}`),
       lastModified: new Date().toISOString().split("T")[0],
       changeFrequency: "weekly",
       priority: 0.6,
