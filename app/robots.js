@@ -8,6 +8,6 @@ export default function robots() {
         "/order-success",
       ],
     },
-    sitemap: "https://maazoud.in/sitemap.xml",
+    sitemap: "https://www.maazoud.in/sitemap.xml",
   };
 }
