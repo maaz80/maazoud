@@ -11,6 +11,37 @@ import { useCart } from "../../../context/CartContext";
 import { FaArrowLeft, FaArrowRight, FaStar, FaRegStar, FaShoppingBag, FaPlus, FaMinus } from "react-icons/fa";
 import { supabase } from "../../../utils/supabase";
 
+const normalizeProductSlug = (value = "") => {
+  return String(value || "")
+    .toLowerCase()
+    .trim()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+};
+
+const findProductBySlug = async (slug) => {
+  const decodedSlug = decodeURIComponent(String(slug || "")).trim();
+  const normalizedTarget = normalizeProductSlug(decodedSlug);
+
+  const { data: allProducts, error } = await supabase.from("products").select("*");
+  if (error) throw error;
+
+  if (!allProducts || allProducts.length === 0) return null;
+
+  const exactMatches = allProducts.filter((product) => {
+    const candidates = [product.id, product.slug, product.name].filter(Boolean).map(String);
+    return candidates.some((candidate) => normalizeProductSlug(candidate) === normalizedTarget);
+  });
+
+  if (exactMatches.length > 0) {
+    return exactMatches[0];
+  }
+
+  return null;
+};
+
 export default function ProductClient({ slug, initialProduct, initialReviews, initialRelatedProducts }) {
   const { cart, addToCart, triggerBuyNow } = useCart();
 
@@ -54,13 +85,9 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
       setReviews(mapped);
     }
 
-    const { data: prodData } = await supabase
-      .from("products")
-      .select("*")
-      .eq("id", slug)
-      .single();
-    if (prodData) {
-      setProduct(prodData);
+    const fallbackProduct = await findProductBySlug(slug);
+    if (fallbackProduct) {
+      setProduct(fallbackProduct);
     }
   };
 
@@ -131,37 +158,88 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
       }
       setLoading(true);
       try {
-        const { data: prodData, error: prodErr } = await supabase
-          .from("products")
-          .select("*")
-          .eq("id", slug)
-          .single();
+        const fallbackProduct = await findProductBySlug(slug);
 
-        if (prodErr) throw prodErr;
+        if (!fallbackProduct) {
+          throw new Error("Product not found");
+        }
 
-        if (prodData) {
-          setProduct(prodData);
+        const prodData = fallbackProduct;
+        setProduct(prodData);
 
-          const prodCategories = Array.isArray(prodData.category) ? prodData.category : (prodData.category ? [prodData.category] : []);
-          const [revRes, relRes] = await Promise.all([
-            supabase.from("reviews").select("*").eq("product_id", slug).order("created_at", { ascending: false }),
-            supabase.from("products").select("*").overlaps("category", prodCategories).neq("id", prodData.id).limit(4)
-          ]);
+        const prodCategories = Array.isArray(prodData.category) ? prodData.category : (prodData.category ? [prodData.category] : []);
+        const [revRes, relRes] = await Promise.all([
+          supabase.from("reviews").select("*").eq("product_id", slug).order("created_at", { ascending: false }),
+          supabase.from("products").select("*").overlaps("category", prodCategories).neq("id", prodData.id).limit(4)
+        ]);
 
-          if (revRes.data) {
-            const mapped = revRes.data.map(r => ({
-              id: r.id,
-              name: r.name,
-              rating: r.rating,
-              title: r.title,
-              comment: r.comment,
-              date: new Date(r.created_at).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })
-            }));
-            setReviews(mapped);
+        if (revRes.data) {
+          const mapped = revRes.data.map(r => ({
+            id: r.id,
+            name: r.name,
+            rating: r.rating,
+            title: r.title,
+            comment: r.comment,
+            date: new Date(r.created_at).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })
+          }));
+          setReviews(mapped);
+        }
+
+        if (relRes.data && relRes.data.length > 0) {
+          let mappedRel = relRes.data.map(p => {
+            const orig = p.price3mlorig || p.price3mloffer;
+            const offer = p.price3mloffer;
+            const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
+            return {
+              ...p,
+              id: p.id,
+              slug: p.id,
+              price: offer,
+              originalPrice: orig,
+              discount: discount,
+              size: "3ml",
+              category: p.category || "top-selling"
+            };
+          });
+
+          if (mappedRel.length < 4) {
+            const { data: allProds } = await supabase
+              .from("products")
+              .select("*")
+              .neq("id", prodData.id)
+              .limit(8);
+
+            if (allProds) {
+              const extraProds = allProds
+                .filter(ap => !mappedRel.some(mr => mr.id === ap.id))
+                .map(p => {
+                  const orig = p.price3mlorig || p.price3mloffer;
+                  const offer = p.price3mloffer;
+                  const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
+                  return {
+                    ...p,
+                    id: p.id,
+                    slug: p.id,
+                    price: offer,
+                    originalPrice: orig,
+                    discount: discount,
+                    size: "3ml",
+                    category: p.category || "top-selling"
+                  };
+                });
+              mappedRel = [...mappedRel, ...extraProds].slice(0, 4);
+            }
           }
+          setRelatedProducts(mappedRel);
+        } else {
+          const { data: fallbackProds } = await supabase
+            .from("products")
+            .select("*")
+            .neq("id", prodData.id)
+            .limit(4);
 
-          if (relRes.data && relRes.data.length > 0) {
-            let mappedRel = relRes.data.map(p => {
+          if (fallbackProds) {
+            const mappedFallback = fallbackProds.map(p => {
               const orig = p.price3mlorig || p.price3mloffer;
               const offer = p.price3mloffer;
               const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
@@ -176,63 +254,9 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                 category: p.category || "top-selling"
               };
             });
-
-            if (mappedRel.length < 4) {
-              const { data: allProds } = await supabase
-                .from("products")
-                .select("*")
-                .neq("id", prodData.id)
-                .limit(8);
-
-              if (allProds) {
-                const extraProds = allProds
-                  .filter(ap => !mappedRel.some(mr => mr.id === ap.id))
-                  .map(p => {
-                    const orig = p.price3mlorig || p.price3mloffer;
-                    const offer = p.price3mloffer;
-                    const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
-                    return {
-                      ...p,
-                      id: p.id,
-                      slug: p.id,
-                      price: offer,
-                      originalPrice: orig,
-                      discount: discount,
-                      size: "3ml",
-                      category: p.category || "top-selling"
-                    };
-                  });
-                mappedRel = [...mappedRel, ...extraProds].slice(0, 4);
-              }
-            }
-            setRelatedProducts(mappedRel);
+            setRelatedProducts(mappedFallback);
           } else {
-            const { data: fallbackProds } = await supabase
-              .from("products")
-              .select("*")
-              .neq("id", prodData.id)
-              .limit(4);
-
-            if (fallbackProds) {
-              const mappedFallback = fallbackProds.map(p => {
-                const orig = p.price3mlorig || p.price3mloffer;
-                const offer = p.price3mloffer;
-                const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
-                return {
-                  ...p,
-                  id: p.id,
-                  slug: p.id,
-                  price: offer,
-                  originalPrice: orig,
-                  discount: discount,
-                  size: "3ml",
-                  category: p.category || "top-selling"
-                };
-              });
-              setRelatedProducts(mappedFallback);
-            } else {
-              setRelatedProducts([]);
-            }
+            setRelatedProducts([]);
           }
         }
       } catch (err) {
@@ -246,7 +270,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
             const pCats = Array.isArray(p.category) ? p.category : (p.category ? [p.category] : []);
             return pCats.some(c => fpCats.includes(c));
           });
-          
+
           if (related.length < 4) {
             const extra = PRODUCTS.filter(p => p.id !== foundProduct.id && !related.some(r => r.id === p.id));
             related = [...related, ...extra];
@@ -327,6 +351,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
     currentOriginalPrice = Math.round(product.originalPrice * sizeMultiplier);
   }
 
+  const isComboProduct = Boolean(product?.description && String(product.description).includes('<!-- product-type:combo -->'));
   const isAdded = product ? cart.some(item => item.cartItemId === `${product.id}-${selectedSize}`) : false;
 
   const handleAddToCart = () => {
@@ -470,17 +495,17 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
                     className={`w-14 h-16 rounded border overflow-hidden bg-stone-50 shrink-0 transition-all cursor-pointer ${activeImageIndex === idx
-                        ? "border-[#8c6239] ring-1 ring-[#8c6239]"
-                        : "border-stone-200 hover:border-stone-400"
+                      ? "border-[#8c6239] ring-1 ring-[#8c6239]"
+                      : "border-stone-200 hover:border-stone-400"
                       }`}
                   >
-                    <Image 
-                      src={img} 
+                    <Image
+                      src={img}
                       width={56}
                       height={64}
                       quality={60}
-                      className="w-full h-full object-contain" 
-                      alt={getImageAlt(img, `${product.name} thumbnail ${idx + 1}`)} 
+                      className="w-full h-full object-contain"
+                      alt={getImageAlt(img, `${product.name} thumbnail ${idx + 1}`)}
                     />
                   </button>
                 ))}
@@ -528,25 +553,27 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
               )}
             </div>
 
-            <div className="space-y-2.5 -mt-2 md:mt-0">
-              <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
-                Select Bottle Size
-              </label>
-              <div className="flex gap-3">
-                {["3ml", "6ml"].map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-5 py-2.5 text-xs font-bold border rounded transition-all cursor-pointer ${selectedSize === size
-                      ? "border-black bg-black text-white"
-                      : "border-stone-200 bg-white text-stone-700 hover:border-stone-400"
-                      }`}
-                  >
-                    {size}
-                  </button>
-                ))}
+            {!isComboProduct && (
+              <div className="space-y-2.5 -mt-2 md:mt-0">
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+                  Select Bottle Size
+                </label>
+                <div className="flex gap-3">
+                  {["3ml", "6ml"].map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-5 py-2.5 text-xs font-bold border rounded transition-all cursor-pointer ${selectedSize === size
+                        ? "border-black bg-black text-white"
+                        : "border-stone-200 bg-white text-stone-700 hover:border-stone-400"
+                        }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
 
@@ -574,8 +601,8 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                 <button
                   onClick={handleAddToCart}
                   className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-md transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer border ${isAdded
-                      ? "bg-green-700 hover:bg-green-800 text-white border-green-750"
-                      : "border-black hover:bg-stone-50 text-black"
+                    ? "bg-green-700 hover:bg-green-800 text-white border-green-750"
+                    : "border-black hover:bg-stone-50 text-black"
                     }`}
                 >
                   <FaShoppingBag size={14} />
@@ -633,14 +660,14 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                     <div key={star} className="flex items-center gap-3 text-xs text-stone-600 font-medium">
                       <span className="w-2 text-right">{star}</span>
                       <span className="text-amber-500">★</span>
-                      
+
                       <div className="grow bg-stone-200 h-2 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="bg-[#242b35] h-full rounded-full transition-all duration-500"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      
+
                       <span className="w-6 text-right text-stone-400 font-light">{count}</span>
                     </div>
                   );
@@ -654,7 +681,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                   Thank you! Your review was posted successfully.
                 </div>
               )}
-              
+
               <button
                 onClick={() => {
                   setReviewError("");
@@ -783,11 +810,10 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                   <button
                     key={pageNum}
                     onClick={() => setReviewPage(pageNum)}
-                    className={`px-3 py-1.5 text-[10px] font-bold rounded transition-all cursor-pointer ${
-                      reviewPage === pageNum
-                        ? "bg-black text-white"
-                        : "bg-white border border-stone-200 text-stone-700 hover:border-black"
-                    }`}
+                    className={`px-3 py-1.5 text-[10px] font-bold rounded transition-all cursor-pointer ${reviewPage === pageNum
+                      ? "bg-black text-white"
+                      : "bg-white border border-stone-200 text-stone-700 hover:border-black"
+                      }`}
                   >
                     {pageNum}
                   </button>
@@ -827,11 +853,11 @@ function ProductFAQ({ product }) {
 
   if (!product) return null;
 
-  const isOud = product.name.toLowerCase().includes("oud") || 
-                (product.description && product.description.toLowerCase().includes("oud"));
-  const isMusk = product.name.toLowerCase().includes("musk") || 
-                 (product.description && product.description.toLowerCase().includes("musk"));
-  
+  const isOud = product.name.toLowerCase().includes("oud") ||
+    (product.description && product.description.toLowerCase().includes("oud"));
+  const isMusk = product.name.toLowerCase().includes("musk") ||
+    (product.description && product.description.toLowerCase().includes("musk"));
+
   let faqItems = [];
 
   if (isOud) {
@@ -934,9 +960,8 @@ function ProductFAQ({ product }) {
                 </span>
               </button>
               <div
-                className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                  isOpen ? "max-h-40 border-t border-stone-100/50" : "max-h-0"
-                }`}
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? "max-h-40 border-t border-stone-100/50" : "max-h-0"
+                  }`}
               >
                 <p className="p-4 text-xs md:text-sm text-stone-600 font-light leading-relaxed bg-white">
                   {item.answer}

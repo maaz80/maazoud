@@ -1,10 +1,40 @@
 import React, { Suspense } from "react";
-import { redirect } from "next/navigation";
 import ProductClient from "./ProductClient";
 import { supabase } from "../../../utils/supabase";
 import { PRODUCTS } from "../../../utils/mockData";
 
 export const revalidate = 0; // Dynamic server rendering
+
+const normalizeProductSlug = (value = "") => {
+  return String(value || "")
+    .toLowerCase()
+    .trim()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+};
+
+const findProductBySlug = async (slug) => {
+  const decodedSlug = decodeURIComponent(String(slug || "")).trim();
+  const normalizedTarget = normalizeProductSlug(decodedSlug);
+
+  const { data: allProducts, error } = await supabase.from("products").select("*");
+  if (error) throw error;
+
+  if (!allProducts || allProducts.length === 0) return null;
+
+  const exactMatches = allProducts.filter((product) => {
+    const candidates = [product.id, product.slug, product.name].filter(Boolean).map(String);
+    return candidates.some((candidate) => normalizeProductSlug(candidate) === normalizedTarget);
+  });
+
+  if (exactMatches.length > 0) {
+    return exactMatches[0];
+  }
+
+  return null;
+};
 
 async function getProductData(slug) {
   try {
@@ -15,16 +45,11 @@ async function getProductData(slug) {
       .eq("id", slug)
       .single();
 
-    // Fallback: If not found, try to match by prefix (e.g. 'khas' -> 'khas-(vetiver)')
+    // Fallback: resolve by normalized slug/name when the URL is human-friendly or punctuation-rich
     if (prodErr || !prodData) {
-      const { data: fallbackData } = await supabase
-        .from("products")
-        .select("*")
-        .ilike("id", `%${slug}%`)
-        .limit(1);
-
-      if (fallbackData && fallbackData.length > 0) {
-        prodData = fallbackData[0];
+      const fallbackProduct = await findProductBySlug(slug);
+      if (fallbackProduct) {
+        prodData = fallbackProduct;
         prodErr = null;
       }
     }
@@ -159,11 +184,6 @@ export default async function ProductDetailPage({ params }) {
   const slug = resolvedParams.slug;
   const data = await getProductData(slug);
 
-  // If a valid product was found but the requested slug doesn't match its ID (canonical slug), redirect to the canonical URL!
-  if (data.product && data.product.id && data.product.id !== slug) {
-    redirect(`/product/${data.product.id}`);
-  }
-
   // Construct Google Product JSON-LD Schema
   let productSchema = null;
   if (data.product) {
@@ -236,11 +256,11 @@ export default async function ProductDetailPage({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
         />
       )}
-      <ProductClient 
+      <ProductClient
         slug={data.product ? data.product.id : slug}
-        initialProduct={data.product} 
-        initialReviews={data.reviews} 
-        initialRelatedProducts={data.relatedProducts} 
+        initialProduct={data.product}
+        initialReviews={data.reviews}
+        initialRelatedProducts={data.relatedProducts}
       />
     </>
   );
