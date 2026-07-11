@@ -77,11 +77,11 @@ function OrderSuccessContent() {
             </div>
           </div> */}
 
-          <div className="mt-6 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-left shadow-sm">
+          {/* <div className="mt-6 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-left shadow-sm">
             <p className="text-sm text-stone-600">
               You can close this page anytime and continue shopping from the homepage.
             </p>
-          </div>
+          </div> */}
 
           <div className="mt-8">
             <Link
