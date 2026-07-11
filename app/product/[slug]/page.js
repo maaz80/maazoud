@@ -3,7 +3,7 @@ import ProductClient from "./ProductClient";
 import { supabase } from "../../../utils/supabase";
 import { PRODUCTS } from "../../../utils/mockData";
 
-export const revalidate = 0; // Dynamic server rendering
+export const revalidate = 60; // Dynamic server rendering
 
 const normalizeProductSlug = (value = "") => {
   return String(value || "")

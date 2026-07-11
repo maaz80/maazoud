@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import CategoryClient from "./CategoryClient";
 import { supabase } from "../../../utils/supabase";
 
-export const revalidate = 0; // Dynamic server rendering or revalidation as needed
+export const revalidate = 60; // Dynamic server rendering or revalidation as needed
 
 async function getCategoryData(slug) {
   try {

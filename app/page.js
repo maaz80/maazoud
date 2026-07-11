@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import HomeClient from "./HomeClient";
 import { supabase } from "../utils/supabase";
 
-export const revalidate = 0; // Dynamic rendering or revalidate as needed
+export const revalidate = 60; // Dynamic rendering or revalidate as needed
 
 async function getInitialData() {
   try {

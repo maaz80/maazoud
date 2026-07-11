@@ -2,7 +2,7 @@ import React from "react";
 import BlogClient from "./BlogClient";
 import { supabase } from "../../../utils/supabase";
 
-export const revalidate = 0; // Dynamic server rendering
+export const revalidate = 60; // Dynamic server rendering
 
 async function getBlogData(slug) {
   try {
