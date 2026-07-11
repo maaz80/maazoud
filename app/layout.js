@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import CartDrawer from "../components/CartDrawer";
 import OrdersModal from "../components/OrdersModal";
 import LoginModal from "../components/LoginModal";
+import ScrollToTop from "../components/ScrollToTop";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -143,6 +144,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${poppins.className} min-h-full flex flex-col bg-white text-stone-900`}>
         <CartProvider>
+          <ScrollToTop />
           <Navbar />
           <main className="grow">{children}</main>
           <Footer />
