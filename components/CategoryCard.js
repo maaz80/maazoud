@@ -25,6 +25,7 @@ export default function CategoryCard({ category }) {
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
 
+
       {/* Category Name below */}
       <h3 className="mt-1 md:mt-4 text-[11px] md:text-sm font-semibold uppercase tracking-wider text-stone-900 group-hover:text-[#8c6239] transition-colors">
         {category.name}

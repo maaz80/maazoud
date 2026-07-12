@@ -20,7 +20,7 @@ const json = (body, status = 200) => {
 const getEnv = (name) => {
   const value = Deno.env.get(name);
   if (!value) throw new Error(`${name} is not configured`);
-  return value;
+  return value.trim();
 };
 
 // Frontend se aaye cart items ko validate/sanitize karta hai.
