@@ -246,7 +246,7 @@ serve(async (req) => {
         city: String(customer.city || "N/A").trim() || "N/A",
         state: String(customer.state || "N/A").trim() || "N/A",
         pincode: String(customer.pincode || "N/A").trim() || "N/A",
-        payment_method: `Razorpay Online (Payment ID: ${razorpayPaymentId}, Order ID: ${razorpayOrderId}, Status: ${razorpayPayment.status})`,
+        payment_method: `Payment ID: ${razorpayPaymentId}, Order ID: ${razorpayOrderId}, Status: ${razorpayPayment.status}`,
         total_amount: calculated.total,
         status: "Processing",
         items: calculated.orderItems,
