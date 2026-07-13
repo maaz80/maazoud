@@ -16,8 +16,9 @@ const poppins = Poppins({
 
 export const metadata = {
   metadataBase: new URL("https://maazoud.in"),
+  applicationName: "Maaz Oud",
   title: {
-    default: "Best Oud Attar in India & Pure Perfume Oils | Maaz Oud",
+    default: "Maaz Oud | Best Oud Attar & Pure Perfume Oils in India",
     template: "%s | Maaz Oud"
   },
   alternates: {
@@ -44,7 +45,7 @@ export const metadata = {
     "oud fragrance online"
   ],
   openGraph: {
-    title: "Best Oud Attar in India & Pure Perfume Oils | Maaz Oud",
+    title: "Maaz Oud | Best Oud Attar & Pure Perfume Oils in India",
     description: "Buy original oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and organic oud fragrances.",
     url: "https://maazoud.in",
     siteName: "Maaz Oud",
@@ -61,7 +62,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Best Oud Attar in India & Pure Perfume Oils | Maaz Oud",
+    title: "Maaz Oud | Best Oud Attar & Pure Perfume Oils in India",
     description: "Buy original oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and organic oud fragrances.",
     images: ["/maazoud-logo.webp"],
   },
@@ -105,31 +106,47 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
+              "@id": "https://maazoud.in/#website",
               "name": "Maaz Oud",
               "alternateName": "MaazOud",
-              "url": "https://maazoud.in"
+              "url": "https://maazoud.in/"
             })
           }}
         />
-        {/* Web Application / Online Store Ratings Schema */}
+        {/* Organization Schema */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Store",
+              "@type": "Organization",
               "name": "Maaz Oud",
-              "url": "https://maazoud.in",
+              "url": "https://maazoud.in/",
               "logo": "https://maazoud.in/maazoud-logo.webp",
               "description": "Experience the ultimate luxury of pure Cambodian Oud, Indian Agarwood, non-alcoholic botanical attars, and premium natural fragrances.",
-              "image": "https://maazoud.in/maazoud-logo.webp",
               "telephone": "+919616584237",
-              "priceRange": "$$",
               "address": {
                 "@type": "PostalAddress",
                 "addressLocality": "Jaunpur",
                 "addressRegion": "Uttar Pradesh",
                 "addressCountry": "IN"
+              }
+            })
+          }}
+        />
+        {/* Product Rating Schema for Search Results */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Product",
+              "name": "Maaz Oud Luxury Perfumes",
+              "image": "https://maazoud.in/maazoud-logo.webp",
+              "description": "Premium collection of pure Cambodian Oud, Indian Agarwood, and non-alcoholic botanical attars.",
+              "brand": {
+                "@type": "Brand",
+                "name": "Maaz Oud"
               },
               "aggregateRating": {
                 "@type": "AggregateRating",
