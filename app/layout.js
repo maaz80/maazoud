@@ -24,7 +24,7 @@ export const metadata = {
   alternates: {
     canonical: "/"
   },
-  description: "Buy original oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and organic oud fragrances.",
+  description: "Buy premium oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and luxury oud fragrances.",
   keywords: [
     "maaz oud",
     "best oud attar in india",
@@ -46,7 +46,7 @@ export const metadata = {
   ],
   openGraph: {
     title: "Maaz Oud | Best Oud Attar & Pure Perfume Oils in India",
-    description: "Buy original oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and organic oud fragrances.",
+    description: "Buy premium oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and luxury oud fragrances.",
     url: "https://maazoud.in",
     siteName: "Maaz Oud",
     images: [
@@ -63,7 +63,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Maaz Oud | Best Oud Attar & Pure Perfume Oils in India",
-    description: "Buy original oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and organic oud fragrances.",
+    description: "Buy premium oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and luxury oud fragrances.",
     images: ["/maazoud-logo.webp"],
   },
   robots: {
