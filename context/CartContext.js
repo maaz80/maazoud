@@ -417,7 +417,7 @@ export function CartProvider({ children }) {
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const cartSubtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const deliveryCharge = cart.length > 0 ? 1 : 0;
+  const deliveryCharge = cart.length > 0 ? 40 : 0;
   const cartTotal = cartSubtotal + deliveryCharge;
 
   return (

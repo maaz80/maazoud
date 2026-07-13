@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaCheckCircle, FaShoppingBag, FaBoxOpen, FaTruck, FaTimes } from "react-icons/fa";
 import Link from "next/link";
@@ -8,7 +8,18 @@ import Link from "next/link";
 function OrderSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const orderId = searchParams.get("orderId") || "ORD-XXXXXX";
+  const orderId = searchParams.get("orderId");
+
+  useEffect(() => {
+    // Agar URL me koi valid orderId nahi hai (matlab direct access ki koshish ki gayi hai), 
+    // toh user ko wapas home page par bhej do
+    if (!orderId) {
+      router.push('/');
+    }
+  }, [orderId, router]);
+
+  if (!orderId) return null; // Jab tak redirect ho, tab tak kuch mat dikhao
+
 
   const deliveryDate = (() => {
     const delivery = new Date();
@@ -21,7 +32,7 @@ function OrderSuccessContent() {
   })();
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fdf8f3_0%,#f6efe8_45%,#f1e6da_100%)] flex items-center justify-center p-4 sm:p-6 font-sans">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fdf8f3_0%,#f6efe8_45%,#f1e6da_100%)] flex items-start md:items-center justify-center p-4 sm:p-6 font-sans mt-2 md:mt-0">
       <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-[0_20px_70px_-25px_rgba(0,0,0,0.35)]">
         <div className="h-1.5 w-full bg-linear-to-r from-[#8c6239] via-[#b98752] to-[#e4b97b]" />
 
