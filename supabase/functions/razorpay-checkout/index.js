@@ -93,7 +93,7 @@ const calculateOrder = async (supabase, items) => {
   });
 
   const subtotal = orderItems.reduce((total, item) => total + item.price * item.quantity, 0);
-  const deliveryCharge = orderItems.length > 0 ? 50 : 0;
+  const deliveryCharge = orderItems.length > 0 ? 40 : 0;
   const total = subtotal + deliveryCharge;
 
   return { subtotal, deliveryCharge, total, amountInPaise: total * 100, orderItems };
