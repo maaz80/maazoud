@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { FaTimes, FaPlus, FaMinus, FaTrash, FaLock, FaSpinner } from "react-icons/fa";
@@ -38,7 +38,8 @@ export default function CartDrawer() {
     clearCart,
     saveOrders,
     showCheckout,
-    setShowCheckout
+    setShowCheckout,
+    user
   } = useCart();
 
   const [formData, setFormData] = useState({
@@ -53,6 +54,35 @@ export default function CartDrawer() {
   const [errors, setErrors] = useState({});
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
+// Fetch user profile on mount if logged in
+  useEffect(() => {
+    if (user && showCheckout) {
+      const fetchProfile = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("user_profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+          if (data) {
+            setFormData(prev => ({
+              ...prev,
+              name: data.full_name || prev.name,
+              phone: data.phone || prev.phone,
+              address: data.address || prev.address,
+              city: data.city || prev.city,
+              state: data.state || prev.state,
+              pincode: data.pincode || prev.pincode,
+            }));
+          }
+        } catch (e) {
+          console.log("No profile found.");
+        }
+      };
+      fetchProfile();
+    }
+  }, [user, showCheckout]);
+
   if (!isCartOpen) return null;
 
   const handleInputChange = (e) => {
@@ -61,6 +91,27 @@ export default function CartDrawer() {
     // Clear error
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  
+
+  // Save profile upon successful order
+  const saveProfileData = async (formDataStr) => {
+    if (!user) return;
+    try {
+      await supabase.from("user_profiles").upsert({
+        id: user.id,
+        full_name: formDataStr.name,
+        phone: formDataStr.phone,
+        address: formDataStr.address,
+        city: formDataStr.city,
+        state: formDataStr.state,
+        pincode: formDataStr.pincode,
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.log("Error auto-saving profile:", e);
     }
   };
 
@@ -180,6 +231,7 @@ export default function CartDrawer() {
             saveOrders([verifiedOrder.order, ...orders]);
           }
           await clearCart();
+          await saveProfileData(formData);
           resetCheckout();
           setIsCartOpen(false);
           router.push(`/order-success?orderId=${verifiedOrder.orderId}`);

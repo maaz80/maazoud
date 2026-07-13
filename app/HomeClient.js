@@ -6,6 +6,9 @@ import Carousel from "../components/Carousel";
 import CategoryCard from "../components/CategoryCard";
 import ProductCard from "../components/ProductCard";
 import BlogsSection from "../components/BlogsSection";
+import FeaturesSection from "../components/FeaturesSection";
+import BrandStory from "../components/BrandStory";
+import TestimonialSlider from "../components/TestimonialSlider";
 import { CATEGORIES, PRODUCTS } from "../utils/mockData";
 import { FaChevronLeft, FaChevronRight, FaTimes } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
@@ -37,7 +40,7 @@ const ProductSkeleton = () => (
   </div>
 );
 
-function HomeContent({ initialBanners, initialCategories, initialProducts }) {
+function HomeContent({ initialBanners, initialCategories, initialProducts, initialTestimonials }) {
   const searchParams = useSearchParams();
   const searchVal = searchParams.get("search") || "";
   const productsRef = useRef(null);
@@ -237,6 +240,14 @@ function HomeContent({ initialBanners, initialCategories, initialProducts }) {
           )}
         </section>
 
+      </div>
+
+      {/* New Full-Width Aesthetic Sections */}
+      <FeaturesSection />
+      <BrandStory />
+      <TestimonialSlider testimonials={initialTestimonials} />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 md:space-y-16 pb-12">
         {/* Blogs Section */}
         <BlogsSection />
 
@@ -338,13 +349,14 @@ function HomeContent({ initialBanners, initialCategories, initialProducts }) {
   );
 }
 
-export default function HomeClient({ initialBanners, initialCategories, initialProducts }) {
+export default function HomeClient({ initialBanners, initialCategories, initialProducts, initialTestimonials }) {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white text-stone-600 font-sans">Loading luxury collection...</div>}>
       <HomeContent 
         initialBanners={initialBanners} 
         initialCategories={initialCategories} 
         initialProducts={initialProducts} 
+        initialTestimonials={initialTestimonials}
       />
     </Suspense>
   );

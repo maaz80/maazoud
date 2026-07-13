@@ -59,11 +59,11 @@ export default function AboutPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 mt-12 space-y-12">
+      <div className="max-w-7xl mx-auto px-4 mt-12 space-y-12">
         
         {/* Intro Section */}
         <section className="bg-white border border-stone-200 p-8 rounded-lg shadow-sm space-y-6">
-          <h2 className="text-xl font-serif font-bold text-stone-900 border-b border-stone-100 pb-3">
+          <h2 className="text-xl font-bold text-stone-900 border-b border-stone-100 pb-3">
             The Vision Behind Maaz Oud
           </h2>
           <div className="text-sm text-stone-600 font-light leading-relaxed space-y-4">
@@ -144,7 +144,7 @@ export default function AboutPage() {
                 a: "As a boutique brand managed directly by the founder without heavy retail overheads, high markups, or middleman margins, we pass the savings directly to fragrance lovers."
               }
             ].map((faq, idx) => (
-              <details key={idx} className="group border border-stone-150 rounded-md overflow-hidden bg-stone-50/50">
+              <details key={idx} className="group border border-stone-200 rounded-md overflow-hidden bg-stone-50/50">
                 <summary className="flex justify-between items-center p-4 cursor-pointer font-semibold text-xs md:text-sm text-stone-800 hover:bg-stone-50 list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>{faq.q}</span>
                   <span className="text-stone-500 transition-transform duration-200 group-open:rotate-180">
@@ -153,7 +153,7 @@ export default function AboutPage() {
                     </svg>
                   </span>
                 </summary>
-                <div className="p-4 text-xs md:text-sm text-stone-600 font-light leading-relaxed border-t border-stone-150 bg-white">
+                <div className="p-4 text-xs md:text-sm bg-white">
                   {faq.a}
                 </div>
               </details>

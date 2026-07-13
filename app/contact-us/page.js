@@ -280,7 +280,7 @@ export default function ContactPage() {
                 a: "Yes, we support bulk distribution and retail partnerships. Write to us at maazoudofficial@gmail.com with your store details and product list for wholesale volume pricing."
               }
             ].map((faq, idx) => (
-              <details key={idx} className="group border border-stone-150 rounded-md overflow-hidden bg-stone-50/50">
+              <details key={idx} className="group border border-stone-200 rounded-md overflow-hidden bg-stone-50/50">
                 <summary className="flex justify-between items-center p-4 cursor-pointer font-semibold text-xs md:text-sm text-stone-800 hover:bg-stone-50 list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>{faq.q}</span>
                   <span className="text-stone-500 transition-transform duration-200 group-open:rotate-180">
@@ -289,7 +289,7 @@ export default function ContactPage() {
                     </svg>
                   </span>
                 </summary>
-                <div className="p-4 text-xs md:text-sm text-stone-600 font-light leading-relaxed border-t border-stone-150 bg-white">
+                <div className="p-4 text-xs md:text-sm text-stone-600 font-light leading-relaxed border-t border-neutral-200 bg-white">
                   {faq.a}
                 </div>
               </details>

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FiSearch, FiShoppingBag, FiPackage, FiX } from "react-icons/fi";
+import { FiSearch, FiShoppingBag, FiPackage, FiX, FiMenu, FiUser, FiLogOut } from "react-icons/fi";
 import { useCart } from "../context/CartContext";
 
 export default function Navbar() {
@@ -21,20 +21,19 @@ export default function Navbar() {
     fetchGlobalProducts
   } = useCart();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Real-time Search Suggestions states
   const [suggestions, setSuggestions] = useState([]);
 
   const desktopRef = useRef(null);
   const mobileRef = useRef(null);
+  const profileMenuRef = useRef(null);
 
-  // Fetch all products once on mount to enable ultra-fast zero-latency local search filtering
   useEffect(() => {
     fetchGlobalProducts();
   }, []);
 
-  // Close suggestions dropdown when clicking outside
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (
@@ -42,6 +41,9 @@ export default function Navbar() {
         (mobileRef.current && !mobileRef.current.contains(e.target))
       ) {
         setSuggestions([]);
+      }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setProfileMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleOutsideClick);
@@ -54,7 +56,7 @@ export default function Navbar() {
       const query = val.toLowerCase().trim();
       const filtered = globalProducts.filter(prod =>
         prod.name.toLowerCase().includes(query)
-      ).slice(0, 5); // Limit suggestions to top 5 items
+      ).slice(0, 5);
       setSuggestions(filtered);
     } else {
       setSuggestions([]);
@@ -139,7 +141,6 @@ export default function Navbar() {
       <header className="sticky top-0 bg-white border-b border-stone-200 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
 
-          {/* Left Group: Logo & Search Bar */}
           <div className="flex items-center gap-6 md:grow">
             <Link href="/" className="shrink-0 flex items-center">
               <Image
@@ -153,7 +154,6 @@ export default function Navbar() {
               />
             </Link>
 
-            {/* Desktop Search wrapper */}
             <div ref={desktopRef} className="hidden md:flex grow max-w-md relative">
               <form
                 onSubmit={handleSearchSubmit}
@@ -188,10 +188,8 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Right: Actions */}
           <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
 
-            {/* Mobile search toggle */}
             <button
               onClick={() => {
                 setMobileSearchOpen(!mobileSearchOpen);
@@ -204,7 +202,6 @@ export default function Navbar() {
               {mobileSearchOpen ? <FiX size={20} /> : <FiSearch size={20} />}
             </button>
 
-            {/* My Orders */}
             <button
               onClick={() => setIsOrdersOpen(true)}
               className="p-2 text-stone-700 hover:text-[#8c6239] hover:bg-stone-50 rounded-full transition-colors relative cursor-pointer"
@@ -219,7 +216,6 @@ export default function Navbar() {
               )}
             </button>
 
-            {/* Cart Icon */}
             <button
               onClick={() => setIsCartOpen(true)}
               className="p-2 text-stone-700 hover:text-[#8c6239] hover:bg-stone-50 rounded-full transition-colors relative cursor-pointer"
@@ -234,32 +230,73 @@ export default function Navbar() {
               )}
             </button>
 
-            {/* Login / Logout */}
-            {user ? (
-              <div className="flex items-center space-x-2 pl-2 border-l border-stone-200">
-                <span className="hidden sm:inline-block text-xs font-semibold text-stone-700">
-                  Hi, {user.name}
-                </span>
+            {/* Main Menu (Hamburger) */}
+            <div className="relative pl-2 border-l border-stone-200" ref={profileMenuRef}>
+              <div className="flex items-center gap-2">
+                {!user && (
+                  <button
+                    onClick={() => setIsLoginOpen(true)}
+                    className="hidden sm:block px-4 py-2 bg-black text-white hover:bg-[#8c6239] text-xs font-semibold uppercase tracking-wider rounded transition-all cursor-pointer"
+                  >
+                    Login
+                  </button>
+                )}
                 <button
-                  onClick={logoutUser}
-                  className="px-3 py-1.5 border border-stone-200 text-stone-700 hover:border-black hover:bg-stone-50 text-xs rounded transition-all font-medium cursor-pointer"
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  className="p-2 flex items-center gap-2 text-stone-700 hover:text-[#8c6239] hover:bg-stone-50 rounded-full transition-colors cursor-pointer"
+                  aria-label="Menu"
                 >
-                  Logout
+                  <FiMenu size={20} />
                 </button>
               </div>
-            ) : (
-              <button
-                onClick={() => setIsLoginOpen(true)}
-                className="px-4 py-2 bg-black text-white hover:bg-[#8c6239] text-xs font-semibold uppercase tracking-wider rounded transition-all cursor-pointer"
-              >
-                Login
-              </button>
-            )}
 
+              {profileMenuOpen && (
+                <div className="absolute right-0 mt-3 w-48 bg-white border border-stone-200 rounded-md shadow-xl z-50 py-2">
+                  {user && (
+                    <div className="px-4 py-2 border-b border-stone-100 mb-1">
+                      <p className="text-xs text-stone-500">Signed in as</p>
+                      <p className="text-sm font-bold text-stone-800 truncate">{user.name}</p>
+                    </div>
+                  )}
+
+                  <button onClick={() => { setProfileMenuOpen(false); router.push('/'); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
+                    Home
+                  </button>
+                  <button onClick={() => { setProfileMenuOpen(false); router.push('/about-us'); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
+                    About Us
+                  </button>
+                  <button onClick={() => { setProfileMenuOpen(false); router.push('/contact-us'); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
+                    Contact Us
+                  </button>
+                  {/* <button onClick={() => { setProfileMenuOpen(false); router.push('/blog'); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
+                    Blogs
+                  </button> */}
+
+                  <div className="border-t border-stone-100 my-1"></div>
+
+                  {user ? (
+                    <>
+                      <button onClick={() => { setProfileMenuOpen(false); router.push('/profile'); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
+                        <FiUser size={16} /> My Profile
+                      </button>
+                      <button onClick={() => { setProfileMenuOpen(false); setIsOrdersOpen(true); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
+                        <FiPackage size={16} /> My Orders
+                      </button>
+                      <button onClick={() => { setProfileMenuOpen(false); logoutUser(); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors cursor-pointer mt-1 border-t border-stone-100 pt-2">
+                        <FiLogOut size={16} /> Logout
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => { setProfileMenuOpen(false); setIsLoginOpen(true); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
+                      <FiUser size={16} /> Login
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Mobile Search Input */}
         {mobileSearchOpen && (
           <div ref={mobileRef} className="md:hidden border-t border-stone-200 bg-stone-50 p-4 transition-all duration-300 relative">
             <form onSubmit={handleSearchSubmit} className="relative flex items-center">

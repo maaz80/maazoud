@@ -6,10 +6,11 @@ export const revalidate = 60; // Dynamic rendering or revalidate as needed
 
 async function getInitialData() {
   try {
-    const [bannersRes, categoriesRes, productsRes] = await Promise.all([
+    const [bannersRes, categoriesRes, productsRes, testimonialsRes] = await Promise.all([
       supabase.from("banners").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
-      supabase.from("products").select("*").order("created_at", { ascending: false })
+      supabase.from("products").select("*").order("created_at", { ascending: false }),
+      supabase.from("testimonials").select("*").order("created_at", { ascending: false }).limit(5)
     ]);
 
     let products = [];
@@ -31,11 +32,12 @@ async function getInitialData() {
     return {
       banners: bannersRes.data || [],
       categories: categoriesRes.data || [],
-      products: products
+      products: products,
+      testimonials: testimonialsRes?.data || []
     };
   } catch (e) {
     console.error("Error fetching initial data on server:", e);
-    return { banners: [], categories: [], products: [] };
+    return { banners: [], categories: [], products: [], testimonials: [] };
   }
 }
 
@@ -47,6 +49,7 @@ export default async function Home() {
         initialBanners={data.banners} 
         initialCategories={data.categories} 
         initialProducts={data.products} 
+        initialTestimonials={data.testimonials}
       />
     </Suspense>
   );
