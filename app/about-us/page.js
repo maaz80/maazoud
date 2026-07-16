@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FaArrowLeft, FaGem, FaFlask, FaShippingFast } from "react-icons/fa";
 import BlogsSection from "../../components/BlogsSection";
+import { supabase } from "../../utils/supabase";
 
 export const metadata = {
   title: "About Our Heritage | Traditional Attar Distillation",
@@ -25,7 +26,19 @@ export const metadata = {
   }
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  let initialBlogs = [];
+  try {
+    const { data } = await supabase
+      .from("blogs")
+      .select("id, title, image, slug, created_at")
+      .order("created_at", { ascending: false })
+      .limit(3);
+    if (data) initialBlogs = data;
+  } catch (e) {
+    console.error("Error fetching blogs for about-us page:", e);
+  }
+
   return (
     <div className="bg-stone-50 font-sans min-h-screen text-stone-900 pb-16">
       
@@ -122,7 +135,7 @@ export default function AboutPage() {
         </section>
 
         {/* Blogs Section */}
-        <BlogsSection />
+        <BlogsSection initialBlogs={initialBlogs} />
 
         {/* FAQ Section */}
         <section className="bg-white border border-stone-200 p-8 rounded-lg shadow-sm space-y-6">
@@ -145,7 +158,7 @@ export default function AboutPage() {
               }
             ].map((faq, idx) => (
               <details key={idx} className="group border border-stone-200 rounded-md overflow-hidden bg-stone-50/50">
-                <summary className="flex justify-between items-center p-4 cursor-pointer font-semibold text-xs md:text-sm text-stone-800 hover:bg-stone-50 list-none select-none [&::-webkit-details-marker]:hidden">
+                <summary className="flex justify-between items-center p-4 cursor-pointer font-semibold text-xs md:text-sm text-stone-850 hover:bg-stone-50 list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>{faq.q}</span>
                   <span className="text-stone-500 transition-transform duration-200 group-open:rotate-180">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

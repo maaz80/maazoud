@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { FaArrowLeft, FaTruck, FaUndo } from "react-icons/fa";
 import BlogsSection from "../../components/BlogsSection";
+import { supabase } from "../../utils/supabase";
 
 export const metadata = {
   title: "Shipping & Returns Policy | Hassle-Free Delivery",
@@ -24,7 +25,19 @@ export const metadata = {
   }
 };
 
-export default function ShippingPolicyPage() {
+export default async function ShippingPolicyPage() {
+  let initialBlogs = [];
+  try {
+    const { data } = await supabase
+      .from("blogs")
+      .select("id, title, image, slug, created_at")
+      .order("created_at", { ascending: false })
+      .limit(3);
+    if (data) initialBlogs = data;
+  } catch (e) {
+    console.error("Error fetching blogs for shipping-policy page:", e);
+  }
+
   return (
     <div className="bg-stone-50 font-sans min-h-screen text-stone-900 pb-16">
       
@@ -92,7 +105,7 @@ export default function ShippingPolicyPage() {
         </section>
 
         {/* Blogs Section */}
-        <BlogsSection />
+        <BlogsSection initialBlogs={initialBlogs} />
 
         {/* FAQ Section */}
         <section className="bg-white border border-stone-200 p-8 rounded-lg shadow-sm space-y-6">

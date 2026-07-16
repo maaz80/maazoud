@@ -8,7 +8,7 @@ import { supabase } from "../utils/supabase";
 import { CATEGORIES } from "../utils/mockData";
 
 export default function Footer() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(CATEGORIES);
 
   useEffect(() => {
     const fetchFooterCategories = async () => {

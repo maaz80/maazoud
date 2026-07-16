@@ -15,7 +15,7 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  metadataBase: new URL("https://maazoud.in"),
+  metadataBase: new URL("https://www.maazoud.in"),
   applicationName: "Maaz Oud",
   title: {
     default: "Maaz Oud | Best Oud Attar & Pure Perfume Oils in India",
@@ -47,7 +47,7 @@ export const metadata = {
   openGraph: {
     title: "Maaz Oud | Best Oud Attar & Pure Perfume Oils in India",
     description: "Buy premium oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and luxury oud fragrances.",
-    url: "https://maazoud.in",
+    url: "https://www.maazoud.in",
     siteName: "Maaz Oud",
     images: [
       {

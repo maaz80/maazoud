@@ -40,7 +40,7 @@ const ProductSkeleton = () => (
   </div>
 );
 
-function HomeContent({ initialBanners, initialCategories, initialProducts, initialTestimonials }) {
+function HomeContent({ initialBanners, initialCategories, initialProducts, initialTestimonials, initialBlogs }) {
   const searchParams = useSearchParams();
   const searchVal = searchParams.get("search") || "";
   const productsRef = useRef(null);
@@ -249,7 +249,7 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 md:space-y-16 pb-12">
         {/* Blogs Section */}
-        <BlogsSection />
+        <BlogsSection initialBlogs={initialBlogs} />
 
         {/* Homepage FAQ Section */}
         <section className="space-y-8 pt-12 border-t border-stone-100">
@@ -349,7 +349,7 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
   );
 }
 
-export default function HomeClient({ initialBanners, initialCategories, initialProducts, initialTestimonials }) {
+export default function HomeClient({ initialBanners, initialCategories, initialProducts, initialTestimonials, initialBlogs }) {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white text-stone-600 font-sans">Loading luxury collection...</div>}>
       <HomeContent 
@@ -357,6 +357,7 @@ export default function HomeClient({ initialBanners, initialCategories, initialP
         initialCategories={initialCategories} 
         initialProducts={initialProducts} 
         initialTestimonials={initialTestimonials}
+        initialBlogs={initialBlogs}
       />
     </Suspense>
   );

@@ -24,7 +24,7 @@ export async function generateMetadata({ params }) {
           title: `${title} | Maaz Oud`,
           description,
           type: "website",
-          url: `https://maazoud.in/category/${slug}`,
+          url: `https://www.maazoud.in/category/${slug}`,
           siteName: "Maaz Oud",
           images: [
             {
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }) {
     title: "Premium Attars Collection",
     description: "Shop luxury attars and organic pure perfume oils by category.",
     alternates: {
-      canonical: "/category"
+      canonical: "/"
     }
   };
 }

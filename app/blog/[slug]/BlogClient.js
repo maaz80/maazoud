@@ -8,7 +8,7 @@ import { supabase } from "../../../utils/supabase";
 import BlogsSection from "../../../components/BlogsSection";
 import { getImageAlt } from "../../../utils/imageHelper";
 
-export default function BlogClient({ slug, initialBlog }) {
+export default function BlogClient({ slug, initialBlog, initialBlogs }) {
   const [blog, setBlog] = useState(initialBlog || null);
   const [loading, setLoading] = useState(false);
 
@@ -179,7 +179,7 @@ export default function BlogClient({ slug, initialBlog }) {
         </div>
 
         {/* Blogs Section */}
-        <BlogsSection />
+        <BlogsSection initialBlogs={initialBlogs} />
 
         {/* Dynamic Blog FAQ Section */}
         {rawFaqs.length > 0 && (

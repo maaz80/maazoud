@@ -25,8 +25,8 @@ export async function generateMetadata({ params }) {
         openGraph: {
           title: `${title} | Maaz Oud`,
           description: cleanDesc,
-          type: "website",
-          url: `https://maazoud.in/product/${slug}`,
+          type: "product",
+          url: `https://www.maazoud.in/product/${slug}`,
           siteName: "Maaz Oud",
           images: [
             {
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }) {
     title: "Premium Luxury Attars & Perfumes",
     description: "Shop premium luxury attars and organic pure perfume oils.",
     alternates: {
-      canonical: "/product"
+      canonical: "/"
     }
   };
 }

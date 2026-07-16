@@ -1,7 +1,7 @@
 import { supabase } from "../../utils/supabase";
 
 export async function GET() {
-  const baseUrl = "https://maazoud.in";
+  const baseUrl = "https://www.maazoud.in";
   const urls = [
     `${baseUrl}/`,
     `${baseUrl}/about-us`,

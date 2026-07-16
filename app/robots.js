@@ -6,6 +6,7 @@ export default function robots() {
       disallow: [
         "/_next/",
         "/order-success",
+        "/profile",
       ],
     },
     sitemap: "https://www.maazoud.in/sitemap.xml",

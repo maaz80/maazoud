@@ -23,9 +23,17 @@ async function getBlogData(slug) {
 export default async function BlogDetailPage({ params }) {
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
-  const blog = await getBlogData(slug);
+
+  const [blog, blogsRes] = await Promise.all([
+    getBlogData(slug),
+    supabase
+      .from("blogs")
+      .select("id, title, image, slug, created_at")
+      .order("created_at", { ascending: false })
+      .limit(3)
+  ]);
 
   return (
-    <BlogClient slug={slug} initialBlog={blog} />
+    <BlogClient slug={slug} initialBlog={blog} initialBlogs={blogsRes?.data || []} />
   );
 }

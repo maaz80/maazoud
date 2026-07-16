@@ -259,15 +259,15 @@ export default function Navbar() {
                     </div>
                   )}
 
-                  <button onClick={() => { setProfileMenuOpen(false); router.push('/'); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
+                  <Link href="/" onClick={() => setProfileMenuOpen(false)} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
                     Home
-                  </button>
-                  <button onClick={() => { setProfileMenuOpen(false); router.push('/about-us'); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
+                  </Link>
+                  <Link href="/about-us" onClick={() => setProfileMenuOpen(false)} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
                     About Us
-                  </button>
-                  <button onClick={() => { setProfileMenuOpen(false); router.push('/contact-us'); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
+                  </Link>
+                  <Link href="/contact-us" onClick={() => setProfileMenuOpen(false)} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
                     Contact Us
-                  </button>
+                  </Link>
                   {/* <button onClick={() => { setProfileMenuOpen(false); router.push('/blog'); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-[#8c6239] flex items-center gap-2 transition-colors cursor-pointer">
                     Blogs
                   </button> */}

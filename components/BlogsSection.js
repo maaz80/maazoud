@@ -6,11 +6,15 @@ import Image from "next/image";
 import { supabase } from "../utils/supabase";
 import { getImageAlt, getOptimizedImageUrl } from "../utils/imageHelper";
 
-export default function BlogsSection() {
-  const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function BlogsSection({ initialBlogs }) {
+  const [blogs, setBlogs] = useState(initialBlogs && initialBlogs.length > 0 ? initialBlogs : []);
+  const [loading, setLoading] = useState(!initialBlogs || initialBlogs.length === 0);
 
   useEffect(() => {
+    if (initialBlogs && initialBlogs.length > 0) {
+      setLoading(false);
+      return;
+    }
     const fetchBlogs = async () => {
       try {
         const { data, error } = await supabase
@@ -28,7 +32,7 @@ export default function BlogsSection() {
       }
     };
     fetchBlogs();
-  }, []);
+  }, [initialBlogs]);
 
   if (loading) {
     return (

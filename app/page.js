@@ -6,11 +6,12 @@ export const revalidate = 60; // Dynamic rendering or revalidate as needed
 
 async function getInitialData() {
   try {
-    const [bannersRes, categoriesRes, productsRes, testimonialsRes] = await Promise.all([
+    const [bannersRes, categoriesRes, productsRes, testimonialsRes, blogsRes] = await Promise.all([
       supabase.from("banners").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
       supabase.from("products").select("*").order("created_at", { ascending: false }),
-      supabase.from("testimonials").select("*").order("created_at", { ascending: false }).limit(5)
+      supabase.from("testimonials").select("*").order("created_at", { ascending: false }).limit(5),
+      supabase.from("blogs").select("id, title, image, slug, created_at").order("created_at", { ascending: false }).limit(3)
     ]);
 
     let products = [];
@@ -33,11 +34,12 @@ async function getInitialData() {
       banners: bannersRes.data || [],
       categories: categoriesRes.data || [],
       products: products,
-      testimonials: testimonialsRes?.data || []
+      testimonials: testimonialsRes?.data || [],
+      blogs: blogsRes?.data || []
     };
   } catch (e) {
     console.error("Error fetching initial data on server:", e);
-    return { banners: [], categories: [], products: [], testimonials: [] };
+    return { banners: [], categories: [], products: [], testimonials: [], blogs: [] };
   }
 }
 
@@ -50,6 +52,7 @@ export default async function Home() {
         initialCategories={data.categories} 
         initialProducts={data.products} 
         initialTestimonials={data.testimonials}
+        initialBlogs={data.blogs}
       />
     </Suspense>
   );

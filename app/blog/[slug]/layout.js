@@ -26,7 +26,7 @@ export async function generateMetadata({ params }) {
           title,
           description: cleanDesc,
           type: "article",
-          url: `https://maazoud.in/blog/${slug}`,
+          url: `https://www.maazoud.in/blog/${slug}`,
           siteName: "Maaz Oud",
           images: [
             {
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }) {
     title: "Maaz Oud Journal | Fragrance Guides & Heritage",
     description: "Read our latest articles on pure oud extraction, attar heritage, and fragrance guides.",
     alternates: {
-      canonical: "/blog"
+      canonical: "/"
     }
   };
 }
