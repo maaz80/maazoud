@@ -25,7 +25,7 @@ export async function generateMetadata({ params }) {
         openGraph: {
           title: `${title} | Maaz Oud`,
           description: cleanDesc,
-          type: "product",
+          type: "website",
           url: `https://www.maazoud.in/product/${slug}`,
           siteName: "Maaz Oud",
           images: [
