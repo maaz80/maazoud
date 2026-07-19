@@ -15,6 +15,7 @@ export default function BrandStory() {
                 src="/maazoud-bottles.png" 
                 alt="Maaz Oud Luxury Craftsmanship"
                 fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover hover:scale-105 transition-transform duration-700"
               />
               {/* Overlay tint for aesthetic */}

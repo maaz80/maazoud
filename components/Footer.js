@@ -42,7 +42,7 @@ export default function Footer() {
               alt="Maaz Oud Logo" 
               width={56}
               height={56}
-              unoptimized
+              quality={60}
               className="h-14 w-14 object-contain"
             />
             <p className="text-sm text-stone-600 max-w-xs leading-relaxed font-light">

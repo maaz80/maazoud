@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FaQuoteLeft, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { getOptimizedImageUrl } from "../utils/imageHelper";
 
 export default function TestimonialSlider({ testimonials = [] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -84,7 +85,7 @@ export default function TestimonialSlider({ testimonials = [] }) {
               <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-[#c7a17a] p-1 mb-6 shadow-[0_0_20px_rgba(140,98,57,0.3)]">
                 <div className="w-full h-full relative rounded-full overflow-hidden">
                   <Image 
-                    src={data[currentIndex]?.image || "https://ui-avatars.com/api/?name=Guest&background=8c6239&color=fff"} 
+                    src={getOptimizedImageUrl(data[currentIndex]?.image || "https://ui-avatars.com/api/?name=Guest&background=8c6239&color=fff", 240)} 
                     alt={data[currentIndex]?.name}
                     fill
                     className="object-cover"
