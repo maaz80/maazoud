@@ -157,10 +157,15 @@ serve(async (req) => {
     const serviceRoleKey = getEnv("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Checkout sirf logged-in Supabase user ke liye allow hai.
+    // Auth token check optional hai (guest checkout support)
     const token = req.headers.get("Authorization")?.replace("Bearer ", "") || "";
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !userData.user) return json({ error: "Please login before payment." }, 401);
+    let userId = null;
+    if (token) {
+      const { data: userData } = await supabase.auth.getUser(token);
+      if (userData?.user) {
+        userId = userData.user.id;
+      }
+    }
 
     const body = await req.json();
     const action = String(body.action || "");
@@ -177,7 +182,7 @@ serve(async (req) => {
           currency: "INR",
           receipt,
           notes: {
-            user_id: userData.user.id,
+            user_id: userId || "guest",
             source: "maazoud",
           },
         }),
@@ -250,7 +255,7 @@ serve(async (req) => {
         total_amount: calculated.total,
         status: "Processing",
         items: calculated.orderItems,
-        user_id: userData.user.id,
+        user_id: userId,
         created_at: new Date().toISOString(),
       };
 
@@ -277,7 +282,7 @@ serve(async (req) => {
         total_amount: calculated.total + 30, // Include COD Fee
         status: "Processing",
         items: calculated.orderItems,
-        user_id: userData.user.id,
+        user_id: userId,
         created_at: new Date().toISOString(),
       };
 

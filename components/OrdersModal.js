@@ -48,10 +48,34 @@ export default function OrdersModal() {
     return order.total_amount !== undefined ? order.total_amount : (order.total || 0);
   };
 
+  const getOrderBillDetails = (order) => {
+    const items = order.items || [];
+    const subtotal = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const totalAmount = getOrderTotal(order);
+    
+    // Check if COD
+    const isCod = String(order.payment_method || "").toLowerCase().includes("cod");
+    
+    // Delivery charge is normally 40 if subtotal > 0
+    const deliveryCharge = subtotal > 0 ? 40 : 0;
+    
+    // COD fee is 30 if COD
+    const codFee = isCod ? 30 : 0;
+    
+    return {
+      subtotal,
+      deliveryCharge,
+      codFee,
+      isCod,
+      totalAmount
+    };
+  };
+
   const getStatusBadgeStyles = (status) => {
     const s = String(status || "").toLowerCase().trim();
     if (s === "delivered") return "bg-green-100 text-green-800 border border-green-200/55";
     if (s === "shipped") return "bg-blue-100 text-blue-800 border border-blue-200/55";
+    if (s === "cancelled") return "bg-red-100 text-red-800 border border-red-200/55";
     return "bg-yellow-100 text-yellow-800 border border-yellow-200/55";
   };
 
@@ -148,25 +172,55 @@ export default function OrdersModal() {
                   </div>
 
                   {/* Order Total & Info */}
-                  <div className="border-t border-stone-200 pt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <span className="text-[10px] text-stone-400 block uppercase tracking-wider mb-0.5">
-                        Shipping Address
-                      </span>
-                      <span className="block font-light text-stone-600 wrap-break-word">
-                        {getOrderAddress(order)}
-                      </span>
-                      <span className="text-[10px] text-[#8c6239] font-semibold block">
+                  <div className="border-t border-stone-200 pt-3 flex flex-col md:flex-row justify-between items-start gap-4 text-xs">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div>
+                        <span className="text-[10px] text-stone-400 block uppercase tracking-wider mb-0.5">
+                          Shipping Address
+                        </span>
+                        <span className="block font-light text-stone-600 wrap-break-word">
+                          {getOrderAddress(order)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-stone-400 block uppercase tracking-wider mb-0.5">
+                          Payment Method
+                        </span>
+                        <span className="block font-medium text-stone-700">
+                          {order.payment_method && order.payment_method.toLowerCase().includes("cod") ? "Cash on Delivery (COD)" : "Prepaid Online"}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-[#8c6239] font-semibold block pt-1">
                         Order will be delivered before {getDeliveryDate(order)}
                       </span>
                     </div>
-                    <div className="shrink-0 text-left sm:text-right">
-                      <span className="text-[10px] text-stone-400 block uppercase tracking-wider mb-0.5">
-                        Total Amount
-                      </span>
-                      <span className="text-sm font-bold text-stone-900">
-                        Rs. {getOrderTotal(order)}
-                      </span>
+
+                    <div className="w-full md:w-56 bg-stone-100/60 rounded p-3 border border-stone-200/50 space-y-1.5 shrink-0">
+                      {(() => {
+                        const bill = getOrderBillDetails(order);
+                        return (
+                          <>
+                            <div className="flex justify-between text-[11px] text-stone-500">
+                              <span>Items Subtotal</span>
+                              <span className="font-semibold text-stone-800">Rs. {bill.subtotal}</span>
+                            </div>
+                            <div className="flex justify-between text-[11px] text-stone-500">
+                              <span>Delivery Charge</span>
+                              <span className="font-semibold text-stone-800">Rs. {bill.deliveryCharge}</span>
+                            </div>
+                            {bill.isCod && (
+                              <div className="flex justify-between text-[11px] text-stone-500">
+                                <span>COD Fee</span>
+                                <span className="font-semibold text-stone-800">Rs. 30</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between text-xs font-bold border-t border-stone-200 pt-1.5 text-stone-900">
+                              <span>Total Amount</span>
+                              <span className="text-[#8c6239]">Rs. {bill.totalAmount}</span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
 

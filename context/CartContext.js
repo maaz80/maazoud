@@ -108,12 +108,15 @@ export function CartProvider({ children }) {
           name: session.user.email.split("@")[0],
         });
         fetchAndMergeCart(session.user.id);
-        fetchUserOrders(session.user.id);
+        syncGuestOrders(session.user.id).then(() => {
+          fetchUserOrders(session.user.id);
+        });
       } else {
         setUser(null);
         // Load guest cart from local storage if no user logged in
         const savedCart = localStorage.getItem("maazoud_cart");
         if (savedCart) setCart(JSON.parse(savedCart));
+        fetchUserOrders(null);
       }
     });
 
@@ -125,7 +128,9 @@ export function CartProvider({ children }) {
           name: session.user.email.split("@")[0],
         });
         fetchAndMergeCart(session.user.id);
-        fetchUserOrders(session.user.id);
+        syncGuestOrders(session.user.id).then(() => {
+          fetchUserOrders(session.user.id);
+        });
       } else {
         setUser(null);
         setCart([]); // Clear cart state on logout
@@ -208,19 +213,61 @@ export function CartProvider({ children }) {
 
   const fetchUserOrders = async (userId) => {
     try {
-      const { data: dbOrders, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
+      if (userId) {
+        const { data: dbOrders, error } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      if (dbOrders) {
-        setOrders(dbOrders);
-        localStorage.setItem("maazoud_orders", JSON.stringify(dbOrders));
+        if (error) throw error;
+        if (dbOrders) {
+          setOrders(dbOrders);
+          localStorage.setItem("maazoud_orders", JSON.stringify(dbOrders));
+        }
+      } else {
+        const savedOrders = localStorage.getItem("maazoud_orders");
+        if (savedOrders) {
+          const localOrders = JSON.parse(savedOrders);
+          const localOrderIds = localOrders.map(o => o.id).filter(Boolean);
+          if (localOrderIds.length > 0) {
+            const { data: dbOrders, error } = await supabase
+              .from("orders")
+              .select("*")
+              .in("id", localOrderIds)
+              .order("created_at", { ascending: false });
+
+            if (error) throw error;
+            if (dbOrders) {
+              setOrders(dbOrders);
+              localStorage.setItem("maazoud_orders", JSON.stringify(dbOrders));
+            }
+          }
+        }
       }
     } catch (err) {
       console.error("Error loading user orders:", err.message);
+    }
+  };
+
+  const syncGuestOrders = async (userId) => {
+    try {
+      const savedOrders = localStorage.getItem("maazoud_orders");
+      if (!savedOrders) return;
+      const localOrders = JSON.parse(savedOrders);
+      const unlinkedOrderIds = localOrders
+        .filter(o => !o.user_id)
+        .map(o => o.id)
+        .filter(Boolean);
+
+      if (unlinkedOrderIds.length > 0) {
+        await supabase
+          .from("orders")
+          .update({ user_id: userId })
+          .in("id", unlinkedOrderIds);
+      }
+    } catch (err) {
+      console.error("Error syncing guest orders on login:", err);
     }
   };
 
@@ -230,10 +277,6 @@ export function CartProvider({ children }) {
   };
 
   const addToCart = async (product, quantity = 1, selectedSize = null, customPrice = null) => {
-    if (!user) {
-      setIsLoginOpen(true);
-      return;
-    }
 
     const size = selectedSize || product.size || "3ml";
     const price = customPrice !== null ? customPrice : product.price;
@@ -275,10 +318,6 @@ export function CartProvider({ children }) {
   };
 
   const triggerBuyNow = (product, quantity = 1, selectedSize = null, customPrice = null) => {
-    if (!user) {
-      setIsLoginOpen(true);
-      return;
-    }
     addToCart(product, quantity, selectedSize, customPrice);
     setShowCheckout(true);
     setIsCartOpen(true);
@@ -438,11 +477,7 @@ export function CartProvider({ children }) {
         setIsOrdersOpen,
         setIsLoginOpen,
         setShowCheckout: (val) => {
-          if (val && !user) {
-            setIsLoginOpen(true);
-          } else {
-            setShowCheckout(val);
-          }
+          setShowCheckout(val);
         },
         setUser,
         addToCart,
