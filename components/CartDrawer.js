@@ -39,7 +39,8 @@ export default function CartDrawer() {
     saveOrders,
     showCheckout,
     setShowCheckout,
-    user
+    user,
+    placeOrder
   } = useCart();
 
   const [formData, setFormData] = useState({
@@ -51,6 +52,7 @@ export default function CartDrawer() {
     pincode: "",
   });
 
+  const [paymentMethod, setPaymentMethod] = useState("prepaid");
   const [errors, setErrors] = useState({});
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
@@ -155,6 +157,7 @@ export default function CartDrawer() {
     setFormData({ name: "", phone: "", address: "", city: "", state: "", pincode: "" });
     setErrors({});
     setShowCheckout(false);
+    setPaymentMethod("prepaid");
   };
 
   // Automated Razorpay Gateway Checkout Flow
@@ -263,7 +266,50 @@ export default function CartDrawer() {
 
     const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`;
 
-    await handleRazorpayPayment(fullAddress);
+    if (paymentMethod === "cod") {
+      setIsPlacingOrder(true);
+      try {
+        const checkoutItems = cart.map((item) => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+          selectedSize: item.selectedSize || "3ml",
+        }));
+
+        const { data: verifiedOrder, error: verifyError } = await supabase.functions.invoke("razorpay-checkout", {
+          body: {
+            action: "place_cod_order",
+            customer: {
+              name: formData.name,
+              phone: formData.phone,
+              address: fullAddress,
+              city: formData.city,
+              state: formData.state,
+              pincode: formData.pincode,
+            },
+            items: checkoutItems,
+          },
+        });
+
+        if (verifyError || !verifiedOrder?.orderId) {
+          throw new Error(verifyError?.message || verifiedOrder?.error || "Failed to place COD order.");
+        }
+
+        if (verifiedOrder.order) {
+          saveOrders([verifiedOrder.order, ...orders]);
+        }
+        await clearCart();
+        await saveProfileData(formData);
+        resetCheckout();
+        setIsCartOpen(false);
+        router.push(`/order-success?orderId=${verifiedOrder.orderId}`);
+      } catch (err) {
+        alert("Error placing order: " + err.message);
+      } finally {
+        setIsPlacingOrder(false);
+      }
+    } else {
+      await handleRazorpayPayment(fullAddress);
+    }
   };
 
   return (
@@ -390,10 +436,25 @@ export default function CartDrawer() {
                     <span>Delivery Charge</span>
                     <span className="font-semibold text-stone-900 ">Rs. {deliveryCharge}</span>
                   </div>
+                  {paymentMethod === "cod" && (
+                    <div className="flex justify-between text-xs text-stone-500 font-light">
+                      <span>COD Fee</span>
+                      <span className="font-semibold text-stone-900">Rs. 30</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm font-bold border-t border-stone-200 pt-2 text-stone-900">
                     <span>Total Amount</span>
-                    <span className="text-[#8c6239] text-base">Rs. {cartTotal}</span>
+                    <span className="text-[#8c6239] text-base">Rs. {paymentMethod === "cod" ? cartTotal + 30 : cartTotal}</span>
                   </div>
+                  {paymentMethod === "prepaid" ? (
+                    <p className="text-[9px] text-emerald-600 font-medium pt-1 text-right">
+                      🎉 You saved ₹30 COD fees by choosing Prepaid!
+                    </p>
+                  ) : (
+                    <p className="text-[9px] text-[#8c6239] font-medium pt-1 text-right">
+                      💡 Choose Prepaid to save ₹30 COD fees.
+                    </p>
+                  )}
                 </div>
 
                 <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-2">
@@ -501,11 +562,71 @@ export default function CartDrawer() {
                   <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider">
                     Payment Method *
                   </label>
-                  <div className="p-3 bg-stone-50 rounded border border-stone-100 text-[10px] text-stone-500 leading-normal font-light">
-                    <p className="text-[#8c6239] font-medium flex items-center gap-1">
-                      <FaLock size={8} /> Pay securely via Razorpay (UPI, Cards, GPay, PhonePe).
-                    </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("prepaid")}
+                      className={`p-3 rounded border text-left cursor-pointer transition-all ${
+                        paymentMethod === "prepaid"
+                          ? "border-[#8c6239] bg-stone-50"
+                          : "border-stone-200 bg-white hover:bg-stone-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-stone-900">Prepaid</span>
+                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                          paymentMethod === "prepaid" ? "border-[#8c6239]" : "border-stone-300"
+                        }`}>
+                          {paymentMethod === "prepaid" && <div className="w-2.5 h-2.5 rounded-full bg-[#8c6239]" />}
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-stone-500 mt-1 font-light leading-normal">
+                        Pay online securely
+                      </p>
+                      <span className="inline-block mt-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                        Save ₹30 COD Fee
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("cod")}
+                      className={`p-3 rounded border text-left cursor-pointer transition-all ${
+                        paymentMethod === "cod"
+                          ? "border-[#8c6239] bg-stone-50"
+                          : "border-stone-200 bg-white hover:bg-stone-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-stone-900">COD</span>
+                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                          paymentMethod === "cod" ? "border-[#8c6239]" : "border-stone-300"
+                        }`}>
+                          {paymentMethod === "cod" && <div className="w-2.5 h-2.5 rounded-full bg-[#8c6239]" />}
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-stone-500 mt-1 font-light leading-normal">
+                        Cash on Delivery
+                      </p>
+                      <span className="inline-block mt-1 text-[9px] font-bold text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
+                        +₹30 Fee
+                      </span>
+                    </button>
                   </div>
+                  
+                  {paymentMethod === "prepaid" ? (
+                    <div className="p-3 bg-stone-50 rounded border border-stone-100 text-[10px] text-stone-500 leading-normal font-light">
+                      <p className="text-[#8c6239] font-medium flex items-center gap-1">
+                        <FaLock size={8} /> Pay securely via Razorpay (UPI, Cards, Wallet).
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-stone-50 rounded border border-stone-100 text-[10px] text-stone-500 leading-normal font-light">
+                      <p className="text-stone-600 font-medium">
+                        Pay cash upon delivery. COD Handling Fee of ₹30 applies.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Submit Buttons */}
@@ -521,7 +642,7 @@ export default function CartDrawer() {
                     type="submit"
                     className="flex-1 py-2.5 bg-black text-white hover:bg-[#8c6239] text-[10px] font-bold uppercase tracking-wider rounded transition-all cursor-pointer"
                   >
-                    Pay & Confirm
+                    {paymentMethod === "cod" ? "Confirm COD Order" : "Pay & Confirm"}
                   </button>
                 </div>
               </form>
@@ -545,9 +666,12 @@ export default function CartDrawer() {
                 <span className="font-bold text-stone-700">Total Payable</span>
                 <span className="font-black text-stone-900 text-lg">Rs. {cartTotal}</span>
               </div>
-              <p className="text-[10px] text-stone-400 leading-relaxed">
-                Taxes and delivery charges calculated at checkout.
-              </p>
+              <div className="bg-emerald-50 border border-emerald-100 rounded p-2.5 flex items-center gap-2">
+                <span className="text-base">💡</span>
+                <p className="text-[10px] text-emerald-800 leading-tight font-medium">
+                  Select <strong className="font-bold text-emerald-900">Prepaid</strong> at checkout to save ₹30 COD fees!
+                </p>
+              </div>
               <button
                 onClick={() => setShowCheckout(true)}
                 className="w-full py-3 bg-black hover:bg-[#8c6239] text-white text-xs font-bold uppercase tracking-widest rounded transition-all shadow-md cursor-pointer"

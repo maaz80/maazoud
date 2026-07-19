@@ -383,7 +383,7 @@ export function CartProvider({ children }) {
       state: orderDetails.state || "N/A",
       pincode: orderDetails.pincode || "N/A",
       payment_method: orderDetails.paymentMethod,
-      total_amount: cartTotal,
+      total_amount: orderDetails.totalAmount || cartTotal,
       status: "Processing",
       items: cart.map(item => ({
         cartItemId: item.cartItemId,

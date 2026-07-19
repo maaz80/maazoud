@@ -260,6 +260,33 @@ serve(async (req) => {
       return json({ orderId, order: orderPayload });
     }
 
+    // Step 3: COD order creation using server-verified pricing
+    if (action === "place_cod_order") {
+      const customer = body.customer || {};
+      const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+
+      const orderPayload = {
+        id: orderId,
+        customer_name: String(customer.name || "").trim(),
+        phone: String(customer.phone || "").trim(),
+        address: String(customer.address || "").trim(),
+        city: String(customer.city || "N/A").trim() || "N/A",
+        state: String(customer.state || "N/A").trim() || "N/A",
+        pincode: String(customer.pincode || "N/A").trim() || "N/A",
+        payment_method: "Cash on Delivery (COD)",
+        total_amount: calculated.total + 30, // Include COD Fee
+        status: "Processing",
+        items: calculated.orderItems,
+        user_id: userData.user.id,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: insertError } = await supabase.from("orders").insert([orderPayload]);
+      if (insertError) throw new Error(insertError.message);
+
+      return json({ orderId, order: orderPayload });
+    }
+
     return json({ error: "Invalid action." }, 400);
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Unexpected server error." }, 400);
