@@ -8,6 +8,7 @@ import CartDrawer from "../components/CartDrawer";
 import OrdersModal from "../components/OrdersModal";
 import LoginModal from "../components/LoginModal";
 import ScrollToTop from "../components/ScrollToTop";
+import Analytics from "../components/Analytics";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -162,40 +163,8 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fdfvzzqiyyhxowftegpl.supabase.co" crossOrigin="anonymous" />
       </head>
       <body className={`${poppins.className} min-h-full flex flex-col bg-white text-stone-900`}>
-        {/* Google Analytics 4 Tracking */}
-        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
-              strategy="lazyOnload"
-            />
-            <Script id="google-analytics" strategy="lazyOnload">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}', {
-                  page_path: window.location.pathname,
-                });
-              `}
-            </Script>
-          </>
-        )}
-
-        {/* Microsoft Clarity Tracking */}
-        {process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID && (
-          <Script id="microsoft-clarity" strategy="lazyOnload">
-            {`
-              (function(c,l,a,r,i,t,y){
-                  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-              })(window,document,"clarity","script","${process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID}");
-            `}
-          </Script>
-        )}
-
         <CartProvider>
+          <Analytics />
           <ScrollToTop />
           <Navbar />
           <main className="grow">{children}</main>

@@ -154,6 +154,7 @@ export default function OrdersModal() {
                             alt={item.product?.name || "Oud Product"}
                             width={40}
                             height={48}
+                            unoptimized={true}
                             className="w-10 h-12 object-cover rounded bg-white border border-stone-200 shrink-0"
                           />
                           <div className="min-w-0 flex-1">

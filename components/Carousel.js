@@ -66,6 +66,7 @@ export default function Carousel({ initialBanners = [] }) {
                 fill
                 priority={index === 0}
                 fetchPriority={index === 0 ? "high" : "low"}
+                unoptimized={true}
                 sizes="100vw"
                 className="absolute inset-0 w-full h-full object-cover" 
               />

@@ -18,6 +18,7 @@ export default function CategoryCard({ category }) {
           alt={getImageAlt(category.image, category.name)}
           width={300}
           height={300}
+          unoptimized={true}
           sizes="(max-width: 640px) 160px, 320px"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />

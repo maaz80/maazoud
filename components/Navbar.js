@@ -109,6 +109,7 @@ export default function Navbar() {
                 alt={prod.name}
                 width={40}
                 height={40}
+                unoptimized={true}
                 className="w-10 h-10 object-cover rounded border border-stone-100 bg-stone-50 shrink-0"
               />
               <div className="flex-1 min-w-0">

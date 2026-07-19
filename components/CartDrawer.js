@@ -449,6 +449,7 @@ export default function CartDrawer() {
                     alt={item.product.name}
                     width={80}
                     height={80}
+                    unoptimized={true}
                     className="w-20 h-20 object-cover rounded bg-stone-50 border border-stone-100 shrink-0"
                   />
                   <div className="flex-1 min-w-0">

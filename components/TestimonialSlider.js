@@ -88,6 +88,7 @@ export default function TestimonialSlider({ testimonials = [] }) {
                     src={getOptimizedImageUrl(data[currentIndex]?.image || "https://ui-avatars.com/api/?name=Guest&background=8c6239&color=fff", 240)} 
                     alt={data[currentIndex]?.name}
                     fill
+                    unoptimized={true}
                     className="object-cover"
                   />
                 </div>

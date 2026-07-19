@@ -38,6 +38,7 @@ export default function ProductCard({ product }) {
           alt={getImageAlt(gallery[activeImgIndex], product.name)}
           width={300}
           height={300}
+          unoptimized={true}
           sizes="(max-width: 640px) 160px, 320px"
           className="w-full h-full object-cover transition-all duration-300"
         />
