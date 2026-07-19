@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiShoppingBag, FiPackage, FiX, FiMenu, FiUser, FiLogOut } from "react-icons/fi";
 import { useCart } from "../context/CartContext";
+import { getOptimizedImageUrl } from "../utils/imageHelper";
 
 export default function Navbar() {
   const router = useRouter();
@@ -104,7 +105,7 @@ export default function Navbar() {
               className="flex items-center gap-3.5 p-3 hover:bg-stone-50 transition-colors cursor-pointer text-left"
             >
               <Image
-                src={prod.image}
+                src={getOptimizedImageUrl(prod.image, 80)}
                 alt={prod.name}
                 width={40}
                 height={40}

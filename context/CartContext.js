@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "../utils/supabase";
+import { trackGAEvent } from "../utils/analytics";
 
 const CartContext = createContext();
 
@@ -295,6 +296,18 @@ export function CartProvider({ children }) {
       localStorage.setItem("maazoud_cart", JSON.stringify(newCart));
     }
 
+    // Google Analytics Event Tracking
+    trackGAEvent("add_to_cart", {
+      currency: "INR",
+      value: price * quantity,
+      items: [{
+        item_id: product.id,
+        item_name: product.name,
+        price: price,
+        quantity: quantity
+      }]
+    });
+
     // Upload to database if logged in
     if (user?.id) {
       try {
@@ -375,10 +388,25 @@ export function CartProvider({ children }) {
   };
 
   const removeFromCart = async (cartItemId) => {
-    const newCart = cart.filter((item) => item.cartItemId !== cartItemId);
+    const item = cart.find((i) => i.cartItemId === cartItemId);
+    const newCart = cart.filter((i) => i.cartItemId !== cartItemId);
     setCart(newCart);
     if (!user) {
       localStorage.setItem("maazoud_cart", JSON.stringify(newCart));
+    }
+
+    // Google Analytics Event Tracking
+    if (item) {
+      trackGAEvent("remove_from_cart", {
+        currency: "INR",
+        value: item.price * item.quantity,
+        items: [{
+          item_id: item.product.id,
+          item_name: item.product.name,
+          price: item.price,
+          quantity: item.quantity
+        }]
+      });
     }
 
     if (user?.id) {

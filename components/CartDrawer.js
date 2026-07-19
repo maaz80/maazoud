@@ -6,6 +6,8 @@ import Image from "next/image";
 import { FaTimes, FaPlus, FaMinus, FaTrash, FaLock, FaSpinner } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
 import { supabase } from "../utils/supabase";
+import { trackGAEvent } from "../utils/analytics";
+import { getOptimizedImageUrl } from "../utils/imageHelper";
 
 // Razorpay Script Loader Helper
 const loadRazorpayScript = () => {
@@ -85,6 +87,22 @@ export default function CartDrawer() {
       fetchProfile();
     }
   }, [user, showCheckout]);
+
+  // Google Analytics Event Tracking for Checkout Steps
+  useEffect(() => {
+    if (showCheckout && cart.length > 0) {
+      trackGAEvent("begin_checkout", {
+        currency: "INR",
+        value: cartTotal,
+        items: cart.map(item => ({
+          item_id: item.product.id,
+          item_name: item.product.name,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      });
+    }
+  }, [showCheckout, cart, cartTotal]);
 
   if (!isCartOpen) return null;
 
@@ -234,6 +252,21 @@ export default function CartDrawer() {
           if (verifiedOrder.order) {
             saveOrders([verifiedOrder.order, ...orders]);
           }
+
+          // Google Analytics Event Tracking for Purchase Conversion
+          trackGAEvent("purchase", {
+            transaction_id: verifiedOrder.orderId,
+            value: cartTotal,
+            currency: "INR",
+            shipping: 40,
+            items: cart.map(item => ({
+              item_id: item.product.id,
+              item_name: item.product.name,
+              price: item.price,
+              quantity: item.quantity
+            }))
+          });
+
           await clearCart();
           await saveProfileData(formData);
           resetCheckout();
@@ -321,6 +354,21 @@ export default function CartDrawer() {
           // Save COD timestamp to local storage
           localStorage.setItem("maazoud_last_cod_time", String(Date.now()));
         }
+
+        // Google Analytics Event Tracking for Purchase Conversion
+        trackGAEvent("purchase", {
+          transaction_id: verifiedOrder.orderId,
+          value: cartTotal + 30, // Include COD Fee
+          currency: "INR",
+          shipping: 40,
+          items: cart.map(item => ({
+            item_id: item.product.id,
+            item_name: item.product.name,
+            price: item.price,
+            quantity: item.quantity
+          }))
+        });
+
         await clearCart();
         await saveProfileData(formData);
         resetCheckout();
@@ -397,7 +445,7 @@ export default function CartDrawer() {
                   className="flex gap-4 p-3 border border-stone-100 rounded-md hover:border-stone-200 transition-all"
                 >
                   <Image
-                    src={item.product.image}
+                    src={getOptimizedImageUrl(item.product.image, 160)}
                     alt={item.product.name}
                     width={80}
                     height={80}
