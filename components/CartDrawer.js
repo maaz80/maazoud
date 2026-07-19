@@ -7,7 +7,7 @@ import { FaTimes, FaPlus, FaMinus, FaTrash, FaLock, FaSpinner } from "react-icon
 import { useCart } from "../context/CartContext";
 import { supabase } from "../utils/supabase";
 import { trackGAEvent } from "../utils/analytics";
-import { getOptimizedImageUrl } from "../utils/imageHelper";
+import { getOptimizedImageUrl, supabaseLoader } from "../utils/imageHelper";
 
 // Razorpay Script Loader Helper
 const loadRazorpayScript = () => {
@@ -445,11 +445,11 @@ export default function CartDrawer() {
                   className="flex gap-4 p-3 border border-stone-100 rounded-md hover:border-stone-200 transition-all"
                 >
                   <Image
-                    src={getOptimizedImageUrl(item.product.image, 160)}
+                    loader={supabaseLoader}
+                    src={item.product.image}
                     alt={item.product.name}
                     width={80}
                     height={80}
-                    unoptimized={true}
                     className="w-20 h-20 object-cover rounded bg-stone-50 border border-stone-100 shrink-0"
                   />
                   <div className="flex-1 min-w-0">

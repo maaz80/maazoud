@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getImageAlt, getOptimizedImageUrl } from "../utils/imageHelper";
+import { getImageAlt, getOptimizedImageUrl, supabaseLoader } from "../utils/imageHelper";
 
 export default function CategoryCard({ category }) {
   return (
@@ -14,11 +14,11 @@ export default function CategoryCard({ category }) {
       {/* Category Image Container */}
       <div className="relative aspect-square w-full bg-stone-100 overflow-hidden rounded-md border border-stone-200 transition-all group-hover:border-[#8c6239] group-hover:shadow-md">
         <Image
-          src={getOptimizedImageUrl(category.image, 300)}
+          loader={supabaseLoader}
+          src={category.image}
           alt={getImageAlt(category.image, category.name)}
           width={300}
           height={300}
-          unoptimized={true}
           sizes="(max-width: 640px) 160px, 320px"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />

@@ -88,3 +88,15 @@ export const getBannerSrcSet = (url) => {
   
   return undefined;
 };
+
+export const supabaseLoader = ({ src, width, quality }) => {
+  if (!src || typeof src !== 'string') return src;
+
+  if (src.includes("supabase.co/storage/v1/object/public/")) {
+    const renderUrl = src.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+    return `${renderUrl}?width=${width}&resize=contain&format=webp&quality=${quality || 50}`;
+  }
+
+  return src;
+};
+

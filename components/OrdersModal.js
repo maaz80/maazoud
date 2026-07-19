@@ -4,7 +4,7 @@ import React from "react";
 import { FaTimes, FaBoxOpen } from "react-icons/fa";
 import Image from "next/image";
 import { useCart } from "../context/CartContext";
-import { getOptimizedImageUrl } from "../utils/imageHelper";
+import { getOptimizedImageUrl, supabaseLoader } from "../utils/imageHelper";
 
 export default function OrdersModal() {
   const { orders, isOrdersOpen, setIsOrdersOpen } = useCart();
@@ -150,11 +150,11 @@ export default function OrdersModal() {
                       <div key={item.cartItemId || idx} className="flex justify-between items-center gap-2 text-xs">
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <Image
-                            src={getOptimizedImageUrl(item.product?.image || "/images/placeholder.jpg", 120)}
+                            loader={supabaseLoader}
+                            src={item.product?.image || "/images/placeholder.jpg"}
                             alt={item.product?.name || "Oud Product"}
                             width={40}
                             height={48}
-                            unoptimized={true}
                             className="w-10 h-12 object-cover rounded bg-white border border-stone-200 shrink-0"
                           />
                           <div className="min-w-0 flex-1">

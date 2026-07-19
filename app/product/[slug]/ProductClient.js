@@ -6,7 +6,7 @@ import Image from "next/image";
 import { PRODUCTS } from "../../../utils/mockData";
 import ProductCard from "../../../components/ProductCard";
 import BlogsSection from "../../../components/BlogsSection";
-import { getImageAlt, getOptimizedImageUrl } from "../../../utils/imageHelper";
+import { getImageAlt, getOptimizedImageUrl, supabaseLoader } from "../../../utils/imageHelper";
 import { useCart } from "../../../context/CartContext";
 import { FaArrowLeft, FaArrowRight, FaStar, FaRegStar, FaShoppingBag, FaPlus, FaMinus } from "react-icons/fa";
 import { supabase } from "../../../utils/supabase";
@@ -451,13 +451,13 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
           <div className="space-y-4 w-full">
             <div className="relative aspect-4/4 w-full rounded-md border border-stone-200 overflow-hidden bg-stone-50 shadow-sm group">
               <Image
-                src={getOptimizedImageUrl((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image, 640)}
+                loader={supabaseLoader}
+                src={(product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image}
                 alt={getImageAlt((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image, product.name)}
                 width={640}
                 height={640}
                 priority
                 fetchPriority="high"
-                unoptimized={true}
                 sizes="(max-width: 768px) 100vw, 640px"
                 className="w-full h-full object-contain transition-all duration-300"
               />
@@ -500,10 +500,10 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                       }`}
                   >
                     <Image
-                      src={getOptimizedImageUrl(img, 120)}
+                      loader={supabaseLoader}
+                      src={img}
                       width={56}
                       height={64}
-                      unoptimized={true}
                       className="w-full h-full object-contain"
                       alt={getImageAlt(img, `${product.name} thumbnail ${idx + 1}`)}
                     />
