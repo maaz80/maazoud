@@ -27,7 +27,7 @@ export const getOptimizedImageUrl = (url, width) => {
   // If it's a Supabase storage URL, dynamically resize it to target width and transform to webp with quality 50
   if (url.includes("supabase.co/storage/v1/object/public/")) {
     const renderUrl = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-    return `${renderUrl}?width=${width}&format=webp&quality=50`;
+    return `${renderUrl}?width=${width}&resize=contain&format=webp&quality=50`;
   }
   
   // For local images, if width is 200 or less, we can return the mobile version
@@ -49,7 +49,7 @@ export const getImageSrcSet = (url) => {
   // For Supabase storage URL (Generate 160w, 320w and 640w sizes in WebP format with quality 50)
   if (url.includes("supabase.co/storage/v1/object/public/")) {
     const renderUrl = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-    return `${renderUrl}?width=160&format=webp&quality=50 160w, ${renderUrl}?width=320&format=webp&quality=50 320w, ${renderUrl}?width=640&format=webp&quality=50 640w`;
+    return `${renderUrl}?width=160&resize=contain&format=webp&quality=50 160w, ${renderUrl}?width=320&resize=contain&format=webp&quality=50 320w, ${renderUrl}?width=640&resize=contain&format=webp&quality=50 640w`;
   }
   
   // Local images under /images/ (Map to 160w and 320w for mobile-version, and 640w for standard version)
@@ -72,7 +72,7 @@ export const getBannerSrcSet = (url) => {
   // For Supabase storage URL (Generate 600w, 900w and 1200w sizes in WebP format with quality 50)
   if (url.includes("supabase.co/storage/v1/object/public/")) {
     const renderUrl = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-    return `${renderUrl}?width=600&format=webp&quality=50 600w, ${renderUrl}?width=900&format=webp&quality=50 900w, ${renderUrl}?width=1200&format=webp&quality=50 1200w`;
+    return `${renderUrl}?width=600&resize=contain&format=webp&quality=50 600w, ${renderUrl}?width=900&resize=contain&format=webp&quality=50 900w, ${renderUrl}?width=1200&resize=contain&format=webp&quality=50 1200w`;
   }
 
   // Local banners under /images/

@@ -67,7 +67,7 @@ export default function TestimonialSlider({ testimonials = [] }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         <div className="text-center mb-12 space-y-3">
-          <span className="text-[#c7a17a] font-bold tracking-[0.2em] text-xs uppercase">
+          <span className="text-[#eed9c4] font-bold tracking-[0.2em] text-xs uppercase">
             Voices of Customers
           </span>
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-white">
@@ -97,8 +97,8 @@ export default function TestimonialSlider({ testimonials = [] }) {
               </p>
 
               <div className={`mt-8 transition-opacity duration-500 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
-                <h4 className="text-white font-bold tracking-wide uppercase text-sm">{data[currentIndex]?.name}</h4>
-                <p className="text-[#c7a17a] text-xs mt-1">{data[currentIndex]?.role}</p>
+                <h3 className="text-white font-bold tracking-wide uppercase text-sm">{data[currentIndex]?.name}</h3>
+                <p className="text-[#eed9c4] text-xs mt-1">{data[currentIndex]?.role}</p>
               </div>
             </div>
           </div>
@@ -107,6 +107,7 @@ export default function TestimonialSlider({ testimonials = [] }) {
           <button 
             onClick={handlePrev}
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 w-10 h-10 md:w-12 md:h-12 bg-white hover:bg-white/90 text-[#8c6239] rounded-full flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+            aria-label="Previous Testimonial"
           >
             <FaChevronLeft size={14} />
           </button>
@@ -114,6 +115,7 @@ export default function TestimonialSlider({ testimonials = [] }) {
           <button 
             onClick={handleNext}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 w-10 h-10 md:w-12 md:h-12 bg-white hover:bg-white/90 text-[#8c6239] rounded-full flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+            aria-label="Next Testimonial"
           >
             <FaChevronRight size={14} />
           </button>

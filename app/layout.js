@@ -159,6 +159,7 @@ export default function RootLayout({ children }) {
             })
           }}
         />
+        <link rel="preconnect" href="https://fdfvzzqiyyhxowftegpl.supabase.co" crossOrigin="anonymous" />
       </head>
       <body className={`${poppins.className} min-h-full flex flex-col bg-white text-stone-900`}>
         {/* Google Analytics 4 Tracking */}
@@ -166,9 +167,9 @@ export default function RootLayout({ children }) {
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
-              strategy="afterInteractive"
+              strategy="lazyOnload"
             />
-            <Script id="google-analytics" strategy="afterInteractive">
+            <Script id="google-analytics" strategy="lazyOnload">
               {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
@@ -183,7 +184,7 @@ export default function RootLayout({ children }) {
 
         {/* Microsoft Clarity Tracking */}
         {process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID && (
-          <Script id="microsoft-clarity" strategy="afterInteractive">
+          <Script id="microsoft-clarity" strategy="lazyOnload">
             {`
               (function(c,l,a,r,i,t,y){
                   c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

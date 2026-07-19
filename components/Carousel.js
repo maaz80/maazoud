@@ -65,6 +65,7 @@ export default function Carousel({ initialBanners = [] }) {
                 alt={getImageAlt(banner.image, banner.title || "Banner Image")} 
                 fill
                 priority={index === 0}
+                fetchPriority={index === 0 ? "high" : "low"}
                 sizes="100vw"
                 className="absolute inset-0 w-full h-full object-cover" 
               />
