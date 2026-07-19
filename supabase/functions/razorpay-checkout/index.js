@@ -268,6 +268,47 @@ serve(async (req) => {
     // Step 3: COD order creation using server-verified pricing
     if (action === "place_cod_order") {
       const customer = body.customer || {};
+
+      // 1. Honeypot check
+      if (customer.faxNumber) {
+        console.warn("Spambot honeypot triggered.");
+        const fakeOrderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+        return json({
+          orderId: fakeOrderId,
+          order: {
+            id: fakeOrderId,
+            customer_name: String(customer.name || "").trim(),
+            phone: String(customer.phone || "").trim(),
+            address: String(customer.address || "").trim(),
+            payment_method: "Cash on Delivery (COD) [Blocked]",
+            total_amount: calculated.total + 30,
+            status: "Processing",
+            items: calculated.orderItems,
+            created_at: new Date().toISOString(),
+          }
+        });
+      }
+
+      // 2. IP-based Rate Limiting (1 COD order per 1 hour)
+      const clientIp = req.headers.get("x-real-ip") || req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+      
+      if (clientIp !== "unknown") {
+        const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+        const { data: recentOrders, error: rateError } = await supabase
+          .from("orders")
+          .select("id")
+          .eq("payment_method", `Cash on Delivery (COD) [IP: ${clientIp}]`)
+          .gte("created_at", oneHourAgo);
+
+        if (rateError) {
+          console.error("Error checking rate limit:", rateError.message);
+        }
+
+        if (recentOrders && recentOrders.length >= 1) {
+          return json({ error: "COD limit reached. You can only place 1 Cash on Delivery (COD) order per hour. Please choose Prepaid to complete checkout immediately, or try again later." }, 400);
+        }
+      }
+
       const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
       const orderPayload = {
@@ -278,7 +319,7 @@ serve(async (req) => {
         city: String(customer.city || "N/A").trim() || "N/A",
         state: String(customer.state || "N/A").trim() || "N/A",
         pincode: String(customer.pincode || "N/A").trim() || "N/A",
-        payment_method: "Cash on Delivery (COD)",
+        payment_method: `Cash on Delivery (COD) [IP: ${clientIp}]`,
         total_amount: calculated.total + 30, // Include COD Fee
         status: "Processing",
         items: calculated.orderItems,

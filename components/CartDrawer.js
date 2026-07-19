@@ -50,6 +50,7 @@ export default function CartDrawer() {
     city: "",
     state: "",
     pincode: "",
+    faxNumber: "", // honeypot spam protection
   });
 
   const [paymentMethod, setPaymentMethod] = useState("prepaid");
@@ -154,7 +155,7 @@ export default function CartDrawer() {
   };
 
   const resetCheckout = () => {
-    setFormData({ name: "", phone: "", address: "", city: "", state: "", pincode: "" });
+    setFormData({ name: "", phone: "", address: "", city: "", state: "", pincode: "", faxNumber: "" });
     setErrors({});
     setShowCheckout(false);
     setPaymentMethod("prepaid");
@@ -264,6 +265,26 @@ export default function CartDrawer() {
     e.preventDefault();
     if (!validateForm()) return;
 
+    // Honeypot validation
+    if (formData.faxNumber) {
+      console.warn("Spam bot detected via client-side honeypot.");
+      // Silent fail to trick bots
+      await clearCart();
+      resetCheckout();
+      setIsCartOpen(false);
+      router.push(`/order-success?orderId=ORD-${Math.floor(100000 + Math.random() * 900000)}`);
+      return;
+    }
+
+    // Client-side local storage limit: 1 COD order per 1 hour
+    if (paymentMethod === "cod") {
+      const lastCodTime = localStorage.getItem("maazoud_last_cod_time");
+      if (lastCodTime && Date.now() - Number(lastCodTime) < 3600000) {
+        alert("For security reasons, you can only place 1 Cash on Delivery (COD) order per hour. Please choose Prepaid to complete your checkout, or try again later.");
+        return;
+      }
+    }
+
     const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`;
 
     if (paymentMethod === "cod") {
@@ -285,6 +306,7 @@ export default function CartDrawer() {
               city: formData.city,
               state: formData.state,
               pincode: formData.pincode,
+              faxNumber: formData.faxNumber, // passed to backend
             },
             items: checkoutItems,
           },
@@ -296,6 +318,8 @@ export default function CartDrawer() {
 
         if (verifiedOrder.order) {
           saveOrders([verifiedOrder.order, ...orders]);
+          // Save COD timestamp to local storage
+          localStorage.setItem("maazoud_last_cod_time", String(Date.now()));
         }
         await clearCart();
         await saveProfileData(formData);
@@ -460,6 +484,19 @@ export default function CartDrawer() {
                 <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-2">
                   Delivery Details
                 </h3>
+
+                {/* Honeypot field (hidden from screen readers and visual users) */}
+                <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }} aria-hidden="true">
+                  <input
+                    type="text"
+                    name="faxNumber"
+                    tabIndex="-1"
+                    autoComplete="off"
+                    value={formData.faxNumber}
+                    onChange={handleInputChange}
+                    placeholder="Do not fill this field if you are human"
+                  />
+                </div>
 
                 {/* Full Name */}
                 <div>

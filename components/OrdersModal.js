@@ -190,9 +190,11 @@ export default function OrdersModal() {
                           {order.payment_method && order.payment_method.toLowerCase().includes("cod") ? "Cash on Delivery (COD)" : "Prepaid Online"}
                         </span>
                       </div>
-                      <span className="text-[10px] text-[#8c6239] font-semibold block pt-1">
-                        Order will be delivered before {getDeliveryDate(order)}
-                      </span>
+                      {String(order.status || "").toLowerCase() !== "cancelled" && String(order.status || "").toLowerCase() !== "delivered" && (
+                        <span className="text-[10px] text-[#8c6239] font-semibold block pt-1">
+                          Order will be delivered before {getDeliveryDate(order)}
+                        </span>
+                      )}
                     </div>
 
                     <div className="w-full md:w-56 bg-stone-100/60 rounded p-3 border border-stone-200/50 space-y-1.5 shrink-0">
