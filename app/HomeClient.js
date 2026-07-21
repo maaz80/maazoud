@@ -40,9 +40,18 @@ const ProductSkeleton = () => (
   </div>
 );
 
-function HomeContent({ initialBanners, initialCategories, initialProducts, initialTestimonials, initialBlogs }) {
+function SearchQueryListener({ onSearchChange }) {
   const searchParams = useSearchParams();
   const searchVal = searchParams.get("search") || "";
+  
+  useEffect(() => {
+    onSearchChange(searchVal);
+  }, [searchVal, onSearchChange]);
+
+  return null;
+}
+
+function HomeContent({ initialBanners, initialCategories, initialProducts, initialTestimonials, initialBlogs }) {
   const productsRef = useRef(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -75,11 +84,10 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
                   (!initialCategories || initialCategories.length === 0) &&
                   (!initialProducts || initialProducts.length === 0);
 
-  // Keep filterSearch state in sync with URL search query
+  // Reset page on new search
   useEffect(() => {
-    setFilterSearch(searchVal);
-    setCurrentPage(1); // Reset page on new search
-  }, [searchVal]);
+    setCurrentPage(1);
+  }, [filterSearch]);
 
   // Filter products based on search
   const filteredProducts = products.filter((product) => {
@@ -118,6 +126,9 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
 
   return (
     <div className="bg-white font-sans">
+      <Suspense fallback={null}>
+        <SearchQueryListener onSearchChange={setFilterSearch} />
+      </Suspense>
       {/* 1. Hero Carousel */}
       <Carousel initialBanners={initialBanners} />
 
@@ -351,14 +362,12 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
 
 export default function HomeClient({ initialBanners, initialCategories, initialProducts, initialTestimonials, initialBlogs }) {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white text-stone-600 font-sans">Loading luxury collection...</div>}>
-      <HomeContent 
-        initialBanners={initialBanners} 
-        initialCategories={initialCategories} 
-        initialProducts={initialProducts} 
-        initialTestimonials={initialTestimonials}
-        initialBlogs={initialBlogs}
-      />
-    </Suspense>
+    <HomeContent 
+      initialBanners={initialBanners} 
+      initialCategories={initialCategories} 
+      initialProducts={initialProducts} 
+      initialTestimonials={initialTestimonials}
+      initialBlogs={initialBlogs}
+    />
   );
 }

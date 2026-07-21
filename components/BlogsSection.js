@@ -107,6 +107,15 @@ export default function BlogsSection({ initialBlogs }) {
           );
         })}
       </div>
+
+      <div className="flex justify-center pt-4">
+        <Link 
+          href="/blog"
+          className="inline-flex items-center justify-center px-6 py-2.5 bg-stone-900 text-white hover:bg-[#8c6239] text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-sm"
+        >
+          View All Articles
+        </Link>
+      </div>
     </section>
   );
 }

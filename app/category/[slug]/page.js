@@ -13,14 +13,14 @@ async function getCategoryData(slug) {
       .single();
 
     if (catErr || !categoryData) {
-      return { category: null, products: [] };
+      return { category: null, products: [], blogs: [] };
     }
 
-    const { data: prodData } = await supabase
-      .from("products")
-      .select("*")
-      .contains("category", [categoryData.id])
-      .order("created_at", { ascending: false });
+    const [prodRes, blogsRes] = await Promise.all([
+      supabase.from("products").select("*").contains("category", [categoryData.id]).order("created_at", { ascending: false }),
+      supabase.from("blogs").select("id, title, image, slug, created_at").order("created_at", { ascending: false }).limit(3)
+    ]);
+    const prodData = prodRes.data;
 
     let products = [];
     if (prodData) {
@@ -43,11 +43,12 @@ async function getCategoryData(slug) {
 
     return {
       category: categoryData,
-      products: products
+      products: products,
+      blogs: blogsRes?.data || []
     };
   } catch (e) {
     console.error("Error fetching category data on server:", e);
-    return { category: null, products: [] };
+    return { category: null, products: [], blogs: [] };
   }
 }
 
@@ -62,6 +63,7 @@ export default async function CategoryPage({ params }) {
       slug={slug} 
       initialCategory={data.category} 
       initialProducts={data.products} 
+      initialBlogs={data.blogs}
     />
   );
 }

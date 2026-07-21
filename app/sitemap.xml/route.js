@@ -41,6 +41,7 @@ export async function GET() {
   const staticPages = [
     { loc: `${baseUrl}/`, lastmod: formatKolkataDate(now) },
     { loc: `${baseUrl}/about-us`, lastmod: formatKolkataDate(now) },
+    { loc: `${baseUrl}/blog`, lastmod: formatKolkataDate(now) },
     { loc: `${baseUrl}/contact-us`, lastmod: formatKolkataDate(now) },
     { loc: `${baseUrl}/shipping-policy`, lastmod: formatKolkataDate(now) },
     { loc: `${baseUrl}/disclaimer`, lastmod: formatKolkataDate(now) },

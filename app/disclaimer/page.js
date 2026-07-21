@@ -11,7 +11,7 @@ export const metadata = {
   openGraph: {
     title: "Disclaimer & Skin Sensitivity Info | Maaz Oud",
     description: "Read the Disclaimer of Maaz Oud. Learn about fragrance development on different skin chemistries and our skin safety patch testing guidance.",
-    url: "https://maazoud.in/disclaimer",
+    url: "https://www.maazoud.in/disclaimer",
     siteName: "Maaz Oud",
     type: "website",
     locale: "en_US",

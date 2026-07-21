@@ -5,6 +5,7 @@ export async function GET() {
   const urls = [
     `${baseUrl}/`,
     `${baseUrl}/about-us`,
+    `${baseUrl}/blog`,
     `${baseUrl}/contact-us`,
     `${baseUrl}/shipping-policy`,
     `${baseUrl}/disclaimer`,

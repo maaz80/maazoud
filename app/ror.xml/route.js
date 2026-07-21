@@ -45,6 +45,13 @@ export async function GET() {
       <ror:sortOrder>3</ror:sortOrder>
       <ror:resourceOf>sitemap</ror:resourceOf>
     </item>
+    <item>
+      <link>${baseUrl}/blog</link>
+      <title>Maaz Oud Journal | Perfume Guides &amp; Attar Heritage</title>
+      <ror:updatePeriod>day</ror:updatePeriod>
+      <ror:sortOrder>2</ror:sortOrder>
+      <ror:resourceOf>sitemap</ror:resourceOf>
+    </item>
   `;
 
   try {

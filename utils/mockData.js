@@ -1,31 +1,31 @@
 export const CATEGORIES = [
   {
-    id: "top-selling",
-    name: "Top Selling Attars",
-    slug: "top-selling",
-    image: "/images/oud_bottle_gold.webp",
-    description: "Our most coveted and highly-rated premium oud and attar creations."
+    id: "combo-packs",
+    name: "Combo Packs",
+    slug: "combo-packs",
+    image: "https://fdfvzzqiyyhxowftegpl.supabase.co/storage/v1/object/public/maazoud/categories/maazoud-combo-category-image-8.png",
+    description: "Multiple luxury attars, one perfect combo. Crafted for those who love variety without compromise."
   },
   {
-    id: "winter",
-    name: "Winter Attars",
-    slug: "winter",
-    image: "/images/oud_bottle_royal.webp",
-    description: "Deep, warm, and long-lasting attars perfect for the colder months."
+    id: "premium-fragrances",
+    name: "Premium Fragrances",
+    slug: "premium-fragrances",
+    image: "https://fdfvzzqiyyhxowftegpl.supabase.co/storage/v1/object/public/maazoud/categories/maazoud-premium-category-image.png",
+    description: "Discover luxury alcohol-free attars crafted with premium, ethically sourced ingredients for a long-lasting, unforgettable presence."
   },
   {
-    id: "summer",
-    name: "Summer Attars",
-    slug: "summer",
-    image: "/images/oud_bottle_rose.webp",
-    description: "Fresh, citrusy, and light fragrances designed to keep you refreshed in summer."
+    id: "summer-fragrances",
+    name: "Summer Fragrances",
+    slug: "summer-fragrances",
+    image: "https://fdfvzzqiyyhxowftegpl.supabase.co/storage/v1/object/public/maazoud/categories/maazoud-summer-category-image-3.png",
+    description: "Light, fresh, and aquatic attars designed to keep you cool and refreshed through the hottest days."
   },
   {
-    id: "all-season",
-    name: "All Season Attars",
-    slug: "all-season",
-    image: "/images/oud_bottle_gold.webp",
-    description: "Versatile, balanced blends suitable for any time, season, or occasion."
+    id: "winter-fragrances",
+    name: "Winter Fragrances",
+    slug: "winter-fragrances",
+    image: "https://fdfvzzqiyyhxowftegpl.supabase.co/storage/v1/object/public/maazoud/categories/maazoud-winter-category-image.png",
+    description: "Warm, deep, and musky attars perfect for cold weather - rich oud and earthy notes that last all day."
   }
 ];
 

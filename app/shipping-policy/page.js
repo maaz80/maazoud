@@ -13,7 +13,7 @@ export const metadata = {
   openGraph: {
     title: "Shipping & Returns Policy | Hassle-Free Delivery | Maaz Oud",
     description: "Read the shipping rates, dispatch timelines, non-returnable personal care policies, and damaged items replacement process at Maaz Oud.",
-    url: "https://maazoud.in/shipping-policy",
+    url: "https://www.maazoud.in/shipping-policy",
     siteName: "Maaz Oud",
     type: "website",
     locale: "en_US",

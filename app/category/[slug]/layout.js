@@ -13,7 +13,7 @@ export async function generateMetadata({ params }) {
     if (category) {
       const title = `${category.name} Attars Collection | Premium Fragrances`;
       const description = category.description || `Explore our exquisite collection of premium, 100% pure alcohol-free ${category.name} attars and luxury perfume oils at Maaz Oud.`;
-      const imageUrl = category.image || "https://maazoud.in/maazoud-logo.webp";
+      const imageUrl = category.image || "https://www.maazoud.in/maazoud-logo.webp";
       return {
         title,
         description,

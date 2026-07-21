@@ -99,10 +99,15 @@ export default function Navbar() {
       <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-stone-250 rounded-md shadow-2xl z-50 max-h-72 overflow-y-auto divide-y divide-stone-100">
         {suggestions.length > 0 ? (
           suggestions.map((prod) => (
-            <div
+            <Link
               key={prod.id}
-              onClick={() => handleSuggestionClick(prod.id)}
-              className="flex items-center gap-3.5 p-3 hover:bg-stone-50 transition-colors cursor-pointer text-left"
+              href={`/product/${prod.id}`}
+              onClick={() => {
+                setSearchQuery("");
+                setSuggestions([]);
+                setMobileSearchOpen(false);
+              }}
+              className="flex items-center gap-3.5 p-3 hover:bg-stone-50 transition-colors cursor-pointer text-left block"
             >
               <Image
                 src={getOptimizedImageUrl(prod.image, 80)}
@@ -127,7 +132,7 @@ export default function Navbar() {
                   Rs. {prod.price3mloffer}
                 </span>
               </div>
-            </div>
+            </Link>
           ))
         ) : (
           <div className="p-4 text-center text-xs text-stone-400 font-light">

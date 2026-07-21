@@ -108,10 +108,10 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
-              "@id": "https://maazoud.in/#website",
+              "@id": "https://www.maazoud.in/#website",
               "name": "Maaz Oud",
               "alternateName": "MaazOud",
-              "url": "https://maazoud.in/"
+              "url": "https://www.maazoud.in/"
             })
           }}
         />
@@ -123,8 +123,8 @@ export default function RootLayout({ children }) {
               "@context": "https://schema.org",
               "@type": "Organization",
               "name": "Maaz Oud",
-              "url": "https://maazoud.in/",
-              "logo": "https://maazoud.in/maazoud-logo.webp",
+              "url": "https://www.maazoud.in/",
+              "logo": "https://www.maazoud.in/maazoud-logo.webp",
               "description": "Experience the ultimate luxury of pure Cambodian Oud, Indian Agarwood, non-alcoholic botanical attars, and premium natural fragrances.",
               "telephone": "+919616584237",
               "address": {
@@ -132,30 +132,6 @@ export default function RootLayout({ children }) {
                 "addressLocality": "Jaunpur",
                 "addressRegion": "Uttar Pradesh",
                 "addressCountry": "IN"
-              }
-            })
-          }}
-        />
-        {/* Product Rating Schema for Search Results */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Product",
-              "name": "Maaz Oud Luxury Perfumes",
-              "image": "https://maazoud.in/maazoud-logo.webp",
-              "description": "Premium collection of pure Cambodian Oud, Indian Agarwood, and non-alcoholic botanical attars.",
-              "brand": {
-                "@type": "Brand",
-                "name": "Maaz Oud"
-              },
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": "4.9",
-                "ratingCount": "184",
-                "bestRating": "5",
-                "worstRating": "1"
               }
             })
           }}

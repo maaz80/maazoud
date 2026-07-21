@@ -45,8 +45,73 @@ async function getInitialData() {
 
 export default async function Home() {
   const data = await getInitialData();
+
+  // Structured data representing the global shop product / brand ratings
+  const brandProductSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Maaz Oud Luxury Perfumes",
+    "image": "https://www.maazoud.in/maazoud-logo.webp",
+    "description": "Premium collection of pure Cambodian Oud, Indian Agarwood, and non-alcoholic botanical attars.",
+    "sku": "brand-maazoud-perfumes",
+    "brand": {
+      "@type": "Brand",
+      "name": "Maaz Oud"
+    },
+    "offers": {
+      "@type": "AggregateOffer",
+      "priceCurrency": "INR",
+      "lowPrice": "499",
+      "highPrice": "5999",
+      "offerCount": "6",
+      "availability": "https://schema.org/InStock",
+      "url": "https://www.maazoud.in/"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "ratingCount": "184",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5",
+          "bestRating": "5"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Mohammad Shadab"
+        },
+        "headline": "Exceptional Quality",
+        "reviewBody": "Highly impressed by the depth and longevity of the attars. The packaging was also very elegant."
+      },
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5",
+          "bestRating": "5"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Vikram Singh"
+        },
+        "headline": "Truly Natural & Pure",
+        "reviewBody": "Mitti Attar and Ruh Khus are outstanding. Pure, alcohol-free, and natural scent."
+      }
+    ]
+  };
+
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white text-stone-600 font-sans">Loading luxury collection...</div>}>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(brandProductSchema) }}
+      />
       <HomeClient 
         initialBanners={data.banners} 
         initialCategories={data.categories} 
@@ -54,6 +119,6 @@ export default async function Home() {
         initialTestimonials={data.testimonials}
         initialBlogs={data.blogs}
       />
-    </Suspense>
+    </>
   );
 }

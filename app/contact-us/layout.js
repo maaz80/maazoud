@@ -8,7 +8,7 @@ export const metadata = {
     title: "Contact Us | Customer Support & Gifting Queries | Maaz Oud",
     description: "Get in touch with Maaz Oud. Reach out for order tracking, custom wedding hampers, bulk wholesale attars, or fragrance advice.",
     type: "website",
-    url: "https://maazoud.in/contact-us",
+    url: "https://www.maazoud.in/contact-us",
     siteName: "Maaz Oud",
     locale: "en_US",
   },

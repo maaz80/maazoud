@@ -6,9 +6,10 @@ import Image from "next/image";
 import { FaArrowLeft, FaCalendarAlt, FaClock } from "react-icons/fa";
 import { supabase } from "../../../utils/supabase";
 import BlogsSection from "../../../components/BlogsSection";
+import ProductCard from "../../../components/ProductCard";
 import { getImageAlt } from "../../../utils/imageHelper";
 
-export default function BlogClient({ slug, initialBlog, initialBlogs }) {
+export default function BlogClient({ slug, initialBlog, initialBlogs, initialProducts = [] }) {
   const [blog, setBlog] = useState(initialBlog || null);
   const [loading, setLoading] = useState(false);
 
@@ -105,7 +106,7 @@ export default function BlogClient({ slug, initialBlog, initialBlogs }) {
                 "name": "Maaz Oud",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://maazoud.in/maazoud-logo-no-bg.png",
+                  "url": "https://www.maazoud.in/maazoud-logo-no-bg.png",
                 },
               },
             },
@@ -177,6 +178,28 @@ export default function BlogClient({ slug, initialBlog, initialBlogs }) {
             dangerouslySetInnerHTML={{ __html: blog.content }}
           />
         </div>
+
+        {/* Related Products Section */}
+        {initialProducts && initialProducts.length > 0 && (
+          <section className="space-y-6 pt-12 border-t border-stone-100 max-w-7xl mx-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-serif font-bold text-stone-900 tracking-wide">
+                Featured Fragrances
+              </h2>
+              <Link 
+                href="/" 
+                className="text-xs font-semibold text-[#8c6239] hover:underline"
+              >
+                View All
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+              {initialProducts.map((prod) => (
+                <ProductCard key={prod.id} product={prod} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Blogs Section */}
         <BlogsSection initialBlogs={initialBlogs} />

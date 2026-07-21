@@ -11,7 +11,7 @@ export const metadata = {
   openGraph: {
     title: "Privacy Policy & Secure Shopping | Maaz Oud",
     description: "Read the Privacy Policy of Maaz Oud. Learn how we securely protect customer accounts, OTP verification codes, and transaction details.",
-    url: "https://maazoud.in/privacy-policy",
+    url: "https://www.maazoud.in/privacy-policy",
     siteName: "Maaz Oud",
     type: "website",
     locale: "en_US",

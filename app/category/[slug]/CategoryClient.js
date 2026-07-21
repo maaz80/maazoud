@@ -24,7 +24,7 @@ const ProductSkeleton = () => (
   </div>
 );
 
-export default function CategoryClient({ slug, initialCategory, initialProducts }) {
+export default function CategoryClient({ slug, initialCategory, initialProducts, initialBlogs }) {
   const topRef = useRef(null);
   
   const [category, setCategory] = useState(initialCategory || null);
@@ -254,7 +254,7 @@ export default function CategoryClient({ slug, initialCategory, initialProducts 
         )}
 
         {/* Blogs Section */}
-        <BlogsSection />
+        <BlogsSection initialBlogs={initialBlogs} />
 
         {/* Category specific FAQ */}
         <CategoryFAQ slug={slug} categoryName={category.name} />
@@ -268,7 +268,7 @@ function CategoryFAQ({ slug, categoryName }) {
   const [openIndex, setOpenIndex] = useState(null);
 
   const faqData = {
-    "top-selling": [
+    "premium-fragrances": [
       {
         question: `Which are the best-selling attars in ${categoryName}?`,
         answer: "Our top-selling attars include Dehn Al Oud Yusuf Royale, Imperial Kalakassi Reserve, and Cambodi Intense. These premium oud creations are highly appreciated for their rich, aged scent profiles and outstanding projection."
@@ -282,7 +282,7 @@ function CategoryFAQ({ slug, categoryName }) {
         answer: "Yes, they make the ultimate luxury gift. Packed in beautiful bottles, these fragrances are universally loved by oud connoisseurs and beginners alike."
       }
     ],
-    "winter": [
+    "winter-fragrances": [
       {
         question: `Why are ${categoryName} recommended for cold weather?`,
         answer: "Winter attars contain warm, deep, and heavy base notes like aged oud, amber, musk, and spices. These notes evaporate slowly and project beautifully in cold temperatures, creating a comforting fragrance bubble."
@@ -296,7 +296,7 @@ function CategoryFAQ({ slug, categoryName }) {
         answer: "Yes, winter attars are highly versatile for winter days and nights. The cool outdoor air tempers the density of the fragrance, making it rich but not overwhelming."
       }
     ],
-    "summer": [
+    "summer-fragrances": [
       {
         question: `What makes ${categoryName} suitable for hot weather?`,
         answer: "Summer attars focus on fresh, airy, citrusy, and light floral notes (like White Musk Imperial and Taif Rose). They provide a cooling, clean, and refreshing scent that counteracts summer heat."
@@ -310,18 +310,18 @@ function CategoryFAQ({ slug, categoryName }) {
         answer: "Our light summer blends like White Musk are clear and skin-friendly. However, when applying to very light fabrics, we suggest rubbing the oil on your palms first and lightly dabbing to prevent concentrated oil spots."
       }
     ],
-    "all-season": [
+    "combo-packs": [
       {
         question: `What exactly are ${categoryName}?`,
-        answer: "All-season attars are balanced, versatile blends featuring notes that transition smoothly from fresh/floral top notes to warm/woody base notes, making them perfect for any weather."
+        answer: "Our Combo Packs are curated selections of our finest attars offered together at a special promotional price. They allow you to experience different profiles (such as fresh, woody, and musky) in one set."
       },
       {
         question: "Can I wear these attars daily to the office?",
-        answer: "Yes, all-season attars like Mukhallat Al Badar are designed to be elegant, sophisticated, and close to the skin. They are non-offensive and create a professional aura."
+        answer: "Yes, the attars in our combo packs (like Mitti-E-Hind and Aqua Oud) are perfectly balanced, clean, and non-offensive, making them excellent choices for professional settings."
       },
       {
-        question: "How should I store all-season attars for long-term freshness?",
-        answer: "Store your attars in a cool, dry place away from direct sunlight. High-quality natural oils mature and get better with age if kept in stable temperatures."
+        question: "How should I store these attars for long-term freshness?",
+        answer: "Store your attar bottles in a cool, dry place away from direct sunlight. High-quality natural oils mature and get richer with age if kept in stable temperatures."
       }
     ]
   };
