@@ -808,6 +808,7 @@ export default function CartDrawer() {
               <FaTimes size={16} />
             </button>
 
+
             <div className="w-14 h-14 bg-amber-50 text-[#8c6239] rounded-full flex items-center justify-center mx-auto border border-amber-200/60 shadow-sm">
               <FaClock size={24} />
             </div>
