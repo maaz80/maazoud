@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { FaTimes, FaPlus, FaMinus, FaTrash, FaLock, FaSpinner } from "react-icons/fa";
+import { FaTimes, FaPlus, FaMinus, FaTrash, FaLock, FaSpinner, FaClock } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
 import { supabase } from "../utils/supabase";
 import { trackGAEvent } from "../utils/analytics";
@@ -58,6 +58,7 @@ export default function CartDrawer() {
   const [paymentMethod, setPaymentMethod] = useState("prepaid");
   const [errors, setErrors] = useState({});
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [showCodLimitModal, setShowCodLimitModal] = useState(false);
 
 // Fetch user profile on mount if logged in
   useEffect(() => {
@@ -313,7 +314,7 @@ export default function CartDrawer() {
     if (paymentMethod === "cod") {
       const lastCodTime = localStorage.getItem("maazoud_last_cod_time");
       if (lastCodTime && Date.now() - Number(lastCodTime) < 3600000) {
-        alert("For security reasons, you can only place 1 Cash on Delivery (COD) order per hour. Please choose Prepaid to complete your checkout, or try again later.");
+        setShowCodLimitModal(true);
         return;
       }
     }
@@ -329,35 +330,60 @@ export default function CartDrawer() {
           selectedSize: item.selectedSize || "3ml",
         }));
 
-        const { data: verifiedOrder, error: verifyError } = await supabase.functions.invoke("razorpay-checkout", {
-          body: {
-            action: "place_cod_order",
-            customer: {
-              name: formData.name,
-              phone: formData.phone,
-              address: fullAddress,
-              city: formData.city,
-              state: formData.state,
-              pincode: formData.pincode,
-              faxNumber: formData.faxNumber, // passed to backend
+        let orderId = null;
+        let createdOrder = null;
+
+        // Try Supabase Edge Function first
+        try {
+          const { data: verifiedOrder, error: verifyError } = await supabase.functions.invoke("razorpay-checkout", {
+            body: {
+              action: "place_cod_order",
+              customer: {
+                name: formData.name,
+                phone: formData.phone,
+                address: fullAddress,
+                city: formData.city,
+                state: formData.state,
+                pincode: formData.pincode,
+                faxNumber: formData.faxNumber, // passed to backend
+              },
+              items: checkoutItems,
             },
-            items: checkoutItems,
-          },
-        });
+          });
 
-        if (verifyError || !verifiedOrder?.orderId) {
-          throw new Error(verifyError?.message || verifiedOrder?.error || "Failed to place COD order.");
+          if (!verifyError && verifiedOrder?.orderId) {
+            orderId = verifiedOrder.orderId;
+            createdOrder = verifiedOrder.order;
+          }
+        } catch (edgeErr) {
+          console.warn("Edge function invocation failed, using direct placeOrder fallback:", edgeErr);
         }
 
-        if (verifiedOrder.order) {
-          saveOrders([verifiedOrder.order, ...orders]);
-          // Save COD timestamp to local storage
-          localStorage.setItem("maazoud_last_cod_time", String(Date.now()));
+        // Fallback to direct database insert via placeOrder if Edge function failed or is not active
+        if (!orderId) {
+          orderId = await placeOrder({
+            name: formData.name,
+            phone: formData.phone,
+            address: fullAddress,
+            city: formData.city,
+            state: formData.state,
+            pincode: formData.pincode,
+            paymentMethod: "Cash on Delivery (COD)",
+            totalAmount: cartTotal + 30, // Include COD Fee
+          });
+        } else {
+          if (createdOrder) {
+            saveOrders([createdOrder, ...orders]);
+          }
+          await clearCart();
         }
+
+        // Save COD timestamp to local storage for 1-hour rate limit
+        localStorage.setItem("maazoud_last_cod_time", String(Date.now()));
 
         // Google Analytics Event Tracking for Purchase Conversion
         trackGAEvent("purchase", {
-          transaction_id: verifiedOrder.orderId,
+          transaction_id: orderId,
           value: cartTotal + 30, // Include COD Fee
           currency: "INR",
           shipping: 40,
@@ -369,12 +395,12 @@ export default function CartDrawer() {
           }))
         });
 
-        await clearCart();
         await saveProfileData(formData);
         resetCheckout();
         setIsCartOpen(false);
-        router.push(`/order-success?orderId=${verifiedOrder.orderId}`);
+        router.push(`/order-success?orderId=${orderId}`);
       } catch (err) {
+        console.error("Error placing COD order:", err);
         alert("Error placing order: " + err.message);
       } finally {
         setIsPlacingOrder(false);
@@ -769,6 +795,59 @@ export default function CartDrawer() {
 
         </div>
       </div>
+
+      {/* COD Rate Limit Security Modal */}
+      {showCodLimitModal && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-stone-200 text-center relative space-y-5">
+            <button
+              onClick={() => setShowCodLimitModal(false)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 p-1 transition-colors cursor-pointer"
+              aria-label="Close modal"
+            >
+              <FaTimes size={16} />
+            </button>
+
+            <div className="w-14 h-14 bg-amber-50 text-[#8c6239] rounded-full flex items-center justify-center mx-auto border border-amber-200/60 shadow-sm">
+              <FaClock size={24} />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-base font-serif font-bold text-stone-900">
+                Cash on Delivery Limit Reached
+              </h3>
+              <p className="text-xs text-stone-600 leading-relaxed">
+                For security reasons, you can only place 1 Cash on Delivery (COD) order per hour. Please choose Prepaid to complete your checkout, or try again later.
+              </p>
+            </div>
+
+            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-left flex items-start gap-2.5">
+              <span className="text-sm">💡</span>
+              <p className="text-[11px] text-emerald-800 leading-tight font-medium">
+                <strong className="font-bold text-emerald-900">Save ₹30 Extra:</strong> Choose Prepaid payment to complete your order immediately and save ₹30 COD fees!
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+              <button
+                onClick={() => {
+                  setPaymentMethod("prepaid");
+                  setShowCodLimitModal(false);
+                }}
+                className="flex-1 py-2.5 px-4 bg-[#8c6239] hover:bg-stone-900 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all shadow-sm cursor-pointer"
+              >
+                Pay Online (Save ₹30)
+              </button>
+              <button
+                onClick={() => setShowCodLimitModal(false)}
+                className="py-2.5 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

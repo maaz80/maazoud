@@ -110,7 +110,7 @@ export default function RootLayout({ children }) {
               "@type": "WebSite",
               "@id": "https://www.maazoud.in/#website",
               "name": "Maaz Oud",
-              "alternateName": "MaazOud",
+              "alternateName": ["MaazOud", "maazoud.in", "www.maazoud.in"],
               "url": "https://www.maazoud.in/"
             })
           }}
