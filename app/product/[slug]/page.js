@@ -199,13 +199,17 @@ export default async function ProductDetailPage({ params }) {
       ? data.reviews.length
       : (product.ratingcount || 0);
 
+    const rawSku = String(product.sku || product.id || "").trim();
+    const sku = rawSku.length > 50 ? rawSku.slice(0, 50) : rawSku;
+
     const schemaObj = {
       "@context": "https://schema.org/",
       "@type": "Product",
       "name": product.name,
       "image": (product.images && product.images.length > 0) ? product.images : [product.image],
       "description": product.description ? product.description.replace(/<[^>]*>/g, '').slice(0, 200) : `Buy ${product.name} attar by Maaz Oud. Premium, long-lasting alcohol-free fragrance oil.`,
-      "sku": product.id,
+      "sku": sku,
+      "mpn": sku,
       "brand": {
         "@type": "Brand",
         "name": "Maaz Oud"
@@ -216,8 +220,48 @@ export default async function ProductDetailPage({ params }) {
         "priceCurrency": "INR",
         "price": price,
         "priceValidUntil": "2027-12-31",
+        "validFrom": "2024-01-01",
         "itemCondition": "https://schema.org/NewCondition",
-        "availability": "https://schema.org/InStock"
+        "availability": "https://schema.org/InStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "Maaz Oud"
+        },
+        "shippingDetails": {
+          "@type": "OfferShippingDetails",
+          "shippingRate": {
+            "@type": "MonetaryAmount",
+            "value": "0",
+            "currency": "INR"
+          },
+          "shippingDestination": {
+            "@type": "DefinedRegion",
+            "addressCountry": "IN"
+          },
+          "deliveryTime": {
+            "@type": "ShippingDeliveryTime",
+            "handlingTime": {
+              "@type": "QuantitativeValue",
+              "minValue": 1,
+              "maxValue": 2,
+              "unitCode": "DAY"
+            },
+            "transitTime": {
+              "@type": "QuantitativeValue",
+              "minValue": 2,
+              "maxValue": 5,
+              "unitCode": "DAY"
+            }
+          }
+        },
+        "hasMerchantReturnPolicy": {
+          "@type": "MerchantReturnPolicy",
+          "applicableCountry": "IN",
+          "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+          "merchantReturnDays": 7,
+          "returnMethod": "https://schema.org/ReturnByMail",
+          "returnFees": "https://schema.org/FreeReturn"
+        }
       }
     };
 

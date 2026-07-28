@@ -59,6 +59,9 @@ export default function CartDrawer() {
   const [errors, setErrors] = useState({});
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [showCodLimitModal, setShowCodLimitModal] = useState(false);
+  const [isInternational, setIsInternational] = useState(false);
+  const [detectedCountry, setDetectedCountry] = useState("IN");
+  const [showInternationalModal, setShowInternationalModal] = useState(false);
 
 // Fetch user profile on mount if logged in
   useEffect(() => {
@@ -88,6 +91,25 @@ export default function CartDrawer() {
       fetchProfile();
     }
   }, [user, showCheckout]);
+
+  // Geolocation visitor country check
+  useEffect(() => {
+    if (isCartOpen) {
+      const checkCountry = async () => {
+        try {
+          const res = await fetch("/api/detect-country");
+          const data = await res.json();
+          if (data.country) {
+            setDetectedCountry(data.country);
+            setIsInternational(data.country !== "IN");
+          }
+        } catch (e) {
+          console.log("Error checking visitor country:", e);
+        }
+      };
+      checkCountry();
+    }
+  }, [isCartOpen]);
 
   // Google Analytics Event Tracking for Checkout Steps
   useEffect(() => {
@@ -166,11 +188,32 @@ export default function CartDrawer() {
     if (!formData.pincode.trim()) {
       newErrors.pincode = "Pincode is required.";
     } else if (!pinRegex.test(formData.pincode.trim())) {
-      newErrors.pincode = "Enter a valid 6-digit Pincode.";
+      newErrors.pincode = "Enter a valid 6-digit Pincode (Domestic shipping only).";
+    }
+
+    // Check for foreign keywords in address, city, or state fields
+    const foreignKeywords = [
+      "united states", "usa", "united kingdom", "uk", "london", "canada", 
+      "australia", "germany", "dubai", "uae", "singapore", "malaysia", 
+      "bangladesh", "pakistan", "new york", "california", "america"
+    ];
+    const addressLower = formData.address.toLowerCase();
+    const cityLower = formData.city.toLowerCase();
+    const stateLower = formData.state.toLowerCase();
+
+    const hasForeignAddress = foreignKeywords.some(keyword => 
+      addressLower.includes(keyword) || 
+      cityLower.includes(keyword) || 
+      stateLower.includes(keyword)
+    );
+
+    if (hasForeignAddress) {
+      setShowInternationalModal(true);
+      newErrors.address = "International delivery addresses are not supported.";
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 && !hasForeignAddress;
   };
 
   const resetCheckout = () => {
@@ -556,6 +599,12 @@ export default function CartDrawer() {
                   )}
                 </div>
 
+                {isInternational && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-[10px] text-amber-900 leading-normal font-medium mb-3">
+                     <strong>International Visitor:</strong> We only ship orders within India. You can place your order from anywhere as long as the delivery address and phone number are in India.
+                  </div>
+                )}
+
                 <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-2">
                   Delivery Details
                 </h3>
@@ -667,6 +716,19 @@ export default function CartDrawer() {
                     className={`w-full bg-stone-50 border ${errors.pincode ? 'border-red-500' : 'border-stone-200'} rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] text-xs`}
                   />
                   {errors.pincode && <p className="text-[10px] text-red-500 mt-1">{errors.pincode}</p>}
+                </div>
+
+                {/* Shipping Country (Fixed to India) */}
+                <div>
+                  <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Shipping Country
+                  </label>
+                  <input
+                    type="text"
+                    value="India (Domestic Delivery Only)"
+                    disabled
+                    className="w-full bg-stone-100 border border-stone-200 rounded-md py-2 px-3 text-stone-500 text-xs font-semibold cursor-not-allowed"
+                  />
                 </div>
 
                 {/* Payment Method */}
@@ -844,6 +906,52 @@ export default function CartDrawer() {
                 className="py-2.5 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all cursor-pointer"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* International Shipping Warning Modal */}
+      {showInternationalModal && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-stone-200 text-center relative space-y-5">
+            <button
+              onClick={() => setShowInternationalModal(false)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 p-1 transition-colors cursor-pointer"
+              aria-label="Close modal"
+            >
+              <FaTimes size={16} />
+            </button>
+
+            <div className="w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto border border-red-200/60 shadow-sm">
+              <span className="text-2xl">✈️</span>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-base font-serif font-bold text-stone-900">
+                International Shipping Not Available
+              </h3>
+              <p className="text-xs text-stone-600 leading-relaxed">
+                We are currently shipping only within India. If you wish to send this order as a gift to family or friends in India, please use an Indian delivery address, pincode, and phone number.
+              </p>
+            </div>
+
+            <div className="bg-stone-50 border border-stone-150 rounded-lg p-3 text-left">
+              <p className="text-[11px] text-stone-600 leading-tight font-medium">
+                🇮🇳 <strong>Domestic Shipping Requirements:</strong>
+                <br />• 10-digit Indian Mobile Number (starts with 6-9)
+                <br />• 6-digit Indian Postal Pincode
+                <br />• Local State and City within India
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={() => setShowInternationalModal(false)}
+                className="w-full py-2.5 bg-stone-900 hover:bg-[#8c6239] text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+              >
+                Got It, Change Address
               </button>
             </div>
           </div>

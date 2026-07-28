@@ -51,6 +51,8 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
   const [selectedSize, setSelectedSize] = useState("3ml");
   const [loading, setLoading] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const gallery = product ? ((product.images && product.images.length > 0) ? product.images : [product.image]) : [];
+
 
   // Dynamic Review State
   const [reviews, setReviews] = useState(initialReviews || []);
@@ -379,14 +381,17 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
   const finalReviewCount = totalReviews > 0 ? totalReviews : 1;
   const finalRatingValue = totalReviews > 0 ? averageRating : (product?.rating || 5.0).toFixed(1);
 
+  const rawClientSku = String(product?.sku || product?.id || "").trim();
+  const clientSku = rawClientSku.length > 50 ? rawClientSku.slice(0, 50) : rawClientSku;
+
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": product.name,
     "image": product.images && product.images.length > 0 ? product.images : [product.image],
     "description": product.description ? product.description.replace(/<[^>]*>/g, '').slice(0, 160).trim() : "",
-    "sku": product.id,
-    "mpn": product.id,
+    "sku": clientSku,
+    "mpn": clientSku,
     "brand": {
       "@type": "Brand",
       "name": "Maaz Oud"
@@ -397,11 +402,47 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
       "priceCurrency": "INR",
       "price": currentPrice,
       "priceValidUntil": "2030-12-31",
+      "validFrom": "2024-01-01",
       "itemCondition": "https://schema.org/NewCondition",
       "availability": "https://schema.org/InStock",
       "seller": {
         "@type": "Organization",
         "name": "Maaz Oud"
+      },
+      "shippingDetails": {
+        "@type": "OfferShippingDetails",
+        "shippingRate": {
+          "@type": "MonetaryAmount",
+          "value": "0",
+          "currency": "INR"
+        },
+        "shippingDestination": {
+          "@type": "DefinedRegion",
+          "addressCountry": "IN"
+        },
+        "deliveryTime": {
+          "@type": "ShippingDeliveryTime",
+          "handlingTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 1,
+            "maxValue": 2,
+            "unitCode": "DAY"
+          },
+          "transitTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 2,
+            "maxValue": 5,
+            "unitCode": "DAY"
+          }
+        }
+      },
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "applicableCountry": "IN",
+        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+        "merchantReturnDays": 7,
+        "returnMethod": "https://schema.org/ReturnByMail",
+        "returnFees": "https://schema.org/FreeReturn"
       }
     },
     "aggregateRating": {
@@ -469,31 +510,39 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 items-start">
 
           <div className="space-y-4 w-full">
-            <div className="relative aspect-4/4 w-full rounded-md border border-stone-200 overflow-hidden bg-stone-50 shadow-sm group">
-              <Image
-                loader={supabaseLoader}
-                src={(product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image}
-                alt={getImageAlt((product.images && product.images.length > 0) ? product.images[activeImageIndex] : product.image, product.name)}
-                width={640}
-                height={640}
-                priority
-                fetchPriority="high"
-                sizes="(max-width: 768px) 100vw, 640px"
-                className="w-full h-full object-contain transition-all duration-300"
-              />
+            <div className="relative aspect-square w-full rounded-md border border-stone-200 overflow-hidden bg-stone-50 shadow-sm group">
+              {/* Sliding Track */}
+              <div 
+                className="flex w-full h-full transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)" 
+                style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
+              >
+                {gallery.map((img, idx) => (
+                  <div key={idx} className="w-full h-full shrink-0 relative flex items-center justify-center">
+                    <Image
+                      loader={supabaseLoader}
+                      src={img}
+                      alt={getImageAlt(img, `${product.name} image ${idx + 1}`)}
+                      fill
+                      priority={idx === 0}
+                      sizes="(max-width: 768px) 100vw, 640px"
+                      className="object-contain w-full h-full"
+                    />
+                  </div>
+                ))}
+              </div>
 
-              {product.images && product.images.length > 1 && (
+              {gallery.length > 1 && (
                 <>
                   <button
-                    onClick={() => setActiveImageIndex((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md opacity-0 group-hover:opacity-100 cursor-pointer"
+                    onClick={() => setActiveImageIndex((prev) => (prev === 0 ? gallery.length - 1 : prev - 1))}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md opacity-0 group-hover:opacity-100 cursor-pointer z-10"
                     aria-label="Previous image"
                   >
                     <FaArrowLeft size={10} />
                   </button>
                   <button
-                    onClick={() => setActiveImageIndex((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md opacity-0 group-hover:opacity-100 cursor-pointer"
+                    onClick={() => setActiveImageIndex((prev) => (prev === gallery.length - 1 ? 0 : prev + 1))}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md opacity-0 group-hover:opacity-100 cursor-pointer z-10"
                     aria-label="Next image"
                   >
                     <FaArrowRight size={10} />
@@ -502,15 +551,15 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
               )}
 
               {product.discount > 0 && (
-                <span className="absolute top-4 left-4 bg-[#8c6239] text-white text-xs uppercase font-bold tracking-widest px-3 py-1.5 rounded shadow">
+                <span className="absolute top-4 left-4 bg-[#8c6239] text-white text-xs uppercase font-bold tracking-widest px-3 py-1.5 rounded shadow z-10">
                   {product.discount}% OFF
                 </span>
               )}
             </div>
 
-            {product.images && product.images.length > 1 && (
+            {gallery.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {product.images.map((img, idx) => (
+                {gallery.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
