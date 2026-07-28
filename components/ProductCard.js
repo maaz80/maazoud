@@ -33,17 +33,27 @@ export default function ProductCard({ product }) {
 
       {/* Product Image & Gallery Slider */}
       <Link href={`/product/${product.slug}`} className="relative aspect-4/4 w-full overflow-hidden block group/img bg-stone-50 border-b border-stone-100">
-        <Image
-          loader={supabaseLoader}
-          src={gallery[activeImgIndex]}
-          alt={getImageAlt(gallery[activeImgIndex], product.name)}
-          width={300}
-          height={300}
-          sizes="(max-width: 640px) 160px, 320px"
-          className="w-full h-full object-cover transition-all duration-300"
-        />
+        {/* Sliding Track */}
+        <div 
+          className="flex w-full h-full transition-transform duration-500 ease-out" 
+          style={{ transform: `translateX(-${activeImgIndex * 100}%)` }}
+        >
+          {gallery.map((img, idx) => (
+            <div key={idx} className="w-full h-full shrink-0 relative">
+              <Image
+                loader={supabaseLoader}
+                src={img}
+                alt={getImageAlt(img, `${product.name} image ${idx + 1}`)}
+                fill
+                sizes="(max-width: 640px) 160px, 320px"
+                className="object-cover w-full h-full"
+              />
+            </div>
+          ))}
+        </div>
+
         {/* Soft overlay */}
-        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover/img:opacity-100 transition-opacity" />
+        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover/img:opacity-100 transition-opacity pointer-events-none" />
 
         {/* Card Gallery Nav Buttons */}
         {gallery.length > 1 && (
