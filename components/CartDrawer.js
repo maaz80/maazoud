@@ -197,23 +197,40 @@ export default function CartDrawer() {
       "australia", "germany", "dubai", "uae", "singapore", "malaysia", 
       "bangladesh", "pakistan", "new york", "california", "america"
     ];
-    const addressLower = formData.address.toLowerCase();
-    const cityLower = formData.city.toLowerCase();
-    const stateLower = formData.state.toLowerCase();
+    
+    const addressVal = (formData.address || "").toLowerCase().trim();
+    const cityVal = (formData.city || "").toLowerCase().trim();
+    const stateVal = (formData.state || "").toLowerCase().trim();
 
-    const hasForeignAddress = foreignKeywords.some(keyword => 
-      addressLower.includes(keyword) || 
-      cityLower.includes(keyword) || 
-      stateLower.includes(keyword)
-    );
+    let hasForeign = false;
 
-    if (hasForeignAddress) {
+    // Check state field
+    const stateHasForeign = foreignKeywords.some(keyword => stateVal.includes(keyword));
+    if (stateHasForeign) {
+      newErrors.state = "We do not deliver to international states. Domestic shipping only.";
+      hasForeign = true;
+    }
+
+    // Check city field
+    const cityHasForeign = foreignKeywords.some(keyword => cityVal.includes(keyword));
+    if (cityHasForeign) {
+      newErrors.city = "We do not deliver to international cities. Domestic shipping only.";
+      hasForeign = true;
+    }
+
+    // Check address field
+    const addressHasForeign = foreignKeywords.some(keyword => addressVal.includes(keyword));
+    if (addressHasForeign) {
+      newErrors.address = "International delivery addresses are not supported. Domestic shipping only.";
+      hasForeign = true;
+    }
+
+    if (hasForeign) {
       setShowInternationalModal(true);
-      newErrors.address = "International delivery addresses are not supported.";
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0 && !hasForeignAddress;
+    return Object.keys(newErrors).length === 0;
   };
 
   const resetCheckout = () => {
