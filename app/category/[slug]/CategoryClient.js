@@ -329,7 +329,7 @@ function CategoryFAQ({ slug, categoryName }) {
   const currentFaqs = faqData[slug] || [
     {
       question: "Are these attars 100% alcohol-free?",
-      answer: "Yes, all Maaz Oud attars are 100% pure perfume oils, completely free of alcohol or chemical solvents."
+      answer: "Yes, all Maaz Oud attars are 100% concentrated perfume oils, completely free of alcohol or chemical solvents."
     },
     {
       question: "How should I apply attar for the best projection?",

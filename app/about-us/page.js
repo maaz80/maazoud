@@ -7,13 +7,13 @@ import { supabase } from "../../utils/supabase";
 
 export const metadata = {
   title: "About Our Heritage | Traditional Attar Distillation",
-  description: "Discover the journey of Maaz Oud. Learn about our traditional Kannauj & Kanpur distillation processes, organic ingredients, and pure alcohol-free attars.",
+  description: "Discover the journey of Maaz Oud. Learn about our traditional Kannauj & Kanpur distillation processes, organic ingredients, and premium alcohol-free attars.",
   alternates: {
     canonical: "/about-us"
   },
   openGraph: {
     title: "About Our Heritage | Traditional Attar Distillation | Maaz Oud",
-    description: "Discover the journey of Maaz Oud. Learn about our traditional Kannauj & Kanpur distillation processes, organic ingredients, and pure alcohol-free attars.",
+    description: "Discover the journey of Maaz Oud. Learn about our traditional Kannauj & Kanpur distillation processes, organic ingredients, and premium alcohol-free attars.",
     url: "https://www.maazoud.in/about-us",
     siteName: "Maaz Oud",
     type: "website",
@@ -22,7 +22,7 @@ export const metadata = {
   twitter: {
     card: "summary",
     title: "About Our Heritage | Traditional Attar Distillation | Maaz Oud",
-    description: "Discover the journey of Maaz Oud. Learn about our traditional Kannauj & Kanpur distillation processes, organic ingredients, and pure alcohol-free attars.",
+    description: "Discover the journey of Maaz Oud. Learn about our traditional Kannauj & Kanpur distillation processes, organic ingredients, and premium alcohol-free attars.",
   }
 };
 

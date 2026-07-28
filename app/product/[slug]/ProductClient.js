@@ -945,7 +945,7 @@ function ProductFAQ({ product }) {
       },
       {
         question: "Are these attars safe for daily skin application?",
-        answer: "Absolutely. Our attars are 100% alcohol-free and formulated with pure essential oils and carrier oils. They are exceptionally gentle on the skin, but we always recommend a brief patch test on the wrist if you have highly sensitive skin."
+        answer: "Absolutely. Our attars are 100% alcohol-free and formulated with premium essential oils and carrier oils. They are exceptionally gentle on the skin, but we always recommend a brief patch test on the wrist if you have highly sensitive skin."
       }
     ];
   } else if (isMusk) {
@@ -971,7 +971,7 @@ function ProductFAQ({ product }) {
     faqItems = [
       {
         question: `How long does ${product.name} fragrance last?`,
-        answer: "Since our attars are 100% pure oil concentrates without any alcohol dilution, they are extremely long-lasting. On skin, they typically last between 8 to 12 hours, and on clothing, the scent can linger for multiple days depending on the specific notes."
+        answer: "Since our attars are 100% concentrated perfume oils without any alcohol dilution, they are extremely long-lasting. On skin, they typically last between 8 to 12 hours, and on clothing, the scent can linger for multiple days depending on the specific notes."
       },
       {
         question: "Are these attars 100% alcohol-free?",

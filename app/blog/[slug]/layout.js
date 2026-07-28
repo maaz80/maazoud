@@ -52,7 +52,7 @@ export async function generateMetadata({ params }) {
   
   return {
     title: "Maaz Oud Journal | Fragrance Guides & Heritage",
-    description: "Read our latest articles on pure oud extraction, attar heritage, and fragrance guides.",
+    description: "Read our latest articles on traditional oud extraction, attar heritage, and fragrance guides.",
     alternates: {
       canonical: "/"
     }

@@ -10,13 +10,13 @@ export const revalidate = 60; // Dynamic server rendering with 1 min cache
 
 export const metadata = {
   title: "Maaz Oud Journal | Perfume Guides, Oud Heritage & Attar Tips",
-  description: "Read the latest articles on pure oud extraction, traditional attar distillation heritage, and fragrance guides from Maaz Oud.",
+  description: "Read the latest articles on traditional oud extraction, traditional attar distillation heritage, and fragrance guides from Maaz Oud.",
   alternates: {
     canonical: "/blog"
   },
   openGraph: {
     title: "Maaz Oud Journal | Perfume Guides & Attar Heritage",
-    description: "Read the latest articles on pure oud extraction, traditional attar distillation heritage, and fragrance guides from Maaz Oud.",
+    description: "Read the latest articles on traditional oud extraction, traditional attar distillation heritage, and fragrance guides from Maaz Oud.",
     url: "https://www.maazoud.in/blog",
     siteName: "Maaz Oud",
     type: "website",
@@ -25,7 +25,7 @@ export const metadata = {
   twitter: {
     card: "summary",
     title: "Maaz Oud Journal | Perfume Guides & Attar Heritage",
-    description: "Read the latest articles on pure oud extraction, traditional attar distillation heritage, and fragrance guides from Maaz Oud.",
+    description: "Read the latest articles on traditional oud extraction, traditional attar distillation heritage, and fragrance guides from Maaz Oud.",
   }
 };
 
@@ -83,7 +83,7 @@ export default async function BlogListPage() {
     },
     {
       question: "How can I find guides on specific attars or ingredients?",
-      answer: "You can read our dedicated articles like 'Attar vs Perfume' or 'How Long Does Attar Last' to understand the core characteristics of our pure oils. We also highlight specific ingredient origins like Khas (Vetiver) and Kashmiri Musk in our detailed blog entries."
+      answer: "You can read our dedicated articles like 'Attar vs Perfume' or 'How Long Does Attar Last' to understand the core characteristics of our premium oils. We also highlight specific ingredient origins like Khas (Vetiver) and Kashmiri Musk in our detailed blog entries."
     },
     {
       question: "Are the products mentioned in the articles available for purchase?",
@@ -123,7 +123,7 @@ export default async function BlogListPage() {
           </h1>
           <div className="w-16 h-0.5 bg-[#8c6239] mx-auto my-3" />
           <p className="text-xs md:text-sm text-stone-300 max-w-xl mx-auto leading-relaxed font-light">
-            Explore our archives for premium perfume guides, attar usage tips, and pure oud distillation heritage.
+            Explore our archives for premium perfume guides, attar usage tips, and traditional oud distillation heritage.
           </p>
         </div>
       </div>

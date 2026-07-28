@@ -48,10 +48,10 @@ export async function generateMetadata({ params }) {
     }
     
     if (product) {
-      const title = `${product.name} Attar | Long-Lasting Pure Perfume Oil`;
+      const title = `${product.name} Attar | Long-Lasting Premium Perfume Oil`;
       const cleanDesc = product.description 
         ? product.description.replace(/<[^>]*>/g, '').slice(0, 155).trim() + "..."
-        : `Buy ${product.name} attar by Maaz Oud. A premium, long-lasting fragrance oil made from 100% pure alcohol-free ingredients. Free shipping across India.`;
+        : `Buy ${product.name} attar by Maaz Oud. A premium, long-lasting fragrance oil made from 100% premium alcohol-free ingredients. Free shipping across India.`;
       
       const imageUrl = product.image;
       const productCanonical = `/product/${product.id}`;
@@ -91,7 +91,7 @@ export async function generateMetadata({ params }) {
   
   return {
     title: "Premium Luxury Attars & Perfumes",
-    description: "Shop premium luxury attars and organic pure perfume oils.",
+    description: "Shop premium luxury attars and organic concentrated perfume oils.",
     alternates: {
       canonical: "/"
     }

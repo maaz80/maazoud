@@ -134,7 +134,7 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
 
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-12 space-y-6 md:space-y-16">
-        <h1 className="sr-only">Maaz Oud | Luxury Pure Attars & Organic Oud Perfumes</h1>
+        <h1 className="sr-only">Maaz Oud | Best Arabic Oud & Luxury Premium Attars below Rs.200</h1>
         
         {/* 2. Categories Section */}
         <section className="space-y-8">
@@ -278,19 +278,27 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
             {[
               {
                 q: "What is an Attar and how is it different from normal perfumes?",
-                a: "Attars are highly concentrated perfume oils extracted naturally from flowers, herbs, and wood (like agarwood or sandalwood). Unlike modern spray perfumes, they are 100% free of alcohol and chemical propellants, making them richer, closer to the skin, and extremely skin-friendly."
+                a: "Attars are highly concentrated perfume oils extracted traditionally from flowers, herbs, and wood (like agarwood or sandalwood). Unlike modern spray perfumes, they are 100% free of alcohol and chemical propellants, making them richer, closer to the skin, and extremely skin-friendly."
+              },
+              {
+                q: "Can I find premium Attar and Oud below Rs.200?",
+                a: "Yes! At Maaz Oud, we offer an exceptional range of long-lasting, concentrated attars and budget-friendly oud fragrances starting at just Rs.199. Popular options under Rs.200 include Khas (Vetiver), Aqua Oud, Black Musk, and Indian Oud, offering luxury scents without the heavy price tag."
+              },
+              {
+                q: "What is the best Oud under Rs.200 for daily wear?",
+                a: "Our Indian Oud (3ml) is highly recommended as the best budget-friendly oud fragrance. It is crafted with rich agarwood notes, providing a warm, woody presence that lasts all day, all for just Rs.199."
               },
               {
                 q: "How long do Maaz Oud attars typically last?",
-                a: "Since our attars are pure oil concentrates without any alcohol dilution, they have exceptional longevity. On the skin, they last between 8 to 12 hours, and on clothing, the scent can linger for multiple days."
+                a: "Since our attars are concentrated perfume oils without any alcohol dilution, they have exceptional longevity. On the skin, they last between 8 to 12 hours, and on clothing, the scent can linger for multiple days."
+              },
+              {
+                q: "What makes Arabic Oud unique compared to other fragrances?",
+                a: "Arabic Oud is famous for its rich, exotic, and deep character. It typically features warm resinous agarwood, spicy notes, and sweet amber or floral elements. At Maaz Oud, we offer premium Arabic Oud-inspired fragrances like Indian Oud and Black Musk, which capture this traditional Middle Eastern essence."
               },
               {
                 q: "Are these attars safe for sensitive skin?",
-                a: "Yes! All Maaz Oud attars are 100% alcohol-free and formulated with premium, skin-safe natural ingredients. If you have highly sensitive skin or known botanical allergies, we suggest doing a small patch test on your inner wrist first."
-              },
-              {
-                q: "How should I apply the attar for the best projection?",
-                a: "For maximum performance, apply a few drops of attar to your pulse points: the wrists, behind the ears, and on the sides of the neck. The heat from these spots naturally diffuses the oil throughout the day. You can also lightly dab it on clothing."
+                a: "Yes! All Maaz Oud attars are 100% alcohol-free and formulated with premium, skin-safe ingredients. If you have highly sensitive skin or known botanical allergies, we suggest doing a small patch test on your inner wrist first."
               }
             ].map((faq, idx) => (
               <details key={idx} className="group border border-gray-200 rounded-md overflow-hidden bg-stone-50/50">
@@ -323,7 +331,23 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
                   "name": "What is an Attar and how is it different from normal perfumes?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Attars are highly concentrated perfume oils extracted naturally from flowers, herbs, and wood (like agarwood or sandalwood). Unlike modern spray perfumes, they are 100% free of alcohol and chemical propellants, making them richer, closer to the skin, and extremely skin-friendly."
+                    "text": "Attars are highly concentrated perfume oils extracted traditionally from flowers, herbs, and wood (like agarwood or sandalwood). Unlike modern spray perfumes, they are 100% free of alcohol and chemical propellants, making them richer, closer to the skin, and extremely skin-friendly."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Can I find premium Attar and Oud below Rs.200?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes! At Maaz Oud, we offer an exceptional range of long-lasting, concentrated attars and budget-friendly oud fragrances starting at just Rs.199. Popular options under Rs.200 include Khas (Vetiver), Aqua Oud, Black Musk, and Indian Oud, offering luxury scents without the heavy price tag."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What is the best Oud under Rs.200 for daily wear?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Our Indian Oud (3ml) is highly recommended as the best budget-friendly oud fragrance. It is crafted with rich agarwood notes, providing a warm, woody presence that lasts all day, all for just Rs.199."
                   }
                 },
                 {
@@ -331,7 +355,15 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
                   "name": "How long do Maaz Oud attars typically last?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Since our attars are pure oil concentrates without any alcohol dilution, they have exceptional longevity. On the skin, they last between 8 to 12 hours, and on clothing, the scent can linger for multiple days."
+                    "text": "Since our attars are concentrated perfume oils without any alcohol dilution, they have exceptional longevity. On the skin, they last between 8 to 12 hours, and on clothing, the scent can linger for multiple days."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What makes Arabic Oud unique compared to other fragrances?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Arabic Oud is famous for its rich, exotic, and deep character. It typically features warm resinous agarwood, spicy notes, and sweet amber or floral elements. At Maaz Oud, we offer premium Arabic Oud-inspired fragrances like Indian Oud and Black Musk, which capture this traditional Middle Eastern essence."
                   }
                 },
                 {
@@ -339,15 +371,7 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
                   "name": "Are these attars safe for sensitive skin?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Yes! All Maaz Oud attars are 100% alcohol-free and formulated with premium, skin-safe natural ingredients. If you have highly sensitive skin or known botanical allergies, we suggest doing a small patch test on your inner wrist first."
-                  }
-                },
-                {
-                  "@type": "Question",
-                  "name": "How should I apply the attar for the best projection?",
-                  "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "For maximum performance, apply a few drops of attar to your pulse points: the wrists, behind the ears, and on the sides of the neck. The heat from these spots naturally diffuses the oil throughout the day. You can also lightly dab it on clothing."
+                    "text": "Yes! All Maaz Oud attars are 100% alcohol-free and formulated with premium, skin-safe ingredients. If you have highly sensitive skin or known botanical allergies, we suggest doing a small patch test on your inner wrist first."
                   }
                 }
               ]

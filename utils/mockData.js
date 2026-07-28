@@ -53,7 +53,7 @@ export const PRODUCTS = [
     originalPrice: 240,
     discount: 25,
     image: "/images/oud_bottle_royal.webp",
-    description: "An intense, dark woody expression of Cambodian Agarwood. Rich in resinous sweet notes and animalic depth, crafted for true connoisseurs of pure aged oud.",
+    description: "An intense, dark woody expression of Cambodian Agarwood. Rich in resinous sweet notes and animalic depth, crafted for true connoisseurs of premium aged oud.",
     size: "3ml (1 Tola)",
     rating: 4.8,
     reviews: 98
@@ -95,7 +95,7 @@ export const PRODUCTS = [
     originalPrice: 80,
     discount: 25,
     image: "/images/oud_bottle_rose.webp",
-    description: "Pure, clean, and velvety smooth white musk with subtle floral and cotton notes. Extremely fresh and refreshing, perfect for high-heat summer afternoons.",
+    description: "Premium, clean, and velvety smooth white musk with subtle floral and cotton notes. Extremely fresh and refreshing, perfect for high-heat summer afternoons.",
     size: "12ml (1 Tola)",
     rating: 4.6,
     reviews: 210
@@ -151,7 +151,7 @@ export const PRODUCTS = [
     originalPrice: 170,
     discount: 23,
     image: "/images/oud_bottle_rose.webp",
-    description: "Sustainably harvested pure Mysore Sandalwood oil. Creamy, milky, rich, and incredibly soothing on the skin, offering a calming scent bubble in warm weather.",
+    description: "Sustainably harvested premium Mysore Sandalwood oil. Creamy, milky, rich, and incredibly soothing on the skin, offering a calming scent bubble in warm weather.",
     size: "3ml (1 Tola)",
     rating: 4.9,
     reviews: 112
@@ -179,7 +179,7 @@ export const PRODUCTS = [
     originalPrice: 380,
     discount: 23,
     image: "/images/oud_bottle_royal.webp",
-    description: "An authentic, deep Siberian Deer Musk maceration in premium sandalwood oil. Intensely warming, highly animalic, spicy, and incredibly long-lasting.",
+    description: "A premium, deep Siberian Deer Musk maceration in premium sandalwood oil. Intensely warming, highly animalic, spicy, and incredibly long-lasting.",
     size: "3ml (1 Tola)",
     rating: 4.9,
     reviews: 51
@@ -193,7 +193,7 @@ export const PRODUCTS = [
     originalPrice: 100,
     discount: 25,
     image: "/images/oud_bottle_rose.webp",
-    description: "Pure Kashmiri saffron distilled into premium sandalwood oil. Spicy, warm, golden-sweet, and highly comforting. A true classic for all seasons.",
+    description: "Premium Kashmiri saffron distilled into premium sandalwood oil. Spicy, warm, golden-sweet, and highly comforting. A true classic for all seasons.",
     size: "6ml (1/2 Tola)",
     rating: 4.8,
     reviews: 94
@@ -203,7 +203,7 @@ export const PRODUCTS = [
 export const BANNERS = [
   {
     id: 1,
-    title: "The Ultimate Luxury of Pure Oud",
+    title: "The Ultimate Luxury of Premium Oud",
     subtitle: "Experience natural, aged agarwood oils and artisanal attars crafted for connoisseurs.",
     image: "/images/oud_banner_1.webp",
     linkText: "Shop the Collection",
@@ -211,7 +211,7 @@ export const BANNERS = [
   },
   {
     id: 2,
-    title: "Pure & Organic Ingredients",
+    title: "Premium & Organic Ingredients",
     subtitle: "Sourced directly from the forests of Assam and Cambodia, distilled with vintage perfection.",
     image: "/images/oud_banner_2.webp",
     linkText: "Explore Heritage",

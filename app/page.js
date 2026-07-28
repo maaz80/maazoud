@@ -16,7 +16,7 @@ async function getInitialData() {
 
     let products = [];
     if (productsRes.data) {
-      products = productsRes.data.map(p => ({
+      const mapped = productsRes.data.map(p => ({
         ...p,
         id: p.id,
         slug: p.id,
@@ -28,6 +28,37 @@ async function getInitialData() {
         size: "3ml",
         category: p.category || "top-selling"
       }));
+
+      // Interleave combo packs and single attars to show affordable single attars mixed in on landing
+      const combos = [];
+      const singles = [];
+      mapped.forEach(p => {
+        let categories = [];
+        if (Array.isArray(p.category)) {
+          categories = p.category;
+        } else if (typeof p.category === 'string') {
+          categories = p.category.split(',').map(c => c.trim());
+        }
+        if (categories.includes('combo-packs')) {
+          combos.push(p);
+        } else {
+          singles.push(p);
+        }
+      });
+
+      let comboIdx = 0;
+      let singleIdx = 0;
+      while (singleIdx < singles.length || comboIdx < combos.length) {
+        if (singleIdx < singles.length) {
+          products.push(singles[singleIdx++]);
+        }
+        if (comboIdx < combos.length) {
+          products.push(combos[comboIdx++]);
+        }
+        if (singleIdx < singles.length) {
+          products.push(singles[singleIdx++]);
+        }
+      }
     }
 
     return {
@@ -52,7 +83,7 @@ export default async function Home() {
     "@type": "Product",
     "name": "Maaz Oud Luxury Perfumes",
     "image": "https://www.maazoud.in/maazoud-logo.webp",
-    "description": "Premium collection of pure Cambodian Oud, Indian Agarwood, and non-alcoholic botanical attars.",
+    "description": "Premium collection of exquisite Cambodian Oud, Indian Agarwood, and non-alcoholic botanical attars.",
     "sku": "brand-maazoud-perfumes",
     "brand": {
       "@type": "Brand",
@@ -61,9 +92,9 @@ export default async function Home() {
     "offers": {
       "@type": "AggregateOffer",
       "priceCurrency": "INR",
-      "lowPrice": "499",
-      "highPrice": "5999",
-      "offerCount": "6",
+      "lowPrice": "199",
+      "highPrice": "399",
+      "offerCount": "7",
       "availability": "https://schema.org/InStock",
       "url": "https://www.maazoud.in/"
     },
@@ -100,8 +131,8 @@ export default async function Home() {
           "@type": "Person",
           "name": "Vikram Singh"
         },
-        "headline": "Truly Natural & Pure",
-        "reviewBody": "Mitti Attar and Ruh Khus are outstanding. Pure, alcohol-free, and natural scent."
+        "headline": "Truly Premium & Long-Lasting",
+        "reviewBody": "Mitti Attar and Ruh Khus are outstanding. Alcohol-free and exquisite scent."
       }
     ]
   };

@@ -94,7 +94,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3 p-4 bg-stone-50 border border-stone-150 rounded text-stone-700">
             <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider mb-2">4. Important Return Policy</h3>
             <p className="leading-relaxed">
-              <strong>Please Note:</strong> Because attars and oud oils are personal care products, hygienic integrity is critical. To ensure that every customer receives 100% pure, untainted, and factory-sealed oils, <strong>all sales are final. Products sold on Maaz Oud are non-returnable and non-exchangeable</strong> once delivered. We appreciate your understanding in helping us maintain the highest standards of purity.
+              <strong>Please Note:</strong> Because attars and oud oils are personal care products, hygienic integrity is critical. To ensure that every customer receives 100% brand-new, untainted, and factory-sealed oils, <strong>all sales are final. Products sold on Maaz Oud are non-returnable and non-exchangeable</strong> once delivered. We appreciate your understanding in helping us maintain the highest standards of purity.
             </p>
           </section>
 

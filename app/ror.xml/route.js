@@ -5,7 +5,7 @@ export async function GET() {
   let items = `
     <item>
       <link>${baseUrl}/</link>
-      <title>Maaz Oud | Luxury Pure Attars &amp; Organic Oud Perfumes</title>
+      <title>Maaz Oud | Luxury Premium Attars &amp; Organic Oud Perfumes</title>
       <ror:updatePeriod>day</ror:updatePeriod>
       <ror:sortOrder>1</ror:sortOrder>
       <ror:resourceOf>sitemap</ror:resourceOf>

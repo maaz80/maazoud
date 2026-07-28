@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
     
     if (category) {
       const title = `${category.name} Attars Collection | Premium Fragrances`;
-      const description = category.description || `Explore our exquisite collection of premium, 100% pure alcohol-free ${category.name} attars and luxury perfume oils at Maaz Oud.`;
+      const description = category.description || `Explore our exquisite collection of premium, 100% premium alcohol-free ${category.name} attars and luxury perfume oils at Maaz Oud.`;
       const imageUrl = category.image || "https://www.maazoud.in/maazoud-logo.webp";
       return {
         title,
@@ -50,7 +50,7 @@ export async function generateMetadata({ params }) {
   
   return {
     title: "Premium Attars Collection",
-    description: "Shop luxury attars and organic pure perfume oils by category.",
+    description: "Shop luxury attars and organic concentrated perfume oils by category.",
     alternates: {
       canonical: "/"
     }

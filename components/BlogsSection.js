@@ -61,7 +61,7 @@ export default function BlogsSection({ initialBlogs }) {
         </h2>
         <div className="w-16 h-0.5 bg-[#8c6239] mx-auto" />
         <p className="text-xs text-stone-500 max-w-md mx-auto leading-relaxed">
-          Read our latest articles on pure oud extraction, attar heritage, and fragrance guides.
+          Read our latest articles on traditional oud extraction, attar heritage, and fragrance guides.
         </p>
       </div>
 

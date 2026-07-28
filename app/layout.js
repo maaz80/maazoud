@@ -20,21 +20,21 @@ export const metadata = {
   metadataBase: new URL("https://www.maazoud.in"),
   applicationName: "Maaz Oud",
   title: {
-    default: "Maaz Oud | Best Oud Attar & Pure Perfume Oils in India",
+    default: "Maaz Oud | Best Oud Attar & Premium Perfume Oils in India",
     template: "%s | Maaz Oud"
   },
   alternates: {
     canonical: "/"
   },
-  description: "Buy premium oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and luxury oud fragrances.",
+  description: "Buy premium oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India, including high-quality Arabic Oud and best pocket attars below Rs.200. Explore premium, alcohol-free perfume oils, traditional ittar, premium khas, mitti attar, and luxury oud fragrances.",
   keywords: [
     "maaz oud",
     "best oud attar in india",
-    "buy original oud attar online",
-    "pure oud perfume oil price",
+    "buy premium oud attar online",
+    "premium oud perfume oil price",
     "long lasting attar for men",
     "alcohol-free perfume oil india",
-    "natural ittar online",
+    "premium ittar online",
     "ruh khus attar",
     "khas attar",
     "mitti attar",
@@ -42,13 +42,19 @@ export const metadata = {
     "kasturi musk",
     "organic oud perfumes",
     "non-alcoholic fragrances",
-    "pure perfume oil",
+    "premium perfume oil",
     "khushbu",
-    "oud fragrance online"
+    "oud fragrance online",
+    "attar below rs 200",
+    "attar under 200",
+    "oud below rs 200",
+    "best oud under rs 200",
+    "best oud",
+    "arabic oud"
   ],
   openGraph: {
-    title: "Maaz Oud | Best Oud Attar & Pure Perfume Oils in India",
-    description: "Buy premium oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and luxury oud fragrances.",
+    title: "Maaz Oud | Best Oud Attar & Premium Perfume Oils in India",
+    description: "Buy premium oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India, including high-quality Arabic Oud and best pocket attars below Rs.200. Explore premium, alcohol-free perfume oils, traditional ittar, premium khas, mitti attar, and luxury oud fragrances.",
     url: "https://www.maazoud.in",
     siteName: "Maaz Oud",
     images: [
@@ -64,8 +70,8 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Maaz Oud | Best Oud Attar & Pure Perfume Oils in India",
-    description: "Buy premium oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India. Explore pure, alcohol-free perfume oils, natural ittar, premium khas, mitti attar, and luxury oud fragrances.",
+    title: "Maaz Oud | Best Oud Attar & Premium Perfume Oils in India",
+    description: "Buy premium oud attar online at Maaz Oud. Discover the best long-lasting attar for men & women in India, including high-quality Arabic Oud and best pocket attars below Rs.200. Explore premium, alcohol-free perfume oils, traditional ittar, premium khas, mitti attar, and luxury oud fragrances.",
     images: ["/maazoud-logo.webp"],
   },
   robots: {
@@ -125,7 +131,7 @@ export default function RootLayout({ children }) {
               "name": "Maaz Oud",
               "url": "https://www.maazoud.in/",
               "logo": "https://www.maazoud.in/maazoud-logo.webp",
-              "description": "Experience the ultimate luxury of pure Cambodian Oud, Indian Agarwood, non-alcoholic botanical attars, and premium natural fragrances.",
+              "description": "Experience the ultimate luxury of premium Cambodian Oud, Indian Agarwood, non-alcoholic botanical attars, and luxury fragrances.",
               "telephone": "+919616584237",
               "address": {
                 "@type": "PostalAddress",

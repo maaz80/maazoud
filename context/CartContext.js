@@ -83,8 +83,40 @@ export function CartProvider({ children }) {
         category: p.category || "top-selling"
       }));
 
-      if (data) setGlobalProducts(formatted);
-      return formatted;
+      // Interleave combo packs and single attars to show affordable single attars mixed in on landing
+      const combos = [];
+      const singles = [];
+      formatted.forEach(p => {
+        let categories = [];
+        if (Array.isArray(p.category)) {
+          categories = p.category;
+        } else if (typeof p.category === 'string') {
+          categories = p.category.split(',').map(c => c.trim());
+        }
+        if (categories.includes('combo-packs')) {
+          combos.push(p);
+        } else {
+          singles.push(p);
+        }
+      });
+
+      let interleaved = [];
+      let comboIdx = 0;
+      let singleIdx = 0;
+      while (singleIdx < singles.length || comboIdx < combos.length) {
+        if (singleIdx < singles.length) {
+          interleaved.push(singles[singleIdx++]);
+        }
+        if (comboIdx < combos.length) {
+          interleaved.push(combos[comboIdx++]);
+        }
+        if (singleIdx < singles.length) {
+          interleaved.push(singles[singleIdx++]);
+        }
+      }
+
+      if (data) setGlobalProducts(interleaved);
+      return interleaved;
     } catch (e) {
       console.error("Error fetching products:", e.message);
       return [];
