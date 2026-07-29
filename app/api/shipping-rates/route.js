@@ -66,7 +66,7 @@ export async function POST(request) {
     }
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(userToken);
-    if (authError || !user || user.email !== 'maazshakeel008@gmail.com') {
+    if (authError || !user || user.email !== 'maazforlap@gmail.com') {
       return NextResponse.json({ error: "Access Denied: Only the store Administrator is authorized to perform this action." }, { status: 403, headers: corsHeaders });
     }
 
