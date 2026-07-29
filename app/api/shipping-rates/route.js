@@ -336,6 +336,76 @@ export async function POST(request) {
       }, { headers: corsHeaders });
     }
 
+    // ACTION 3: Generate Shipping Label
+    if (action === 'generate_label') {
+      const { shipment_id } = body;
+
+      if (!shipment_id) {
+        return NextResponse.json({ error: "Shipment ID is required to generate a label." }, { status: 400, headers: corsHeaders });
+      }
+
+      const token = await getShiprocketToken();
+
+      const labelRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/generate/label`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ shipment_id: [parseInt(shipment_id)] }),
+        cache: 'no-store'
+      });
+
+      const labelData = await labelRes.json();
+
+      if (!labelRes.ok) {
+        return NextResponse.json({ error: labelData.message || "Failed to generate shipping label." }, { status: labelRes.status, headers: corsHeaders });
+      }
+
+      const labelUrl = labelData?.label_url || labelData?.data?.label_url;
+
+      if (!labelUrl) {
+        return NextResponse.json({ error: "Shiprocket did not return a label URL. The label may not be ready yet — please try again in a moment." }, { status: 500, headers: corsHeaders });
+      }
+
+      return NextResponse.json({ success: true, label_url: labelUrl }, { headers: corsHeaders });
+    }
+
+    // ACTION 4: Generate Manifest
+    if (action === 'generate_manifest') {
+      const { shipment_id } = body;
+
+      if (!shipment_id) {
+        return NextResponse.json({ error: "Shipment ID is required to generate a manifest." }, { status: 400, headers: corsHeaders });
+      }
+
+      const token = await getShiprocketToken();
+
+      const manifestRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/generate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ shipment_id: [parseInt(shipment_id)] }),
+        cache: 'no-store'
+      });
+
+      const manifestData = await manifestRes.json();
+
+      if (!manifestRes.ok) {
+        return NextResponse.json({ error: manifestData.message || "Failed to generate manifest." }, { status: manifestRes.status, headers: corsHeaders });
+      }
+
+      const manifestUrl = manifestData?.manifest_url || manifestData?.data?.manifest_url;
+
+      if (!manifestUrl) {
+        return NextResponse.json({ error: "Shiprocket did not return a manifest URL. Please try again in a moment." }, { status: 500, headers: corsHeaders });
+      }
+
+      return NextResponse.json({ success: true, manifest_url: manifestUrl }, { headers: corsHeaders });
+    }
+
     return NextResponse.json({ error: "Invalid action" }, { status: 400, headers: corsHeaders });
 
   } catch (error) {
