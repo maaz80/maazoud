@@ -260,6 +260,7 @@ export async function POST(request) {
         payment_method: isCod ? "COD" : "Prepaid",
         sub_total: parseFloat(order.total_amount) || 0,
         length: parsedLength,
+        breadth: parsedWidth,
         width: parsedWidth,
         height: parsedHeight,
         weight: parsedWeight
