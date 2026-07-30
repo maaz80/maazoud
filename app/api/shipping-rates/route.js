@@ -598,9 +598,30 @@ export async function POST(request) {
 
       let manifestUrl = findUrlInObj(manifestData);
 
-      // 2. Fallback to print endpoint if generate endpoint didn't return direct URL
+      // If check_ids returned, wait 1.5 seconds for Shiprocket to finalize manifest generation
+      const checkIds = manifestData.check_ids || manifestData.data?.check_ids;
+      if (!manifestUrl && checkIds) {
+        console.log("Manifest check_ids received. Waiting 1.5 seconds for generation...", checkIds);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Try print with check_ids
+        const checkPrintRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ check_ids: checkIds }),
+          cache: 'no-store'
+        });
+        const checkPrintData = await checkPrintRes.json();
+        console.log("Shiprocket Print with check_ids response:", JSON.stringify(checkPrintData, null, 2));
+        manifestUrl = findUrlInObj(checkPrintData);
+      }
+
+      // 2. Fallback to print endpoint with shipment_id if direct URL not found yet
       if (!manifestUrl) {
-        console.log("Trying Shiprocket Print Manifest endpoint fallback...");
+        console.log("Trying Shiprocket Print Manifest with shipment_id fallback...");
         const printRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
           method: 'POST',
           headers: {
@@ -618,8 +639,8 @@ export async function POST(request) {
 
       if (!manifestUrl) {
         return NextResponse.json({ 
-          error: `Shiprocket did not return a manifest URL. Raw Response: ${JSON.stringify(manifestData)}`
-        }, { status: 500, headers: corsHeaders });
+          error: `Manifest request initiated on Shiprocket (check_ids: ${JSON.stringify(checkIds || [])}). Please click 'Download Manifest' again in a few seconds. Response: ${JSON.stringify(manifestData)}`
+        }, { status: 400, headers: corsHeaders });
       }
 
       return NextResponse.json({ success: true, manifest_url: manifestUrl }, { headers: corsHeaders });
