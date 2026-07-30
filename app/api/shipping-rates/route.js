@@ -582,6 +582,24 @@ export async function POST(request) {
         return null;
       };
 
+      // 0. Trigger Pickup Generation (Shiprocket requires pickup to be requested before manifest can be generated)
+      try {
+        console.log("Triggering Shiprocket Pickup Request for shipment:", parsedShipmentId);
+        const pickupRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/generate/pickup`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ shipment_id: [parsedShipmentId] }),
+          cache: 'no-store'
+        });
+        const pickupData = await pickupRes.json();
+        console.log("Shiprocket Pickup Response:", JSON.stringify(pickupData, null, 2));
+      } catch (pickupErr) {
+        console.error("Pickup trigger error:", pickupErr);
+      }
+
       // 1. Try generate endpoint
       let manifestRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/generate`, {
         method: 'POST',
