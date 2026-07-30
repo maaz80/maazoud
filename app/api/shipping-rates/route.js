@@ -194,19 +194,22 @@ export async function POST(request) {
         });
       }
 
+      // Append timestamp to order_id to ensure uniqueness on retries.
+      // Shiprocket returns "Oops! Invalid Data." if the same order_id is submitted twice.
+      const shiprocketOrderIdSuffix = Date.now();
       const shiprocketOrderPayload = {
-        order_id: order.id,
+        order_id: `${order.id}-${shiprocketOrderIdSuffix}`,
         order_date: new Date(order.created_at).toISOString().replace(/T/, ' ').replace(/\..+/, ''),
         pickup_location: pickup_location,
         billing_customer_name: order.customer_name.split(' ')[0] || "Customer",
         billing_last_name: order.customer_name.split(' ').slice(1).join(' ') || "",
         billing_address: order.address,
         billing_city: order.city,
-        billing_pincode: order.pincode,
+        billing_pincode: String(order.pincode).trim(),
         billing_state: order.state,
         billing_country: "India",
-        billing_email: `${order.phone}@maazoud-customer.in`, // Fallback dummy email
-        billing_phone: order.phone,
+        billing_email: order.email || `${order.phone}@maazoud-customer.in`,
+        billing_phone: String(order.phone).replace(/\D/g, '').slice(-10),
         shipping_is_billing: true,
         order_items: orderItems,
         payment_method: isCod ? "COD" : "Prepaid",
