@@ -563,27 +563,63 @@ export async function POST(request) {
       }
 
       const token = await getShiprocketToken();
+      const parsedShipmentId = parseInt(shipment_id);
 
-      const manifestRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/generate`, {
+      // Helper to find any URL in response object
+      const findUrlInObj = (obj) => {
+        if (!obj) return null;
+        if (typeof obj === 'string' && (obj.startsWith('http://') || obj.startsWith('https://'))) {
+          return obj;
+        }
+        if (typeof obj === 'object') {
+          if (obj.manifest_url) return obj.manifest_url;
+          if (obj.url) return obj.url;
+          for (const key of Object.keys(obj)) {
+            const found = findUrlInObj(obj[key]);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      // 1. Try generate endpoint
+      let manifestRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/generate`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ shipment_id: [parseInt(shipment_id)] }),
+        body: JSON.stringify({ shipment_id: [parsedShipmentId] }),
         cache: 'no-store'
       });
 
-      const manifestData = await manifestRes.json();
+      let manifestData = await manifestRes.json();
+      console.log("Shiprocket Generate Manifest Response:", JSON.stringify(manifestData, null, 2));
 
-      if (!manifestRes.ok) {
-        return NextResponse.json({ error: manifestData.message || "Failed to generate manifest." }, { status: manifestRes.status, headers: corsHeaders });
+      let manifestUrl = findUrlInObj(manifestData);
+
+      // 2. Fallback to print endpoint if generate endpoint didn't return direct URL
+      if (!manifestUrl) {
+        console.log("Trying Shiprocket Print Manifest endpoint fallback...");
+        const printRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ shipment_id: [parsedShipmentId] }),
+          cache: 'no-store'
+        });
+
+        const printData = await printRes.json();
+        console.log("Shiprocket Print Manifest Response:", JSON.stringify(printData, null, 2));
+        manifestUrl = findUrlInObj(printData);
       }
 
-      const manifestUrl = manifestData?.manifest_url || manifestData?.data?.manifest_url;
-
       if (!manifestUrl) {
-        return NextResponse.json({ error: "Shiprocket did not return a manifest URL. Please try again in a moment." }, { status: 500, headers: corsHeaders });
+        return NextResponse.json({ 
+          error: `Shiprocket did not return a manifest URL. Raw Response: ${JSON.stringify(manifestData)}`
+        }, { status: 500, headers: corsHeaders });
       }
 
       return NextResponse.json({ success: true, manifest_url: manifestUrl }, { headers: corsHeaders });
