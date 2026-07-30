@@ -598,48 +598,72 @@ export async function POST(request) {
 
       let manifestUrl = findUrlInObj(manifestData);
 
-      // If check_ids returned, wait 1.5 seconds for Shiprocket to finalize manifest generation
+      // If check_ids returned or direct URL not found, check multiple manifest endpoints
       const checkIds = manifestData.check_ids || manifestData.data?.check_ids;
-      if (!manifestUrl && checkIds) {
-        console.log("Manifest check_ids received. Waiting 1.5 seconds for generation...", checkIds);
-        await new Promise(resolve => setTimeout(resolve, 1500));
+      const checkIdsStr = Array.isArray(checkIds) ? checkIds.join(',') : checkIds;
 
-        // Try print with check_ids
-        const checkPrintRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ check_ids: checkIds }),
-          cache: 'no-store'
-        });
-        const checkPrintData = await checkPrintRes.json();
-        console.log("Shiprocket Print with check_ids response:", JSON.stringify(checkPrintData, null, 2));
-        manifestUrl = findUrlInObj(checkPrintData);
+      // Endpoint Fallback 1: GET /v1/external/manifests/generate/label?check_ids=...
+      if (!manifestUrl && checkIdsStr) {
+        try {
+          console.log(`Checking /v1/external/manifests/generate/label?check_ids=${checkIdsStr}`);
+          const res1 = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/generate/label?check_ids=${checkIdsStr}`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            cache: 'no-store'
+          });
+          const d1 = await res1.json();
+          console.log("Manifest GET label res:", JSON.stringify(d1, null, 2));
+          manifestUrl = findUrlInObj(d1);
+        } catch (e) { console.error("Manifest check 1 failed:", e); }
       }
 
-      // 2. Fallback to print endpoint with shipment_id if direct URL not found yet
-      if (!manifestUrl) {
-        console.log("Trying Shiprocket Print Manifest with shipment_id fallback...");
-        const printRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ shipment_id: [parsedShipmentId] }),
-          cache: 'no-store'
-        });
+      // Endpoint Fallback 2: POST /v1/external/manifests/print with check_ids
+      if (!manifestUrl && checkIds) {
+        try {
+          const res2 = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ check_ids: Array.isArray(checkIds) ? checkIds : [checkIds] }),
+            cache: 'no-store'
+          });
+          const d2 = await res2.json();
+          console.log("Manifest POST print check_ids res:", JSON.stringify(d2, null, 2));
+          manifestUrl = findUrlInObj(d2);
+        } catch (e) { console.error("Manifest check 2 failed:", e); }
+      }
 
-        const printData = await printRes.json();
-        console.log("Shiprocket Print Manifest Response:", JSON.stringify(printData, null, 2));
-        manifestUrl = findUrlInObj(printData);
+      // Endpoint Fallback 3: POST /v1/external/manifests/print with shipment_id
+      if (!manifestUrl) {
+        try {
+          const res3 = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shipment_id: [parsedShipmentId] }),
+            cache: 'no-store'
+          });
+          const d3 = await res3.json();
+          console.log("Manifest POST print shipment_id res:", JSON.stringify(d3, null, 2));
+          manifestUrl = findUrlInObj(d3);
+        } catch (e) { console.error("Manifest check 3 failed:", e); }
+      }
+
+      // Endpoint Fallback 4: GET /v1/external/orders/print/manifest
+      if (!manifestUrl) {
+        try {
+          const res4 = await fetch(`${SHIPROCKET_API_BASE}/v1/external/orders/print/manifest?order_ids=${parsedShipmentId}`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            cache: 'no-store'
+          });
+          const d4 = await res4.json();
+          console.log("Manifest GET orders print manifest res:", JSON.stringify(d4, null, 2));
+          manifestUrl = findUrlInObj(d4);
+        } catch (e) { console.error("Manifest check 4 failed:", e); }
       }
 
       if (!manifestUrl) {
         return NextResponse.json({ 
-          error: `Manifest request initiated on Shiprocket (check_ids: ${JSON.stringify(checkIds || [])}). Please click 'Download Manifest' again in a few seconds. Response: ${JSON.stringify(manifestData)}`
+          error: `Shiprocket manifest compilation in progress (check_ids: ${JSON.stringify(checkIds || [])}). Please try clicking 'Download Manifest' again in 5-10 seconds. Initial Response: ${JSON.stringify(manifestData)}`
         }, { status: 400, headers: corsHeaders });
       }
 
