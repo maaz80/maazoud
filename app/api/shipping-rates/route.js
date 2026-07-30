@@ -186,7 +186,7 @@ export async function POST(request) {
       const parsedHeight = parseFloat(height) || 10;
 
       // Extract details
-      const pickup_location = process.env.SHIPROCKET_PICKUP_LOCATION || 'Primary';
+      const pickup_location = process.env.SHIPROCKET_PICKUP_LOCATION || 'Home';
       const isCod = order.payment_method ? (order.payment_method.toLowerCase().includes('cod') || order.payment_method.toLowerCase().includes('cash on delivery')) : false;
 
       const token = await getShiprocketToken();
@@ -269,7 +269,7 @@ export async function POST(request) {
       console.log("Creating Shiprocket Order Payload:", JSON.stringify(shiprocketOrderPayload, null, 2));
 
       // 2. Register Order on Shiprocket
-      const createOrderRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/orders/create/adhoc`, {
+      let createOrderRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/orders/create/adhoc`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -279,8 +279,30 @@ export async function POST(request) {
         cache: 'no-store'
       });
 
-      const createOrderData = await createOrderRes.json();
+      let createOrderData = await createOrderRes.json();
       console.log("Shiprocket Create Order Response:", JSON.stringify(createOrderData, null, 2));
+
+      // Auto-recovery: If pickup location is invalid, pick valid location returned in response and retry
+      if (createOrderData.message && createOrderData.message.toLowerCase().includes('pickup location')) {
+        const locations = createOrderData.data?.data || createOrderData.data || [];
+        if (Array.isArray(locations) && locations.length > 0 && locations[0].pickup_location) {
+          const autoLocation = locations[0].pickup_location;
+          console.log(`Auto-recovering pickup_location to '${autoLocation}'`);
+          shiprocketOrderPayload.pickup_location = autoLocation;
+          
+          createOrderRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/orders/create/adhoc`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(shiprocketOrderPayload),
+            cache: 'no-store'
+          });
+          createOrderData = await createOrderRes.json();
+          console.log("Shiprocket Retry Create Order Response:", JSON.stringify(createOrderData, null, 2));
+        }
+      }
 
       if (!createOrderRes.ok || createOrderData.status_code === 400 || (createOrderData.status_code && createOrderData.status_code !== 1 && !createOrderData.order_id)) {
         if (createOrderData.message && (createOrderData.message.toLowerCase().includes('wallet') || createOrderData.message.toLowerCase().includes('balance'))) {
