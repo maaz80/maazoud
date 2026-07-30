@@ -290,11 +290,40 @@ export async function POST(request) {
         return NextResponse.json({ error: detailedErr }, { status: createOrderRes.status || 400, headers: corsHeaders });
       }
 
-      const shiprocketOrderId = createOrderData.order_id;
-      const shiprocketShipmentId = createOrderData.shipment_id;
+      const shiprocketOrderId = createOrderData.order_id || createOrderData.data?.order_id;
+      let shiprocketShipmentId = createOrderData.shipment_id || 
+                                 createOrderData.data?.shipment_id || 
+                                 (Array.isArray(createOrderData.shipments) && (createOrderData.shipments[0]?.id || createOrderData.shipments[0]?.shipment_id)) ||
+                                 (createOrderData.data?.shipments && (createOrderData.data.shipments[0]?.id || createOrderData.data.shipments[0]?.shipment_id));
+
+      // Fallback: If shipment_id is missing from initial creation response, fetch order details by order_id
+      if (!shiprocketShipmentId && shiprocketOrderId) {
+        try {
+          const showOrderRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/orders/show/${shiprocketOrderId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store'
+          });
+          const showOrderData = await showOrderRes.json();
+          console.log("Shiprocket Show Order Response:", JSON.stringify(showOrderData, null, 2));
+
+          shiprocketShipmentId = showOrderData.data?.shipment_id || 
+                                 showOrderData.data?.shipments?.[0]?.id || 
+                                 showOrderData.shipment_id || 
+                                 (Array.isArray(showOrderData.shipments) && showOrderData.shipments[0]?.id);
+        } catch (fetchErr) {
+          console.error("Failed to fetch order details fallback from Shiprocket:", fetchErr);
+        }
+      }
 
       if (!shiprocketShipmentId) {
-        return NextResponse.json({ error: "Shiprocket created the order but did not return a Shipment ID." }, { status: 500, headers: corsHeaders });
+        return NextResponse.json({ 
+          error: `Shiprocket created order (ID: ${shiprocketOrderId || 'Unknown'}), but did not return a Shipment ID. Response: ${JSON.stringify(createOrderData)}`,
+          shiprocket_order_id: shiprocketOrderId
+        }, { status: 500, headers: corsHeaders });
       }
 
       // 3. Assign selected courier and generate AWB
