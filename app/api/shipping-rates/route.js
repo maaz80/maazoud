@@ -399,13 +399,61 @@ export async function POST(request) {
         }, { status: 400, headers: corsHeaders });
       }
 
-      const awbResponse = assignAwbData?.data?.response || assignAwbData?.response || {};
-      const awbCode = awbResponse?.awb_code;
-      const courierName = awbResponse?.courier_name || "Shiprocket Courier";
-      const shipmentCharge = parseFloat(awbResponse?.rate) || 0;
+      let awbCode = null;
+      let courierName = "Shiprocket Courier";
+      let shipmentCharge = 0;
+
+      // Deep search helper for AWB details inside assignAwbData
+      const findAwbInObj = (obj) => {
+        if (!obj || typeof obj !== 'object') return null;
+        if (obj.awb_code) return obj;
+        for (const key of Object.keys(obj)) {
+          if (typeof obj[key] === 'object') {
+            const found = findAwbInObj(obj[key]);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const awbObj = findAwbInObj(assignAwbData);
+      if (awbObj) {
+        awbCode = awbObj.awb_code;
+        courierName = awbObj.courier_name || courierName;
+        shipmentCharge = parseFloat(awbObj.rate) || shipmentCharge;
+      }
+
+      // Fallback: If AWB code is missing, query order/shipment details directly from Shiprocket
+      if (!awbCode && (shiprocketOrderId || shiprocketShipmentId)) {
+        try {
+          const checkRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/orders/show/${shiprocketOrderId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store'
+          });
+          const checkData = await checkRes.json();
+          console.log("Shiprocket Order Check for AWB:", JSON.stringify(checkData, null, 2));
+
+          const orderAwbObj = findAwbInObj(checkData);
+          if (orderAwbObj) {
+            awbCode = orderAwbObj.awb_code;
+            courierName = orderAwbObj.courier_name || courierName;
+            shipmentCharge = parseFloat(orderAwbObj.rate) || shipmentCharge;
+          }
+        } catch (checkErr) {
+          console.error("Error fetching order AWB fallback:", checkErr);
+        }
+      }
 
       if (!awbCode) {
-        return NextResponse.json({ error: "Shiprocket did not return an AWB Code. Please check Shiprocket Dashboard." }, { status: 500, headers: corsHeaders });
+        return NextResponse.json({ 
+          error: `Shiprocket assigned shipment but did not return an AWB Code. Raw Assign Response: ${JSON.stringify(assignAwbData)}`,
+          shiprocket_order_id: shiprocketOrderId,
+          shiprocket_shipment_id: shiprocketShipmentId
+        }, { status: 500, headers: corsHeaders });
       }
 
       // 4. Update order details in Supabase
