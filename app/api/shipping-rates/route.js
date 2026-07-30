@@ -241,6 +241,26 @@ export async function POST(request) {
       // Date formatting: YYYY-MM-DD HH:mm
       const orderDateStr = order.created_at ? new Date(order.created_at).toISOString().replace(/T/, ' ').replace(/\..+/, '') : new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 
+      // Calculate subtotal of items and shipping charge collected from customer
+      const itemsSubtotal = (order.items || []).reduce((acc, item) => {
+        const itemPrice = parseFloat(item.price) || 0;
+        const itemQty = parseInt(item.quantity) || 1;
+        return acc + (itemPrice * itemQty);
+      }, 0);
+
+      const totalAmount = parseFloat(order.total_amount) || 0;
+      let customerShippingCharge = 0;
+
+      if (order.shipping_charge !== undefined && order.shipping_charge !== null) {
+        customerShippingCharge = parseFloat(order.shipping_charge) || 0;
+      } else if (order.delivery_charge !== undefined && order.delivery_charge !== null) {
+        customerShippingCharge = parseFloat(order.delivery_charge) || 0;
+      } else if (totalAmount > itemsSubtotal && itemsSubtotal > 0) {
+        customerShippingCharge = totalAmount - itemsSubtotal;
+      }
+
+      const calcSubTotal = itemsSubtotal > 0 ? itemsSubtotal : Math.max(0, totalAmount - customerShippingCharge);
+
       const shiprocketOrderIdSuffix = Date.now();
       const shiprocketOrderPayload = {
         order_id: `${order.id}-${shiprocketOrderIdSuffix}`,
@@ -258,7 +278,8 @@ export async function POST(request) {
         shipping_is_billing: true,
         order_items: orderItems,
         payment_method: isCod ? "COD" : "Prepaid",
-        sub_total: parseFloat(order.total_amount) || 0,
+        sub_total: calcSubTotal,
+        shipping_charges: customerShippingCharge,
         length: parsedLength,
         breadth: parsedWidth,
         width: parsedWidth,
@@ -457,13 +478,15 @@ export async function POST(request) {
       }
 
       // 4. Update order details in Supabase
+      const finalShippingCharge = shipmentCharge > 0 ? shipmentCharge : customerShippingCharge;
+
       const updatePayload = {
         status: "Shipped",
         shiprocket_order_id: shiprocketOrderId.toString(),
         shiprocket_shipment_id: shiprocketShipmentId.toString(),
         shiprocket_awb: awbCode.toString(),
         shiprocket_courier_name: courierName,
-        shiprocket_charge: shipmentCharge,
+        shiprocket_charge: finalShippingCharge,
         shiprocket_status: "AWB Assigned",
         shipment_details: {
           create_order_response: createOrderData,
