@@ -162,7 +162,7 @@ export async function POST(request) {
 
     // ACTION 2: Create Order & Assign AWB
     if (action === 'create_shipment') {
-      const { order_id, courier_id, weight, length, width, height } = body;
+      const { order_id, courier_id, weight, length, width, height, pickup_date } = body;
 
       if (!order_id || !courier_id) {
         return NextResponse.json({ error: "Order ID and Courier ID are required." }, { status: 400, headers: corsHeaders });
@@ -284,7 +284,8 @@ export async function POST(request) {
         breadth: parsedWidth,
         width: parsedWidth,
         height: parsedHeight,
-        weight: parsedWeight
+        weight: parsedWeight,
+        ...(pickup_date ? { pickup_date: pickup_date } : {})
       };
 
       console.log("Creating Shiprocket Order Payload:", JSON.stringify(shiprocketOrderPayload, null, 2));
@@ -585,13 +586,17 @@ export async function POST(request) {
       // 0. Trigger Pickup Generation (Shiprocket requires pickup to be requested before manifest can be generated)
       try {
         console.log("Triggering Shiprocket Pickup Request for shipment:", parsedShipmentId);
+        const pickupPayload = { shipment_id: [parsedShipmentId] };
+        if (body.pickup_date) {
+          pickupPayload.pickup_date = [body.pickup_date];
+        }
         const pickupRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/generate/pickup`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ shipment_id: [parsedShipmentId] }),
+          body: JSON.stringify(pickupPayload),
           cache: 'no-store'
         });
         const pickupData = await pickupRes.json();
