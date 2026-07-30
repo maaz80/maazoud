@@ -162,7 +162,7 @@ export async function POST(request) {
 
     // ACTION 2: Create Order & Assign AWB
     if (action === 'create_shipment') {
-      const { order_id, courier_id, weight, length, width, height, pickup_date } = body;
+      const { order_id, courier_id, courier_rate, weight, length, width, height, pickup_date } = body;
 
       if (!order_id || !courier_id) {
         return NextResponse.json({ error: "Order ID and Courier ID are required." }, { status: 400, headers: corsHeaders });
@@ -479,7 +479,7 @@ export async function POST(request) {
       }
 
       // 4. Update order details in Supabase
-      const finalShippingCharge = shipmentCharge > 0 ? shipmentCharge : customerShippingCharge;
+      const finalShiprocketCharge = parseFloat(courier_rate) || parseFloat(shipmentCharge) || 0;
 
       const updatePayload = {
         status: "Shipped",
@@ -487,7 +487,7 @@ export async function POST(request) {
         shiprocket_shipment_id: shiprocketShipmentId.toString(),
         shiprocket_awb: awbCode.toString(),
         shiprocket_courier_name: courierName,
-        shiprocket_charge: finalShippingCharge,
+        shiprocket_charge: finalShiprocketCharge,
         shiprocket_status: "AWB Assigned",
         shipment_details: {
           create_order_response: createOrderData,
