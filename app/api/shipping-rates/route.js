@@ -442,7 +442,11 @@ export async function POST(request) {
       if (awbObj) {
         awbCode = awbObj.awb_code;
         courierName = awbObj.courier_name || courierName;
-        shipmentCharge = parseFloat(awbObj.rate) || shipmentCharge;
+        const codFee = isCod ? (parseFloat(awbObj.cod_charges) || parseFloat(awbObj.cod_charge) || 50.00) : 0;
+        const baseFreight = parseFloat(awbObj.freight_charges) || parseFloat(awbObj.rate) || 0;
+        if (baseFreight > 0) {
+          shipmentCharge = baseFreight + codFee;
+        }
       }
 
       // Fallback: If AWB code is missing, query order/shipment details directly from Shiprocket
@@ -463,7 +467,11 @@ export async function POST(request) {
           if (orderAwbObj) {
             awbCode = orderAwbObj.awb_code;
             courierName = orderAwbObj.courier_name || courierName;
-            shipmentCharge = parseFloat(orderAwbObj.rate) || shipmentCharge;
+            const codFee = isCod ? (parseFloat(orderAwbObj.cod_charges) || parseFloat(orderAwbObj.cod_charge) || 50.00) : 0;
+            const baseFreight = parseFloat(orderAwbObj.freight_charges) || parseFloat(orderAwbObj.rate) || 0;
+            if (baseFreight > 0) {
+              shipmentCharge = baseFreight + codFee;
+            }
           }
         } catch (checkErr) {
           console.error("Error fetching order AWB fallback:", checkErr);
@@ -479,7 +487,10 @@ export async function POST(request) {
       }
 
       // 4. Update order details in Supabase
-      const finalShiprocketCharge = parseFloat(courier_rate) || parseFloat(shipmentCharge) || 0;
+      const fallbackRate = parseFloat(courier_rate) || 0;
+      const finalShiprocketCharge = parseFloat(shipmentCharge) > 0 
+        ? parseFloat(shipmentCharge) 
+        : (isCod ? fallbackRate + 50.00 : fallbackRate);
 
       const updatePayload = {
         status: "Shipped",
