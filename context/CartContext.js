@@ -310,8 +310,19 @@ export function CartProvider({ children }) {
   };
 
   const addToCart = async (product, quantity = 1, selectedSize = null, customPrice = null) => {
-
     const size = selectedSize || product.size || "3ml";
+
+    // Stock check
+    const isOverallOOS = Boolean(product.is_out_of_stock || product.in_stock === false);
+    const is3mlOOS = isOverallOOS || Boolean(product.is_out_of_stock_3ml || product.in_stock_3ml === false);
+    const is6mlOOS = isOverallOOS || Boolean(product.is_out_of_stock_6ml || product.in_stock_6ml === false);
+    const isVariantOOS = size === "3ml" ? is3mlOOS : is6mlOOS;
+
+    if (isVariantOOS) {
+      alert(`Sorry, ${product.name} (${size}) is currently out of stock.`);
+      return;
+    }
+
     const price = customPrice !== null ? customPrice : product.price;
     const cartItemId = `${product.id}-${size}`;
 

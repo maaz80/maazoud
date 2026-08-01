@@ -13,6 +13,13 @@ export default function ProductCard({ product }) {
 
   const [activeImgIndex, setActiveImgIndex] = useState(0);
 
+  // Stock evaluation
+  const isOverallOutOfStock = Boolean(product.is_out_of_stock || product.in_stock === false);
+  const is3mlOutOfStock = isOverallOutOfStock || Boolean(product.is_out_of_stock_3ml || product.in_stock_3ml === false);
+  const is6mlOutOfStock = isOverallOutOfStock || Boolean(product.is_out_of_stock_6ml || product.in_stock_6ml === false);
+  const isFullyOutOfStock = isOverallOutOfStock || (is3mlOutOfStock && is6mlOutOfStock);
+  const isDefaultSizeOutOfStock = size === "3ml" ? is3mlOutOfStock : is6mlOutOfStock;
+
   // Parse gallery images (fallback to single product.image)
   const gallery = (product.images && product.images.length > 0) ? product.images : [product.image];
 
@@ -33,6 +40,21 @@ export default function ProductCard({ product }) {
 
       {/* Product Image & Gallery Slider */}
       <Link href={`/product/${product.slug}`} className="relative aspect-4/4 w-full overflow-hidden block group/img bg-stone-50 border-b border-stone-100">
+        {/* Out of stock badge on top left */}
+        {isFullyOutOfStock ? (
+          <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded shadow-sm z-20">
+            OUT OF STOCK
+          </span>
+        ) : is3mlOutOfStock && !is6mlOutOfStock ? (
+          <span className="absolute top-3 left-3 bg-amber-700 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded shadow-sm z-20">
+            3ML OUT OF STOCK
+          </span>
+        ) : is6mlOutOfStock && !is3mlOutOfStock ? (
+          <span className="absolute top-3 left-3 bg-amber-700 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded shadow-sm z-20">
+            6ML OUT OF STOCK
+          </span>
+        ) : null}
+
         {/* Sliding Track */}
         <div 
           className="flex w-full h-full transition-transform duration-500 ease-out" 
@@ -46,7 +68,7 @@ export default function ProductCard({ product }) {
                 alt={getImageAlt(img, `${product.name} image ${idx + 1}`)}
                 fill
                 sizes="(max-width: 640px) 160px, 320px"
-                className="object-cover w-full h-full"
+                className={`object-cover w-full h-full ${isFullyOutOfStock ? "opacity-75 grayscale-[20%]" : ""}`}
               />
             </div>
           ))}
@@ -131,17 +153,40 @@ export default function ProductCard({ product }) {
           )}
         </div>
 
-        {/* Quick Add Button */}
+        {/* Quick Add Button or Out of Stock indicator */}
         <div className="mt-2 pt-1 md:pt-2">
-          <button
-            onClick={() => addToCart(product, 1)}
-            className={`w-full py-2 text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer ${isAdded
-                ? "bg-green-700 hover:bg-green-800 text-white"
-                : "bg-stone-900 hover:bg-[#8c6239] text-white"
-              }`}
-          >
-            {isAdded ? "Added to Cart ✓" : "Add to Cart"}
-          </button>
+          {isFullyOutOfStock ? (
+            <button
+              disabled
+              className="w-full py-2 text-xs font-bold uppercase tracking-wider rounded bg-stone-200 text-stone-500 cursor-not-allowed border border-stone-300 select-none"
+            >
+              OUT OF STOCK
+            </button>
+          ) : is3mlOutOfStock && !is6mlOutOfStock ? (
+            <Link
+              href={`/product/${product.slug}`}
+              className="w-full block text-center py-2 text-xs font-bold uppercase tracking-wider rounded bg-amber-800 hover:bg-[#8c6239] text-white transition-all cursor-pointer"
+            >
+              3ML OUT OF STOCK (SELECT 6ML)
+            </Link>
+          ) : is6mlOutOfStock && !is3mlOutOfStock && size === "6ml" ? (
+            <Link
+              href={`/product/${product.slug}`}
+              className="w-full block text-center py-2 text-xs font-bold uppercase tracking-wider rounded bg-amber-800 hover:bg-[#8c6239] text-white transition-all cursor-pointer"
+            >
+              6ML OUT OF STOCK (SELECT 3ML)
+            </Link>
+          ) : (
+            <button
+              onClick={() => addToCart(product, 1)}
+              className={`w-full py-2 text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer ${isAdded
+                  ? "bg-green-700 hover:bg-green-800 text-white"
+                  : "bg-stone-900 hover:bg-[#8c6239] text-white"
+                }`}
+            >
+              {isAdded ? "Added to Cart ✓" : "Add to Cart"}
+            </button>
+          )}
         </div>
 
       </div>
