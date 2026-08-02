@@ -905,29 +905,45 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
             </h2>
 
             <div className="space-y-6 divide-y divide-stone-100">
-              {currentReviews.map((rev) => (
-                <div key={rev.id} className="pt-6 first:pt-0 space-y-3">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-9 h-9 rounded-full bg-stone-100 border border-stone-150 flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-stone-750">
-                        {rev.name ? rev.name.charAt(0).toUpperCase() : "U"}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-stone-900">{rev.name}</span>
-                        <span className="text-[8px] bg-green-50 text-green-700 border border-green-200 uppercase tracking-wider px-1.5 py-0.5 rounded-full font-bold">
-                          Verified Buyer
+              {currentReviews.length > 0 ? (
+                currentReviews.map((rev) => (
+                  <div key={rev.id || rev.name} className="pt-6 first:pt-0 space-y-2.5">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-9 h-9 rounded-full bg-stone-100 border border-stone-150 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-stone-750">
+                          {rev.name ? rev.name.charAt(0).toUpperCase() : "U"}
                         </span>
                       </div>
-                      <span className="text-[10px] text-stone-600 font-light block">
-                        Reviewed on {rev.date}
-                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-stone-900">{rev.name}</span>
+                          <span className="text-[8px] bg-green-50 text-green-700 border border-green-200 uppercase tracking-wider px-1.5 py-0.5 rounded-full font-bold">
+                            Verified Buyer
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-stone-600 font-light block">
+                          Reviewed on {rev.date}
+                        </span>
+                      </div>
                     </div>
+                    {renderStars(rev.rating)}
+                    {rev.title && (
+                      <h4 className="text-xs font-bold text-stone-900 tracking-tight mt-1">
+                        {rev.title}
+                      </h4>
+                    )}
+                    {rev.comment && (
+                      <p className="text-xs text-stone-700 leading-relaxed font-normal whitespace-pre-line">
+                        {rev.comment}
+                      </p>
+                    )}
                   </div>
-                  {renderStars(rev.rating)}
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-xs text-stone-500 italic pt-4">
+                  No reviews yet. Be the first to review this product!
+                </p>
+              )}
             </div>
 
             {totalReviewPages > 1 && (
