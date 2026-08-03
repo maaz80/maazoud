@@ -488,9 +488,11 @@ export async function POST(request) {
 
       // 4. Update order details in Supabase
       const fallbackRate = parseFloat(courier_rate) || 0;
-      const finalShiprocketCharge = parseFloat(shipmentCharge) > 0 
+      const msgFee = 5.90;
+      const baseCharge = parseFloat(shipmentCharge) > 0 
         ? parseFloat(shipmentCharge) 
         : (isCod ? fallbackRate + 50.00 : fallbackRate);
+      const finalShiprocketCharge = Number((baseCharge + msgFee).toFixed(2));
 
       const updatePayload = {
         status: "Shipped",
