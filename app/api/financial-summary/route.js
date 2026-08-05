@@ -78,18 +78,29 @@ export async function GET(request) {
       });
       const codShippedSum = codShipped.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
-      // 3. Prepaid Orders
-      const prepaidDelivered = nonCancelled.filter(o => {
+      const codProcessing = nonCancelled.filter(o => {
         const pm = (o.payment_method || '').toLowerCase();
-        return (pm.includes('razorpay') || pm.includes('payment id') || pm.includes('prepaid')) && o.status === 'Delivered';
+        return (pm.includes('cod') || pm.includes('cash on delivery')) && (o.status === 'Processing' || o.status === 'Placed');
       });
+      const codProcessingSum = codProcessing.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
+
+      // 3. Prepaid Orders
+      const prepaidOrders = nonCancelled.filter(o => {
+        const pm = (o.payment_method || '').toLowerCase();
+        return pm.includes('razorpay') || pm.includes('payment id') || pm.includes('prepaid');
+      });
+      const prepaidTotalSum = prepaidOrders.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
+
+      const prepaidDelivered = prepaidOrders.filter(o => o.status === 'Delivered');
       const prepaidDeliveredSum = prepaidDelivered.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
-      const prepaidShipped = nonCancelled.filter(o => {
-        const pm = (o.payment_method || '').toLowerCase();
-        return (pm.includes('razorpay') || pm.includes('payment id') || pm.includes('prepaid')) && o.status === 'Shipped';
-      });
+      const prepaidShipped = prepaidOrders.filter(o => o.status === 'Shipped');
       const prepaidShippedSum = prepaidShipped.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
+
+      const prepaidProcessing = prepaidOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Shipped');
+      const prepaidProcessingSum = prepaidProcessing.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
+
+      const fullCodFuture = codDeliveredSum + codShippedSum + codProcessingSum;
 
       responseData.local_metrics = {
         offline_sales_total: Number(offlineSum.toFixed(2)),
@@ -98,14 +109,19 @@ export async function GET(request) {
         cod_delivered_count: codDelivered.length,
         cod_shipped_total: Number(codShippedSum.toFixed(2)),
         cod_shipped_count: codShipped.length,
-        cod_pipeline_total: Number((codDeliveredSum + codShippedSum).toFixed(2)),
+        cod_processing_total: Number(codProcessingSum.toFixed(2)),
+        cod_processing_count: codProcessing.length,
+        cod_pipeline_total: Number(fullCodFuture.toFixed(2)),
+        cod_future_total: Number(fullCodFuture.toFixed(2)),
         prepaid_delivered_total: Number(prepaidDeliveredSum.toFixed(2)),
         prepaid_delivered_count: prepaidDelivered.length,
         prepaid_shipped_total: Number(prepaidShippedSum.toFixed(2)),
         prepaid_shipped_count: prepaidShipped.length,
-        prepaid_pipeline_total: Number((prepaidDeliveredSum + prepaidShippedSum).toFixed(2)),
-        cod_delivered_unremitted_estimate: Number((codDeliveredSum + codShippedSum).toFixed(2)),
-        prepaid_razorpay_total: Number((prepaidDeliveredSum + prepaidShippedSum).toFixed(2))
+        prepaid_processing_total: Number(prepaidProcessingSum.toFixed(2)),
+        prepaid_processing_count: prepaidProcessing.length,
+        prepaid_pipeline_total: Number(prepaidTotalSum.toFixed(2)),
+        cod_delivered_unremitted_estimate: Number(codDeliveredSum.toFixed(2)),
+        prepaid_razorpay_total: Number(prepaidTotalSum.toFixed(2))
       };
     }
 
