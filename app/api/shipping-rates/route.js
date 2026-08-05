@@ -706,6 +706,121 @@ export async function POST(request) {
       return NextResponse.json({ success: true, manifest_url: manifestUrl }, { headers: corsHeaders });
     }
 
+    // ACTION 5: Sync Order / AWB Status from Shiprocket
+    if (action === 'sync_shipment') {
+      const { order_id } = body;
+
+      if (!order_id) {
+        return NextResponse.json({ error: "Order ID is required to sync shipment." }, { status: 400, headers: corsHeaders });
+      }
+
+      // Fetch order from DB
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', order_id)
+        .single();
+
+      if (orderError || !order) {
+        return NextResponse.json({ error: `Order not found in database: ${orderError?.message || ''}` }, { status: 404, headers: corsHeaders });
+      }
+
+      const srOrderId = order.shiprocket_order_id || order.shipment_details?.create_order_response?.order_id || order.shipment_details?.create_order_response?.data?.order_id;
+
+      if (!srOrderId) {
+        return NextResponse.json({ error: "No Shiprocket Order ID found in database for this order." }, { status: 400, headers: corsHeaders });
+      }
+
+      const token = await getShiprocketToken();
+
+      // Fetch order details from Shiprocket
+      const showRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/orders/show/${srOrderId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store'
+      });
+
+      const showData = await showRes.json();
+      console.log("Shiprocket Sync Order Response:", JSON.stringify(showData, null, 2));
+
+      if (!showRes.ok) {
+        return NextResponse.json({ error: showData.message || "Failed to fetch order details from Shiprocket." }, { status: showRes.status, headers: corsHeaders });
+      }
+
+      const srData = showData.data || showData;
+
+      // Helper function to extract AWB, courier name, and status
+      const findAwbInObj = (obj) => {
+        if (!obj || typeof obj !== 'object') return null;
+        if (obj.awb_code || obj.awb) return obj;
+        for (const key of Object.keys(obj)) {
+          if (typeof obj[key] === 'object') {
+            const found = findAwbInObj(obj[key]);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const awbObj = findAwbInObj(srData);
+      const awbCode = awbObj?.awb_code || awbObj?.awb || srData?.awb_code || srData?.shipments?.[0]?.awb;
+      const courierName = awbObj?.courier_name || srData?.courier_name || srData?.shipments?.[0]?.courier_name || order.shiprocket_courier_name || "Shiprocket Courier";
+      const shipmentId = srData?.shipment_id || srData?.shipments?.[0]?.id || order.shiprocket_shipment_id;
+      const srStatus = srData?.status || srData?.shipment_status || "AWB Assigned";
+
+      if (!awbCode) {
+        return NextResponse.json({
+          error: `Order found on Shiprocket (ID: ${srOrderId}), but AWB is not yet assigned on Shiprocket. Current Status: ${srStatus}`,
+          shiprocket_order_id: srOrderId,
+          shiprocket_shipment_id: shipmentId,
+          shiprocket_status: srStatus
+        }, { status: 400, headers: corsHeaders });
+      }
+
+      const isCod = order.payment_method ? (order.payment_method.toLowerCase().includes('cod') || order.payment_method.toLowerCase().includes('cash on delivery')) : false;
+      const codFee = isCod ? (parseFloat(awbObj?.cod_charges || awbObj?.cod_charge || 50.00)) : 0;
+      const baseFreight = parseFloat(awbObj?.freight_charges || awbObj?.rate || 0);
+      const msgFee = 5.90;
+      let finalCharge = order.shiprocket_charge || 0;
+      if (baseFreight > 0) {
+        finalCharge = Number((baseFreight + codFee + msgFee).toFixed(2));
+      }
+
+      const updatePayload = {
+        status: (srStatus.toLowerCase().includes('cancel')) ? 'Cancelled' : 'Shipped',
+        shiprocket_order_id: srOrderId.toString(),
+        shiprocket_shipment_id: shipmentId ? shipmentId.toString() : order.shiprocket_shipment_id,
+        shiprocket_awb: awbCode.toString(),
+        shiprocket_courier_name: courierName,
+        shiprocket_charge: finalCharge,
+        shiprocket_status: srStatus,
+        shipment_details: {
+          ...order.shipment_details,
+          sync_response: showData
+        }
+      };
+
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update(updatePayload)
+        .eq('id', order.id);
+
+      if (updateError) {
+        return NextResponse.json({ error: `Failed to update database: ${updateError.message}` }, { status: 500, headers: corsHeaders });
+      }
+
+      return NextResponse.json({
+        success: true,
+        order: {
+          ...order,
+          ...updatePayload
+        }
+      }, { headers: corsHeaders });
+    }
+
     return NextResponse.json({ error: "Invalid action" }, { status: 400, headers: corsHeaders });
 
   } catch (error) {
