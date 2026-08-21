@@ -57,7 +57,21 @@ async function getShiprocketToken() {
 // Helper to parse detailed error messages from Shiprocket responses
 function parseShiprocketError(data, fallbackMsg) {
   if (!data) return fallbackMsg;
-  let msg = data.message || data.response || fallbackMsg;
+
+  // 1. Check package remarks from courier partner API (e.g. Delhivery ER0005)
+  const pkgRemark = data?.response?.data?.packages?.[0]?.remarks?.[0];
+  if (pkgRemark && typeof pkgRemark === 'string') {
+    return pkgRemark;
+  }
+
+  // 2. Check awb_assign_error or rmk
+  const awbErr = data?.awb_assign_error || data?.data?.awb_assign_error || data?.response?.data?.rmk;
+  if (awbErr && typeof awbErr === 'string') {
+    return awbErr;
+  }
+
+  let rawMsg = data.message || data.response || fallbackMsg;
+  let msg = typeof rawMsg === 'string' ? rawMsg : JSON.stringify(rawMsg);
   if (data.errors) {
     if (typeof data.errors === 'string') {
       msg += ` (${data.errors})`;
@@ -98,7 +112,7 @@ export async function POST(request) {
 
     // ACTION 1: Get Courier Rates
     if (action === 'get_rates') {
-      const { delivery_pincode, weight, length, width, height, is_cod } = body;
+      const { delivery_pincode, weight, length, width, height, is_cod, pickup_date, order_id } = body;
 
       if (!delivery_pincode) {
         return NextResponse.json({ error: "Delivery pincode is required." }, { status: 400, headers: corsHeaders });
@@ -112,6 +126,19 @@ export async function POST(request) {
 
       const token = await getShiprocketToken();
 
+      // Check if order already exists in Supabase to pass shiprocket_order_id
+      let srOrderId = null;
+      if (order_id) {
+        const { data: ord } = await supabase
+          .from('orders')
+          .select('shiprocket_order_id')
+          .eq('id', order_id)
+          .maybeSingle();
+        if (ord?.shiprocket_order_id) {
+          srOrderId = ord.shiprocket_order_id;
+        }
+      }
+
       // Call Shiprocket Courier Serviceability API
       const queryParams = new URLSearchParams({
         pickup_postcode: pickup_pincode,
@@ -121,6 +148,8 @@ export async function POST(request) {
         length: parsedLength.toString(),
         width: parsedWidth.toString(),
         height: parsedHeight.toString(),
+        ...(pickup_date ? { pickup_date: pickup_date } : {}),
+        ...(srOrderId ? { order_id: srOrderId } : {})
       });
 
       const res = await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/serviceability/?${queryParams.toString()}`, {
@@ -136,19 +165,29 @@ export async function POST(request) {
 
       if (!res.ok) {
         // Handle low balance or subscription errors gracefully
-        if (data.message && (data.message.toLowerCase().includes('wallet') || data.message.toLowerCase().includes('balance'))) {
+        const msgStr = typeof data?.message === 'string' ? data.message : JSON.stringify(data?.message || '');
+        if (msgStr && (msgStr.toLowerCase().includes('wallet') || msgStr.toLowerCase().includes('balance'))) {
           return NextResponse.json({ error: "Shiprocket Error: Insufficient wallet balance. Please recharge your Shiprocket account." }, { status: 400, headers: corsHeaders });
         }
         return NextResponse.json({ error: parseShiprocketError(data, "Failed to calculate courier rates.") }, { status: res.status, headers: corsHeaders });
       }
 
       const availableCouriers = data?.data?.available_courier_companies || [];
-      if (availableCouriers.length === 0) {
-        return NextResponse.json({ error: "Pincode is not serviceable by any courier partner currently." }, { status: 400, headers: corsHeaders });
+      
+      // Filter out blocked/disabled couriers
+      const validCouriers = availableCouriers.filter(courier => 
+        courier.blocked !== 1 && 
+        courier.blocked !== true && 
+        courier.status !== 0 && 
+        courier.status !== "0"
+      );
+
+      if (validCouriers.length === 0) {
+        return NextResponse.json({ error: "Pincode is not serviceable by any active courier partner currently." }, { status: 400, headers: corsHeaders });
       }
 
       // Sort couriers by price (lowest first)
-      const sortedCouriers = availableCouriers.map(courier => ({
+      const sortedCouriers = validCouriers.map(courier => ({
         courier_company_id: courier.courier_company_id,
         courier_name: courier.courier_name,
         rate: courier.rate,
@@ -187,7 +226,7 @@ export async function POST(request) {
 
       // Extract details
       const pickup_location = process.env.SHIPROCKET_PICKUP_LOCATION || 'Home';
-      const isCod = order.payment_method ? (order.payment_method.toLowerCase().includes('cod') || order.payment_method.toLowerCase().includes('cash on delivery')) : false;
+      const isCod = String(order?.payment_method || '').toLowerCase().includes('cod') || String(order?.payment_method || '').toLowerCase().includes('cash on delivery');
 
       const token = await getShiprocketToken();
 
@@ -305,7 +344,8 @@ export async function POST(request) {
       console.log("Shiprocket Create Order Response:", JSON.stringify(createOrderData, null, 2));
 
       // Auto-recovery: If pickup location is invalid, pick valid location returned in response and retry
-      if (createOrderData.message && createOrderData.message.toLowerCase().includes('pickup location')) {
+      const createMsgStr = typeof createOrderData?.message === 'string' ? createOrderData.message : JSON.stringify(createOrderData?.message || '');
+      if (createMsgStr && createMsgStr.toLowerCase().includes('pickup location')) {
         const locations = createOrderData.data?.data || createOrderData.data || [];
         if (Array.isArray(locations) && locations.length > 0 && locations[0].pickup_location) {
           const autoLocation = locations[0].pickup_location;
@@ -327,7 +367,8 @@ export async function POST(request) {
       }
 
       if (!createOrderRes.ok || createOrderData.status_code === 400 || (createOrderData.status_code && createOrderData.status_code !== 1 && !createOrderData.order_id)) {
-        if (createOrderData.message && (createOrderData.message.toLowerCase().includes('wallet') || createOrderData.message.toLowerCase().includes('balance'))) {
+        const retryMsgStr = typeof createOrderData?.message === 'string' ? createOrderData.message : JSON.stringify(createOrderData?.message || '');
+        if (retryMsgStr && (retryMsgStr.toLowerCase().includes('wallet') || retryMsgStr.toLowerCase().includes('balance'))) {
           return NextResponse.json({ error: "Shiprocket Error: Insufficient wallet balance. Please recharge your Shiprocket account." }, { status: 400, headers: corsHeaders });
         }
         const detailedErr = parseShiprocketError(createOrderData, "Failed to create shipment order in Shiprocket.");
@@ -377,7 +418,7 @@ export async function POST(request) {
       };
       console.log("Assigning AWB Payload:", JSON.stringify(assignAwbPayload, null, 2));
 
-      const assignAwbRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/assign/awb`, {
+      let assignAwbRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/assign/awb`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -387,7 +428,7 @@ export async function POST(request) {
         cache: 'no-store'
       });
 
-      const assignAwbData = await assignAwbRes.json();
+      let assignAwbData = await assignAwbRes.json();
       console.log("Shiprocket Assign AWB Response:", JSON.stringify(assignAwbData, null, 2));
 
       const isAwbSuccess = assignAwbRes.ok && (assignAwbData.awb_assign_status === 1 || assignAwbData?.data?.response?.awb_code);
@@ -405,8 +446,9 @@ export async function POST(request) {
           .eq('id', order.id);
 
         const errorMsg = parseShiprocketError(assignAwbData, "Failed to assign courier and generate AWB.");
+        const errStr = String(errorMsg || '');
 
-        if (errorMsg.toLowerCase().includes('wallet') || errorMsg.toLowerCase().includes('balance')) {
+        if (errStr.toLowerCase().includes('wallet') || errStr.toLowerCase().includes('balance')) {
           return NextResponse.json({
             error: "Order created successfully on Shiprocket, but AWB Assignment failed due to Insufficient wallet balance. Please recharge your Shiprocket wallet.",
             shiprocket_order_id: shiprocketOrderId,
@@ -542,27 +584,58 @@ export async function POST(request) {
       }
 
       const token = await getShiprocketToken();
+      const parsedShipmentId = parseInt(shipment_id);
 
-      const labelRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/generate/label`, {
+      // Helper to find any URL in response object
+      const findUrlInObj = (obj) => {
+        if (!obj) return null;
+        if (typeof obj === 'string' && (obj.startsWith('http://') || obj.startsWith('https://'))) {
+          return obj;
+        }
+        if (typeof obj === 'object') {
+          if (obj.label_url) return obj.label_url;
+          if (obj.url) return obj.url;
+          for (const key of Object.keys(obj)) {
+            const found = findUrlInObj(obj[key]);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      let labelRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/generate/label`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ shipment_id: [parseInt(shipment_id)] }),
+        body: JSON.stringify({ shipment_id: [parsedShipmentId] }),
         cache: 'no-store'
       });
 
-      const labelData = await labelRes.json();
+      let labelData = await labelRes.json();
+      console.log("Shiprocket Label Response:", JSON.stringify(labelData, null, 2));
 
-      if (!labelRes.ok) {
-        return NextResponse.json({ error: labelData.message || "Failed to generate shipping label." }, { status: labelRes.status, headers: corsHeaders });
+      let labelUrl = findUrlInObj(labelData);
+
+      // Retry once after 1.5s if label URL is not returned immediately
+      if (!labelUrl) {
+        await new Promise(r => setTimeout(r, 1500));
+        labelRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/generate/label`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ shipment_id: [parsedShipmentId] }),
+          cache: 'no-store'
+        });
+        labelData = await labelRes.json();
+        labelUrl = findUrlInObj(labelData);
       }
 
-      const labelUrl = labelData?.label_url || labelData?.data?.label_url;
-
       if (!labelUrl) {
-        return NextResponse.json({ error: "Shiprocket did not return a label URL. The label may not be ready yet — please try again in a moment." }, { status: 500, headers: corsHeaders });
+        return NextResponse.json({ error: labelData?.message || "Shiprocket is still compiling the shipping label PDF. Please try clicking 'Download Label' again in 5 seconds." }, { status: 400, headers: corsHeaders });
       }
 
       return NextResponse.json({ success: true, label_url: labelUrl }, { headers: corsHeaders });
@@ -603,7 +676,7 @@ export async function POST(request) {
         if (body.pickup_date) {
           pickupPayload.pickup_date = [body.pickup_date];
         }
-        const pickupRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/generate/pickup`, {
+        await fetch(`${SHIPROCKET_API_BASE}/v1/external/courier/generate/pickup`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -612,8 +685,6 @@ export async function POST(request) {
           body: JSON.stringify(pickupPayload),
           cache: 'no-store'
         });
-        const pickupData = await pickupRes.json();
-        console.log("Shiprocket Pickup Response:", JSON.stringify(pickupData, null, 2));
       } catch (pickupErr) {
         console.error("Pickup trigger error:", pickupErr);
       }
@@ -634,72 +705,41 @@ export async function POST(request) {
 
       let manifestUrl = findUrlInObj(manifestData);
 
-      // If check_ids returned or direct URL not found, check multiple manifest endpoints
       const checkIds = manifestData.check_ids || manifestData.data?.check_ids;
       const checkIdsStr = Array.isArray(checkIds) ? checkIds.join(',') : checkIds;
 
-      // Endpoint Fallback 1: GET /v1/external/manifests/generate/label?check_ids=...
-      if (!manifestUrl && checkIdsStr) {
-        try {
-          console.log(`Checking /v1/external/manifests/generate/label?check_ids=${checkIdsStr}`);
-          const res1 = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/generate/label?check_ids=${checkIdsStr}`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            cache: 'no-store'
-          });
-          const d1 = await res1.json();
-          console.log("Manifest GET label res:", JSON.stringify(d1, null, 2));
-          manifestUrl = findUrlInObj(d1);
-        } catch (e) { console.error("Manifest check 1 failed:", e); }
-      }
-
-      // Endpoint Fallback 2: POST /v1/external/manifests/print with check_ids
-      if (!manifestUrl && checkIds) {
-        try {
-          const res2 = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ check_ids: Array.isArray(checkIds) ? checkIds : [checkIds] }),
-            cache: 'no-store'
-          });
-          const d2 = await res2.json();
-          console.log("Manifest POST print check_ids res:", JSON.stringify(d2, null, 2));
-          manifestUrl = findUrlInObj(d2);
-        } catch (e) { console.error("Manifest check 2 failed:", e); }
-      }
-
-      // Endpoint Fallback 3: POST /v1/external/manifests/print with shipment_id
+      // Endpoint Fallback 1: POST /v1/external/manifests/print with shipment_id
       if (!manifestUrl) {
         try {
-          const res3 = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
+          const res1 = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ shipment_id: [parsedShipmentId] }),
             cache: 'no-store'
           });
-          const d3 = await res3.json();
-          console.log("Manifest POST print shipment_id res:", JSON.stringify(d3, null, 2));
-          manifestUrl = findUrlInObj(d3);
-        } catch (e) { console.error("Manifest check 3 failed:", e); }
+          const d1 = await res1.json();
+          manifestUrl = findUrlInObj(d1);
+        } catch (e) { console.error("Manifest check 1 failed:", e); }
       }
 
-      // Endpoint Fallback 4: GET /v1/external/orders/print/manifest
-      if (!manifestUrl) {
+      // Endpoint Fallback 2: Wait 2s and retry print endpoint if enqueued
+      if (!manifestUrl && checkIdsStr) {
+        await new Promise(r => setTimeout(r, 2000));
         try {
-          const res4 = await fetch(`${SHIPROCKET_API_BASE}/v1/external/orders/print/manifest?order_ids=${parsedShipmentId}`, {
-            method: 'GET',
+          const res2 = await fetch(`${SHIPROCKET_API_BASE}/v1/external/manifests/print`, {
+            method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shipment_id: [parsedShipmentId] }),
             cache: 'no-store'
           });
-          const d4 = await res4.json();
-          console.log("Manifest GET orders print manifest res:", JSON.stringify(d4, null, 2));
-          manifestUrl = findUrlInObj(d4);
-        } catch (e) { console.error("Manifest check 4 failed:", e); }
+          const d2 = await res2.json();
+          manifestUrl = findUrlInObj(d2);
+        } catch (e) { console.error("Manifest check 2 failed:", e); }
       }
 
       if (!manifestUrl) {
         return NextResponse.json({ 
-          error: `Shiprocket manifest compilation in progress (check_ids: ${JSON.stringify(checkIds || [])}). Please try clicking 'Download Manifest' again in 5-10 seconds. Initial Response: ${JSON.stringify(manifestData)}`
+          error: `Shiprocket has requested pickup for shipment #${parsedShipmentId}. Manifest PDFs are generated once the courier partner confirms pickup. Please try clicking 'Download Manifest' again in a few moments.`
         }, { status: 400, headers: corsHeaders });
       }
 
@@ -780,7 +820,7 @@ export async function POST(request) {
         }, { status: 400, headers: corsHeaders });
       }
 
-      const isCod = order.payment_method ? (order.payment_method.toLowerCase().includes('cod') || order.payment_method.toLowerCase().includes('cash on delivery')) : false;
+      const isCod = String(order?.payment_method || '').toLowerCase().includes('cod') || String(order?.payment_method || '').toLowerCase().includes('cash on delivery');
       const codFee = isCod ? (parseFloat(awbObj?.cod_charges || awbObj?.cod_charge || 50.00)) : 0;
       const baseFreight = parseFloat(awbObj?.freight_charges || awbObj?.rate || 0);
       const msgFee = 5.90;
@@ -790,7 +830,7 @@ export async function POST(request) {
       }
 
       const updatePayload = {
-        status: (srStatus.toLowerCase().includes('cancel')) ? 'Cancelled' : 'Shipped',
+        status: String(srStatus || '').toLowerCase().includes('cancel') ? 'Cancelled' : 'Shipped',
         shiprocket_order_id: srOrderId.toString(),
         shiprocket_shipment_id: shipmentId ? shipmentId.toString() : order.shiprocket_shipment_id,
         shiprocket_awb: awbCode.toString(),

@@ -60,33 +60,33 @@ export async function GET(request) {
 
       // 1. Offline / Self Handover Sales
       const offlineOrders = nonCancelled.filter(o => {
-        const pm = (o.payment_method || '').toLowerCase();
-        return pm.includes('offline') || pm.includes('cash (offline)') || (o.id || '').startsWith('ORD-OFFLINE');
+        const pm = String(o.payment_method || '').toLowerCase();
+        return pm.includes('offline') || pm.includes('cash (offline)') || String(o.id || '').startsWith('ORD-OFFLINE');
       });
       const offlineSum = offlineOrders.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
       // 2. COD Orders
       const codDelivered = nonCancelled.filter(o => {
-        const pm = (o.payment_method || '').toLowerCase();
+        const pm = String(o.payment_method || '').toLowerCase();
         return (pm.includes('cod') || pm.includes('cash on delivery')) && o.status === 'Delivered';
       });
       const codDeliveredSum = codDelivered.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
       const codShipped = nonCancelled.filter(o => {
-        const pm = (o.payment_method || '').toLowerCase();
+        const pm = String(o.payment_method || '').toLowerCase();
         return (pm.includes('cod') || pm.includes('cash on delivery')) && o.status === 'Shipped';
       });
       const codShippedSum = codShipped.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
       const codProcessing = nonCancelled.filter(o => {
-        const pm = (o.payment_method || '').toLowerCase();
+        const pm = String(o.payment_method || '').toLowerCase();
         return (pm.includes('cod') || pm.includes('cash on delivery')) && (o.status === 'Processing' || o.status === 'Placed');
       });
       const codProcessingSum = codProcessing.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
       // 3. Prepaid Orders
       const prepaidOrders = nonCancelled.filter(o => {
-        const pm = (o.payment_method || '').toLowerCase();
+        const pm = String(o.payment_method || '').toLowerCase();
         return pm.includes('razorpay') || pm.includes('payment id') || pm.includes('prepaid');
       });
       const prepaidTotalSum = prepaidOrders.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
@@ -220,7 +220,7 @@ export async function GET(request) {
               const shipments = sData.data || [];
               const codDelivered = shipments.filter(s => 
                 (s.status === 'DELIVERED' || (s.status || '').toUpperCase() === 'DELIVERED') && 
-                (s.payment_method || '').toLowerCase() === 'cod'
+                String(s.payment_method || '').toLowerCase() === 'cod'
               );
 
               let codSum = 0;
