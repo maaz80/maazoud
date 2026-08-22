@@ -66,22 +66,37 @@ export async function GET(request) {
       const offlineSum = offlineOrders.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
       // 2. COD Orders
-      const codDelivered = nonCancelled.filter(o => {
+      const codOrders = nonCancelled.filter(o => {
         const pm = String(o.payment_method || '').toLowerCase();
-        return (pm.includes('cod') || pm.includes('cash on delivery')) && o.status === 'Delivered';
+        return (pm.includes('cod') || pm.includes('cash on delivery')) && !pm.includes('offline');
       });
+
+      const codDelivered = codOrders.filter(o => o.status === 'Delivered');
+
+      const codDeliveredRemitted = codDelivered.filter(o => 
+        Boolean(o.is_paid) ||
+        Boolean(o.cod_remitted) ||
+        String(o.payment_status || '').toLowerCase() === 'paid' ||
+        Boolean(o.shipment_details?.cod_remitted) ||
+        Boolean(o.shipment_details?.is_paid)
+      );
+
+      const codDeliveredPending = codDelivered.filter(o => 
+        !Boolean(o.is_paid) &&
+        !Boolean(o.cod_remitted) &&
+        String(o.payment_status || '').toLowerCase() !== 'paid' &&
+        !Boolean(o.shipment_details?.cod_remitted) &&
+        !Boolean(o.shipment_details?.is_paid)
+      );
+
+      const codDeliveredRemittedSum = codDeliveredRemitted.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
+      const codDeliveredPendingSum = codDeliveredPending.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
       const codDeliveredSum = codDelivered.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
-      const codShipped = nonCancelled.filter(o => {
-        const pm = String(o.payment_method || '').toLowerCase();
-        return (pm.includes('cod') || pm.includes('cash on delivery')) && o.status === 'Shipped';
-      });
+      const codShipped = codOrders.filter(o => o.status === 'Shipped');
       const codShippedSum = codShipped.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
-      const codProcessing = nonCancelled.filter(o => {
-        const pm = String(o.payment_method || '').toLowerCase();
-        return (pm.includes('cod') || pm.includes('cash on delivery')) && (o.status === 'Processing' || o.status === 'Placed');
-      });
+      const codProcessing = codOrders.filter(o => o.status === 'Processing' || o.status === 'Placed');
       const codProcessingSum = codProcessing.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
       // 3. Prepaid Orders
@@ -106,6 +121,8 @@ export async function GET(request) {
         offline_sales_total: Number(offlineSum.toFixed(2)),
         offline_orders_count: offlineOrders.length,
         cod_delivered_total: Number(codDeliveredSum.toFixed(2)),
+        cod_delivered_remitted_total: Number(codDeliveredRemittedSum.toFixed(2)),
+        cod_delivered_pending_total: Number(codDeliveredPendingSum.toFixed(2)),
         cod_delivered_count: codDelivered.length,
         cod_shipped_total: Number(codShippedSum.toFixed(2)),
         cod_shipped_count: codShipped.length,
@@ -120,7 +137,7 @@ export async function GET(request) {
         prepaid_processing_total: Number(prepaidProcessingSum.toFixed(2)),
         prepaid_processing_count: prepaidProcessing.length,
         prepaid_pipeline_total: Number(prepaidTotalSum.toFixed(2)),
-        cod_delivered_unremitted_estimate: Number(codDeliveredSum.toFixed(2)),
+        cod_delivered_unremitted_estimate: Number(codDeliveredPendingSum.toFixed(2)),
         prepaid_razorpay_total: Number(prepaidTotalSum.toFixed(2))
       };
     }
@@ -223,12 +240,17 @@ export async function GET(request) {
                 String(s.payment_method || '').toLowerCase() === 'cod'
               );
 
-              let codSum = 0;
+              let codPendingSum = 0;
+              let codReceivedSum = 0;
               const schedule = [];
 
               for (const s of codDelivered) {
                 let amt = 0;
                 let channelOrdId = '';
+                let srRemittanceStatus = '';
+                let srRemittanceUtr = '';
+                let srRemittanceDate = '';
+
                 const matchInDb = (allOrders || []).find(o => 
                   o.shiprocket_order_id == s.order_id || 
                   o.shiprocket_awb == s.awb ||
@@ -238,31 +260,78 @@ export async function GET(request) {
                 if (matchInDb && parseFloat(matchInDb.total_amount)) {
                   amt = parseFloat(matchInDb.total_amount);
                   channelOrdId = matchInDb.id;
-                } else {
-                  try {
-                    const oRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/orders/show/${s.order_id}`, {
-                      headers: { 'Authorization': `Bearer ${token}` },
-                      cache: 'no-store'
-                    });
-                    if (oRes.ok) {
-                      const oData = await oRes.json();
-                      amt = parseFloat(oData.data?.total || 0);
-                      channelOrdId = oData.data?.channel_order_id || `SR-${s.order_id}`;
-                    }
-                  } catch (_) {}
                 }
 
-                codSum += amt;
-                schedule.push({
-                  id: channelOrdId || `AWB-${s.awb}`,
-                  date: s.created_at || new Date().toISOString(),
-                  status: 'Pending Payout',
-                  utr: s.awb ? `AWB: ${s.awb}` : 'Processing',
-                  amount: Number(amt.toFixed(2))
-                });
+                try {
+                  const oRes = await fetch(`${SHIPROCKET_API_BASE}/v1/external/orders/show/${s.order_id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    cache: 'no-store'
+                  });
+                  if (oRes.ok) {
+                    const oData = await oRes.json();
+                    const d = oData.data || {};
+                    if (!amt) amt = parseFloat(d.total || 0);
+                    if (!channelOrdId) channelOrdId = d.channel_order_id || `SR-${s.order_id}`;
+                    srRemittanceStatus = String(d.remittance_status || '').trim();
+                    srRemittanceUtr = String(d.remittance_utr || '').trim();
+                    srRemittanceDate = String(d.remittance_date || '').trim();
+                  }
+                } catch (_) {}
+
+                const normalizedSrRemStatus = srRemittanceStatus.toLowerCase();
+                const isRemitted = 
+                  normalizedSrRemStatus.includes('success') || 
+                  normalizedSrRemStatus.includes('remitted') || 
+                  normalizedSrRemStatus.includes('paid') || 
+                  normalizedSrRemStatus.includes('completed') || 
+                  normalizedSrRemStatus.includes('settled') ||
+                  Boolean(matchInDb?.is_paid) ||
+                  Boolean(matchInDb?.cod_remitted) ||
+                  String(matchInDb?.payment_status || '').toLowerCase() === 'paid' ||
+                  Boolean(matchInDb?.shipment_details?.cod_remitted) ||
+                  Boolean(matchInDb?.shipment_details?.is_paid);
+
+                const finalUtr = srRemittanceUtr || matchInDb?.shipment_details?.remittance_utr || (s.awb ? `AWB: ${s.awb}` : 'Remitted');
+                const finalDate = srRemittanceDate || s.created_at || new Date().toISOString();
+
+                if (isRemitted) {
+                  codReceivedSum += amt;
+                  schedule.push({
+                    id: channelOrdId || `AWB-${s.awb}`,
+                    date: finalDate,
+                    status: 'Received in Bank',
+                    utr: finalUtr,
+                    amount: Number(amt.toFixed(2))
+                  });
+
+                  if (matchInDb && !matchInDb.shipment_details?.cod_remitted && srRemittanceStatus) {
+                    try {
+                      const updatedDetails = {
+                        ...(matchInDb.shipment_details || {}),
+                        cod_remitted: true,
+                        remittance_utr: finalUtr,
+                        remittance_date: finalDate,
+                        remittance_status: srRemittanceStatus
+                      };
+                      await supabase.from('orders').update({
+                        shipment_details: updatedDetails
+                      }).eq('id', matchInDb.id);
+                    } catch (_) {}
+                  }
+                } else {
+                  codPendingSum += amt;
+                  schedule.push({
+                    id: channelOrdId || `AWB-${s.awb}`,
+                    date: s.created_at || new Date().toISOString(),
+                    status: 'Pending Payout',
+                    utr: s.awb ? `AWB: ${s.awb}` : 'Processing',
+                    amount: Number(amt.toFixed(2))
+                  });
+                }
               }
 
-              responseData.shiprocket.upcoming_remittance_total = Number(codSum.toFixed(2));
+              responseData.shiprocket.upcoming_remittance_total = Number(codPendingSum.toFixed(2));
+              responseData.shiprocket.cod_received_in_bank = Number(codReceivedSum.toFixed(2));
               responseData.shiprocket.remittances_schedule = schedule;
             }
           }
@@ -276,7 +345,14 @@ export async function GET(request) {
     }
 
     const codPipeline = responseData.local_metrics.cod_pipeline_total || 0;
-    const codDeliveredPending = responseData.shiprocket.upcoming_remittance_total || responseData.local_metrics.cod_delivered_total || 0;
+    const codDeliveredPending = responseData.shiprocket.connected
+      ? responseData.shiprocket.upcoming_remittance_total
+      : (responseData.local_metrics.cod_delivered_pending_total || 0);
+
+    const codAlreadyReceivedInBank = responseData.shiprocket.connected
+      ? (responseData.shiprocket.cod_received_in_bank || 0)
+      : (responseData.local_metrics.cod_delivered_remitted_total || 0);
+
     const prepaidUnsettled = responseData.razorpay.unsettled_balance || 0;
     const totalSettled = (responseData.razorpay.total_settled || 0);
     const offlineTotal = responseData.local_metrics.offline_sales_total || 0;
@@ -284,13 +360,14 @@ export async function GET(request) {
     responseData.combined_summary = {
       offline_self_handover_total: Number(offlineTotal.toFixed(2)),
       cod_delivered_pending: Number(codDeliveredPending.toFixed(2)),
+      cod_already_received_in_bank: Number(codAlreadyReceivedInBank.toFixed(2)),
       cod_shipped_in_transit: Number((responseData.local_metrics.cod_shipped_total || 0).toFixed(2)),
       cod_pipeline_total: Number(codPipeline.toFixed(2)),
       prepaid_unsettled_balance: Number(prepaidUnsettled.toFixed(2)),
       prepaid_shipped_in_transit: Number((responseData.local_metrics.prepaid_shipped_total || 0).toFixed(2)),
       prepaid_pipeline_total: Number((responseData.local_metrics.prepaid_pipeline_total || 0).toFixed(2)),
       total_pending_bank_payout: Number((codDeliveredPending + prepaidUnsettled).toFixed(2)),
-      total_already_received_in_bank: Number(totalSettled.toFixed(2))
+      total_already_received_in_bank: Number((totalSettled + codAlreadyReceivedInBank).toFixed(2))
     };
 
     return NextResponse.json(responseData, { headers: corsHeaders });
