@@ -59,16 +59,20 @@ export async function GET(request) {
       const nonCancelled = allOrders.filter(o => o.status !== 'Cancelled');
 
       // 1. Offline / Self Handover Sales
-      const offlineOrders = nonCancelled.filter(o => {
+      const isHandDelivered = (o) => {
         const pm = String(o.payment_method || '').toLowerCase();
-        return pm.includes('offline') || pm.includes('cash (offline)') || String(o.id || '').startsWith('ORD-OFFLINE');
-      });
+        const courier = String(o.shiprocket_courier_name || '').toLowerCase();
+        const id = String(o.id || '');
+        return pm.includes('offline') || pm.includes('cash (offline)') || courier.includes('hand delivered') || courier.includes('direct') || id.startsWith('ORD-OFFLINE');
+      };
+
+      const offlineOrders = nonCancelled.filter(isHandDelivered);
       const offlineSum = offlineOrders.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
 
-      // 2. COD Orders
+      // 2. COD Orders (Courier Shipped)
       const codOrders = nonCancelled.filter(o => {
         const pm = String(o.payment_method || '').toLowerCase();
-        return (pm.includes('cod') || pm.includes('cash on delivery')) && !pm.includes('offline');
+        return (pm.includes('cod') || pm.includes('cash on delivery')) && !isHandDelivered(o);
       });
 
       const codDelivered = codOrders.filter(o => o.status === 'Delivered');
