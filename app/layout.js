@@ -145,6 +145,15 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fdfvzzqiyyhxowftegpl.supabase.co" crossOrigin="anonymous" />
       </head>
       <body className={`${poppins.className} min-h-full flex flex-col bg-white text-stone-900`}>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-K26ZMVH9"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
         <CartProvider>
           <Analytics />
           <ScrollToTop />

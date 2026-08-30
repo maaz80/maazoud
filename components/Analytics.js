@@ -4,10 +4,11 @@ import { useEffect } from "react";
 
 export default function Analytics() {
   useEffect(() => {
+    const gtmId = process.env.NEXT_PUBLIC_GTM_ID || "GTM-K26ZMVH9";
     const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
     const clarityId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
 
-    if (!gaId && !clarityId) return;
+    if (!gtmId && !gaId && !clarityId) return;
 
     let scriptsLoaded = false;
 
@@ -19,6 +20,19 @@ export default function Analytics() {
       window.removeEventListener("scroll", loadScripts);
       window.removeEventListener("mousemove", loadScripts);
       window.removeEventListener("touchstart", loadScripts);
+
+      // Load Google Tag Manager (GTM)
+      if (gtmId) {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          "gtm.start": new Date().getTime(),
+          event: "gtm.js",
+        });
+        const gtmScript = document.createElement("script");
+        gtmScript.async = true;
+        gtmScript.src = `https://www.googletagmanager.com/gtm.js?id=${gtmId}`;
+        document.head.appendChild(gtmScript);
+      }
 
       // Load GA4
       if (gaId) {
