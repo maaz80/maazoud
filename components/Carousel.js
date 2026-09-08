@@ -41,8 +41,10 @@ export default function Carousel({ initialBanners = [] }) {
 
   if (loading) {
     return (
-      <div className="w-full h-37.5 md:h-100 bg-stone-105 flex items-center justify-center animate-pulse">
-        <span className="text-[10px] uppercase font-bold tracking-widest text-stone-400">Loading Banners...</span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-6">
+        <div className="w-full h-37.5 md:h-140 bg-stone-100 flex items-center justify-center animate-pulse rounded-md border border-stone-200/60 shadow-sm">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-stone-400">Loading Banners...</span>
+        </div>
       </div>
     );
   }
@@ -50,83 +52,85 @@ export default function Carousel({ initialBanners = [] }) {
   if (!banners || banners.length === 0) return null;
 
   return (
-    <div className="relative w-full h-37.5 md:h-140 bg-stone-100 overflow-hidden group font-sans">
-      
-      {/* Slides Wrapper */}
-      <div 
-        className="flex w-full h-full transition-transform duration-700 ease-out"
-        style={{ transform: `translateX(-${current * 100}%)` }}
-      >
-        {banners.map((banner, index) => {
-          const content = (
-            <div className="w-full h-full shrink-0 relative flex items-center cursor-pointer">
-              <Image 
-                loader={supabaseLoader}
-                src={banner.image} 
-                alt={getImageAlt(banner.image, banner.title || "Banner Image")} 
-                fill
-                priority={index === 0}
-                fetchPriority={index === 0 ? "high" : "low"}
-                sizes="100vw"
-                className="absolute inset-0 w-full h-full object-cover" 
-              />
-            </div>
-          );
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-6">
+      <div className="relative w-full h-37.5 md:h-140 bg-stone-100 overflow-hidden rounded-md shadow-md border border-stone-200/50 group font-sans">
+        
+        {/* Slides Wrapper */}
+        <div 
+          className="flex w-full h-full transition-transform duration-700 ease-out"
+          style={{ transform: `translateX(-${current * 100}%)` }}
+        >
+          {banners.map((banner, index) => {
+            const content = (
+              <div className="w-full h-full shrink-0 relative flex items-center cursor-pointer">
+                <Image 
+                  loader={supabaseLoader}
+                  src={banner.image} 
+                  alt={getImageAlt(banner.image, banner.title || "Banner Image")} 
+                  fill
+                  priority={index === 0}
+                  fetchPriority={index === 0 ? "high" : "low"}
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                  className="absolute inset-0 w-full h-full object-cover" 
+                />
+              </div>
+            );
 
-          return banner.link ? (
-            <Link key={banner.id} href={banner.link} className="w-full h-full shrink-0">
-              {content}
-            </Link>
-          ) : (
-            <div key={banner.id} className="w-full h-full shrink-0">
-              {content}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Navigation Arrows */}
-      {banners.length > 1 && (
-        <>
-          <button 
-            onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/70 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md z-20 opacity-0 group-hover:opacity-100 cursor-pointer"
-            aria-label="Previous Slide"
-          >
-            <FaChevronLeft size={16} />
-          </button>
-          <button 
-            onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/70 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md z-20 opacity-0 group-hover:opacity-100 cursor-pointer"
-            aria-label="Next Slide"
-          >
-            <FaChevronRight size={16} />
-          </button>
-        </>
-      )}
-
-      {/* Indicators */}
-      {banners.length > 1 && (
-        <div className="absolute bottom-1 md:bottom-6 left-1/2 -translate-x-1/2 flex space-x-1 z-20">
-          {banners.map((_, index) => (
-            <button 
-              key={index}
-              onClick={() => setCurrent(index)}
-              className="w-8 h-8 flex items-center justify-center cursor-pointer focus:outline-none"
-              aria-label={`Go to slide ${index + 1}`}
-            >
-              <span 
-                className={`h-2.5 rounded-full transition-all ${
-                  current === index 
-                    ? "bg-[#8c6239] w-8" 
-                    : "bg-white/50 hover:bg-white w-2.5"
-                }`}
-              />
-            </button>
-          ))}
+            return banner.link ? (
+              <Link key={banner.id} href={banner.link} className="w-full h-full shrink-0">
+                {content}
+              </Link>
+            ) : (
+              <div key={banner.id} className="w-full h-full shrink-0">
+                {content}
+              </div>
+            );
+          })}
         </div>
-      )}
 
+        {/* Navigation Arrows */}
+        {banners.length > 1 && (
+          <>
+            <button 
+              onClick={prevSlide}
+              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/70 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md z-20 opacity-0 group-hover:opacity-100 cursor-pointer"
+              aria-label="Previous Slide"
+            >
+              <FaChevronLeft size={16} />
+            </button>
+            <button 
+              onClick={nextSlide}
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/70 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md z-20 opacity-0 group-hover:opacity-100 cursor-pointer"
+              aria-label="Next Slide"
+            >
+              <FaChevronRight size={16} />
+            </button>
+          </>
+        )}
+
+        {/* Indicators */}
+        {banners.length > 1 && (
+          <div className="absolute bottom-2 md:bottom-6 left-1/2 -translate-x-1/2 flex space-x-1 z-20">
+            {banners.map((_, index) => (
+              <button 
+                key={index}
+                onClick={() => setCurrent(index)}
+                className="w-8 h-8 flex items-center justify-center cursor-pointer focus:outline-none"
+                aria-label={`Go to slide ${index + 1}`}
+              >
+                <span 
+                  className={`h-2.5 rounded-full transition-all ${
+                    current === index 
+                      ? "bg-[#8c6239] w-8" 
+                      : "bg-white/50 hover:bg-white w-2.5"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
