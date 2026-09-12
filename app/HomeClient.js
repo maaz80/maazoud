@@ -136,12 +136,12 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
         <h1 className="sr-only">Maaz Oud | Best Arabic Oud & Luxury Premium Attars below Rs.200</h1>
         
         {/* 2. Categories Section */}
-        <section className="space-y-4 md:space-y-8">
-          <div className="text-center space-y-2">
-            <h2 className="text-xl md:text-3xl font-serif font-bold text-stone-900 tracking-wide">
+        <section className="space-y-4 md:space-y-8 mt-2 md:mt-0">
+          <div className="text-start md:text-center space-y-2">
+            <h2 className="text-xl md:text-3xl font-semibold text-stone-900 tracking-wide">
               Shop by Category
             </h2>
-            <div className="w-16 h-0.5 bg-[#8c6239] mx-auto" />
+            <div className="w-16 h-0.5 bg-[#8c6239] mr-auto md:mx-auto" />
             {/* <p className="text-xs text-stone-600 max-w-md mx-auto leading-relaxed">
               Explore our curated ranges meticulously blended for diverse preferences and seasons.
             </p> */}
@@ -164,7 +164,7 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-stone-200 pb-3 md:pb-5">
             <div>
-              <h2 className="text-xl md:text-2xl font-serif font-bold text-stone-900">
+              <h2 className="text-xl md:text-2xl font-semibold text-stone-900">
                 {filterSearch ? `Search Results for "${filterSearch}"` : "Our Attar Collection"}
               </h2>
               <p className="text-xs text-stone-600 mt-1">
