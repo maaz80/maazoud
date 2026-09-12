@@ -583,7 +583,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`w-14 h-16 rounded border overflow-hidden bg-stone-50 shrink-0 transition-all cursor-pointer ${activeImageIndex === idx
+                    className={`w-14 h-14 rounded border overflow-hidden bg-stone-50 shrink-0 transition-all cursor-pointer ${activeImageIndex === idx
                       ? "border-[#8c6239] ring-1 ring-[#8c6239]"
                       : "border-stone-200 hover:border-stone-400"
                       }`}
