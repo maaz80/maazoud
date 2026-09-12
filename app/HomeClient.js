@@ -15,12 +15,11 @@ import { useCart } from "../context/CartContext";
 
 // Category Skeleton Loader
 const CategorySkeleton = () => (
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+  <div className="grid grid-cols-4 gap-2 sm:gap-6 lg:gap-8">
     {Array.from({ length: 4 }).map((_, i) => (
-      <div key={i} className="animate-pulse bg-stone-50 border border-stone-100 rounded-lg p-6 flex flex-col items-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-stone-200" />
-        <div className="w-24 h-4 bg-stone-200 rounded" />
-        <div className="w-12 h-3 bg-stone-200 rounded" />
+      <div key={i} className="animate-pulse space-y-2">
+        <div className="w-full aspect-square bg-stone-200 rounded-md" />
+        <div className="w-3/4 h-3 bg-stone-200 rounded mx-auto" />
       </div>
     ))}
   </div>
@@ -137,21 +136,21 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
         <h1 className="sr-only">Maaz Oud | Best Arabic Oud & Luxury Premium Attars below Rs.200</h1>
         
         {/* 2. Categories Section */}
-        <section className="space-y-8">
+        <section className="space-y-4 md:space-y-8">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl md:text-3xl font-serif font-bold text-stone-900 tracking-wide">
+            <h2 className="text-xl md:text-3xl font-serif font-bold text-stone-900 tracking-wide">
               Shop by Category
             </h2>
             <div className="w-16 h-0.5 bg-[#8c6239] mx-auto" />
-            <p className="text-xs text-stone-600 max-w-md mx-auto leading-relaxed">
+            {/* <p className="text-xs text-stone-600 max-w-md mx-auto leading-relaxed">
               Explore our curated ranges meticulously blended for diverse preferences and seasons.
-            </p>
+            </p> */}
           </div>
 
           {loading ? (
             <CategorySkeleton />
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            <div className="grid grid-cols-4 gap-2 sm:gap-6 lg:gap-8">
               {categories.map((category) => (
                 <CategoryCard key={category.id} category={category} />
               ))}
@@ -160,10 +159,10 @@ function HomeContent({ initialBanners, initialCategories, initialProducts, initi
         </section>
 
         {/* 3. Products Section */}
-        <section ref={productsRef} id="products" className="space-y-8 pt-8 border-t border-stone-100">
+        <section ref={productsRef} id="products" className="space-y-8 pt-0 md:pt-8 border-none md:border-t border-stone-100">
           
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-stone-200 pb-5">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-stone-200 pb-3 md:pb-5">
             <div>
               <h2 className="text-xl md:text-2xl font-serif font-bold text-stone-900">
                 {filterSearch ? `Search Results for "${filterSearch}"` : "Our Attar Collection"}

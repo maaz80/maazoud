@@ -42,7 +42,7 @@ export default function Carousel({ initialBanners = [] }) {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-6">
-        <div className="w-full h-37.5 md:h-140 bg-stone-100 flex items-center justify-center animate-pulse rounded-md border border-stone-200/60 shadow-sm">
+        <div className="w-full h-37.5 md:h-110 bg-stone-100 flex items-center justify-center animate-pulse rounded-md border border-stone-200/60 shadow-sm">
           <span className="text-[10px] uppercase font-bold tracking-widest text-stone-400">Loading Banners...</span>
         </div>
       </div>
@@ -53,7 +53,7 @@ export default function Carousel({ initialBanners = [] }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-6">
-      <div className="relative w-full h-37.5 md:h-140 bg-stone-100 overflow-hidden rounded-md shadow-md border border-stone-200/50 group font-sans">
+      <div className="relative w-full h-34.5 md:h-110 bg-stone-100 overflow-hidden rounded-md shadow-md border border-stone-200/50 group font-sans">
         
         {/* Slides Wrapper */}
         <div 

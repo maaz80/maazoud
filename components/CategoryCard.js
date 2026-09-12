@@ -19,7 +19,7 @@ export default function CategoryCard({ category }) {
           alt={getImageAlt(category.image, category.name)}
           width={300}
           height={300}
-          sizes="(max-width: 640px) 160px, 320px"
+          sizes="(max-width: 640px) 120px, 320px"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Soft elegant overlay */}
@@ -28,7 +28,7 @@ export default function CategoryCard({ category }) {
 
 
       {/* Category Name below */}
-      <h3 className="mt-1 md:mt-4 text-[11px] md:text-sm font-semibold uppercase tracking-wider text-stone-900 group-hover:text-[#8c6239] transition-colors">
+      <h3 className="mt-1.5 md:mt-4 text-[10px] sm:text-xs md:text-sm font-semibold uppercase tracking-wider text-stone-900 group-hover:text-[#8c6239] transition-colors leading-tight">
         {category.name}
       </h3>
     </Link>
