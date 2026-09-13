@@ -859,7 +859,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                     placeholder="e.g. John Doe"
                     value={newReview.name}
                     onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
-                    className="w-full bg-stone-50 border border-stone-200 rounded p-2 text-xs focus:ring-1 focus:ring-[#8c6239] focus:outline-none"
+                    className="w-full bg-stone-50 border text-stone-700 placeholder:text-stone-400 border-stone-200 rounded p-2 text-xs focus:ring-1 focus:ring-[#8c6239] focus:outline-none"
                   />
                 </div>
 
@@ -872,7 +872,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                     placeholder="e.g. Smells amazing!"
                     value={newReview.title}
                     onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
-                    className="w-full bg-stone-50 border border-stone-200 rounded p-2 text-xs focus:ring-1 focus:ring-[#8c6239] focus:outline-none"
+                    className="w-full bg-stone-50 border text-stone-700 placeholder:text-stone-400 border-stone-200 rounded p-2 text-xs focus:ring-1 focus:ring-[#8c6239] focus:outline-none"
                   />
                 </div>
 
@@ -885,7 +885,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                     placeholder="Write your honest review here..."
                     value={newReview.comment}
                     onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                    className="w-full bg-stone-50 border border-stone-200 rounded p-2 text-xs focus:ring-1 focus:ring-[#8c6239] focus:outline-none"
+                    className="w-full bg-stone-50 border text-stone-700 placeholder:text-stone-400 border-stone-200 rounded p-2 text-xs focus:ring-1 focus:ring-[#8c6239] focus:outline-none"
                   />
                 </div>
 
