@@ -154,7 +154,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
   useEffect(() => {
     const fetchProductDetails = async () => {
       if (!slug) return;
-      if (product && product.id === slug) {
+      if (initialProduct || (product && (product.id === slug || normalizeProductSlug(product.id) === normalizeProductSlug(slug)))) {
         setLoading(false);
         return;
       }

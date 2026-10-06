@@ -16,7 +16,7 @@ export default function BlogClient({ slug, initialBlog, initialBlogs, initialPro
   useEffect(() => {
     const fetchBlogData = async () => {
       if (!slug) return;
-      if (blog && blog.slug === slug) {
+      if (initialBlog || (blog && blog.slug === slug)) {
         setLoading(false);
         return;
       }

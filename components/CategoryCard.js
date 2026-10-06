@@ -8,7 +8,7 @@ import { getImageAlt, getOptimizedImageUrl, supabaseLoader } from "../utils/imag
 export default function CategoryCard({ category }) {
   return (
     <Link
-      href={`/category/${category.slug}`}
+      href={`/category/${category.slug || category.id}`}
       className="group block overflow-hidden text-center cursor-pointer"
     >
       {/* Category Image Container */}

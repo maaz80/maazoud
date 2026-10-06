@@ -3,7 +3,19 @@ import ProductClient from "./ProductClient";
 import { supabase } from "../../../utils/supabase";
 import { PRODUCTS } from "../../../utils/mockData";
 
-export const revalidate = 60; // Dynamic server rendering
+export const revalidate = 60; // Dynamic server rendering with ISR
+
+export async function generateStaticParams() {
+  try {
+    const { data: products } = await supabase.from("products").select("id");
+    if (!products) return [];
+    return products.map((p) => ({
+      slug: String(p.id),
+    }));
+  } catch (e) {
+    return [];
+  }
+}
 
 const normalizeProductSlug = (value = "") => {
   return String(value || "")
@@ -20,20 +32,14 @@ const findProductBySlug = async (slug) => {
   const normalizedTarget = normalizeProductSlug(decodedSlug);
 
   const { data: allProducts, error } = await supabase.from("products").select("*");
-  if (error) throw error;
-
-  if (!allProducts || allProducts.length === 0) return null;
+  if (error || !allProducts || allProducts.length === 0) return null;
 
   const exactMatches = allProducts.filter((product) => {
     const candidates = [product.id, product.slug, product.name].filter(Boolean).map(String);
     return candidates.some((candidate) => normalizeProductSlug(candidate) === normalizedTarget);
   });
 
-  if (exactMatches.length > 0) {
-    return exactMatches[0];
-  }
-
-  return null;
+  return exactMatches.length > 0 ? exactMatches[0] : null;
 };
 
 async function getProductData(slug) {
@@ -45,7 +51,7 @@ async function getProductData(slug) {
       .eq("id", slug)
       .single();
 
-    // Fallback: resolve by normalized slug/name when the URL is human-friendly or punctuation-rich
+    // Fallback: resolve by normalized slug/name when the URL is human-friendly
     if (prodErr || !prodData) {
       const fallbackProduct = await findProductBySlug(slug);
       if (fallbackProduct) {
@@ -55,8 +61,7 @@ async function getProductData(slug) {
     }
 
     if (prodErr || !prodData) {
-      // Try fallback to mock data
-      const foundProduct = PRODUCTS.find((p) => p.slug === slug);
+      const foundProduct = PRODUCTS.find((p) => p.slug === slug || p.id === slug);
       if (foundProduct) {
         const fpCats = Array.isArray(foundProduct.category) ? foundProduct.category : (foundProduct.category ? [foundProduct.category] : []);
         let related = PRODUCTS.filter((p) => {
@@ -78,11 +83,13 @@ async function getProductData(slug) {
       return { product: null, reviews: [], relatedProducts: [], blogs: [] };
     }
 
-    // 2. Fetch reviews, related products, and blogs
+    // 2. Parallel fetch for reviews, related products, and blogs
     const prodCategories = Array.isArray(prodData.category) ? prodData.category : (prodData.category ? [prodData.category] : []);
     const [revRes, relRes, blogsRes] = await Promise.all([
       supabase.from("reviews").select("*").eq("product_id", prodData.id).order("created_at", { ascending: false }),
-      supabase.from("products").select("*").overlaps("category", prodCategories).neq("id", prodData.id).limit(4),
+      prodCategories.length > 0 
+        ? supabase.from("products").select("*").contains("category", [prodCategories[0]]).neq("id", prodData.id).limit(4)
+        : supabase.from("products").select("*").neq("id", prodData.id).limit(4),
       supabase.from("blogs").select("id, title, image, slug, created_at").order("created_at", { ascending: false }).limit(3)
     ]);
 
@@ -115,65 +122,12 @@ async function getProductData(slug) {
           category: p.category || "top-selling"
         };
       });
-
-      if (relatedProducts.length < 4) {
-        const { data: allProds } = await supabase
-          .from("products")
-          .select("*")
-          .neq("id", prodData.id)
-          .limit(8);
-
-        if (allProds) {
-          const extraProds = allProds
-            .filter(ap => !relatedProducts.some(mr => mr.id === ap.id))
-            .map(p => {
-              const orig = p.price3mlorig || p.price3mloffer;
-              const offer = p.price3mloffer;
-              const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
-              return {
-                ...p,
-                id: p.id,
-                slug: p.id,
-                price: offer,
-                originalPrice: orig,
-                discount: discount,
-                size: "3ml",
-                category: p.category || "top-selling"
-              };
-            });
-          relatedProducts = [...relatedProducts, ...extraProds].slice(0, 4);
-        }
-      }
-    } else {
-      const { data: fallbackProds } = await supabase
-        .from("products")
-        .select("*")
-        .neq("id", prodData.id)
-        .limit(4);
-
-      if (fallbackProds) {
-        relatedProducts = fallbackProds.map(p => {
-          const orig = p.price3mlorig || p.price3mloffer;
-          const offer = p.price3mloffer;
-          const discount = orig > offer ? Math.round(((orig - offer) / orig) * 100) : 0;
-          return {
-            ...p,
-            id: p.id,
-            slug: p.id,
-            price: offer,
-            originalPrice: orig,
-            discount: discount,
-            size: "3ml",
-            category: p.category || "top-selling"
-          };
-        });
-      }
     }
 
     return {
       product: prodData,
       reviews: reviews,
-      relatedProducts: relatedProducts,
+      relatedProducts: relatedProducts.slice(0, 4),
       blogs: blogsRes?.data || []
     };
   } catch (err) {

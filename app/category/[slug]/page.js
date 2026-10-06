@@ -4,6 +4,19 @@ import { supabase } from "../../../utils/supabase";
 
 export const revalidate = 60; // Dynamic server rendering or revalidation as needed
 
+export async function generateStaticParams() {
+  try {
+    const { data: categories } = await supabase.from("categories").select("slug");
+    if (!categories) return [];
+    return categories.map((c) => ({
+      slug: String(c.slug),
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+
 async function getCategoryData(slug) {
   try {
     const { data: categoryData, error: catErr } = await supabase

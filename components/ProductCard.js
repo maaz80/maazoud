@@ -39,7 +39,7 @@ export default function ProductCard({ product }) {
     <div className="group flex flex-col bg-white border border-stone-200 rounded-md overflow-hidden hover:shadow-md transition-all h-full font-sans">
 
       {/* Product Image & Gallery Slider */}
-      <Link href={`/product/${product.slug}`} className="relative aspect-4/4 w-full overflow-hidden block group/img bg-stone-50 border-b border-stone-100">
+      <Link href={`/product/${product.slug || product.id}`} className="relative aspect-4/4 w-full overflow-hidden block group/img bg-stone-50 border-b border-stone-100">
         {/* Out of stock badge on top left */}
         {isFullyOutOfStock ? (
           <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded shadow-sm z-20">
@@ -128,7 +128,7 @@ export default function ProductCard({ product }) {
         </div>
 
         {/* Product Name with Line Clamp */}
-        <Link href={`/product/${product.slug}`}>
+        <Link href={`/product/${product.slug || product.id}`}>
           <h3 className="text-sm font-medium text-stone-900 group-hover:text-[#8c6239] transition-colors line-clamp-1 min-h-5 leading-snug">
             {product.name}
           </h3>
@@ -164,14 +164,14 @@ export default function ProductCard({ product }) {
             </button>
           ) : is3mlOutOfStock && !is6mlOutOfStock ? (
             <Link
-              href={`/product/${product.slug}`}
+              href={`/product/${product.slug || product.id}`}
               className="w-full block text-center py-2 text-xs font-bold uppercase tracking-wider rounded bg-amber-800 hover:bg-[#8c6239] text-white transition-all cursor-pointer"
             >
               3ML OUT OF STOCK (SELECT 6ML)
             </Link>
           ) : is6mlOutOfStock && !is3mlOutOfStock && size === "6ml" ? (
             <Link
-              href={`/product/${product.slug}`}
+              href={`/product/${product.slug || product.id}`}
               className="w-full block text-center py-2 text-xs font-bold uppercase tracking-wider rounded bg-amber-800 hover:bg-[#8c6239] text-white transition-all cursor-pointer"
             >
               6ML OUT OF STOCK (SELECT 3ML)

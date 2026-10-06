@@ -4,6 +4,19 @@ import { supabase } from "../../../utils/supabase";
 
 export const revalidate = 60; // Dynamic server rendering
 
+export async function generateStaticParams() {
+  try {
+    const { data: blogs } = await supabase.from("blogs").select("slug");
+    if (!blogs) return [];
+    return blogs.map((b) => ({
+      slug: String(b.slug),
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+
 async function getBlogData(slug) {
   try {
     const { data, error } = await supabase

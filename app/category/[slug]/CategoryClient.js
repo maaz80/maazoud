@@ -35,7 +35,7 @@ export default function CategoryClient({ slug, initialCategory, initialProducts,
   useEffect(() => {
     const fetchCategoryData = async () => {
       if (!slug) return;
-      if (category && category.slug === slug) {
+      if (initialCategory || (category && (category.slug === slug || category.id === slug))) {
         setLoading(false);
         return;
       }
