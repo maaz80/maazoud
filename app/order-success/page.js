@@ -2,13 +2,15 @@
 
 import React, { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FaCheckCircle, FaShoppingBag, FaBoxOpen, FaTruck, FaTimes } from "react-icons/fa";
+import { FaCheckCircle, FaShoppingBag, FaBoxOpen, FaTruck, FaTimes, FaLock } from "react-icons/fa";
 import Link from "next/link";
+import { useCart } from "../../context/CartContext";
 
 function OrderSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const { user, setIsLoginOpen, setIsOrdersOpen } = useCart();
 
   useEffect(() => {
     // Agar URL me koi valid orderId nahi hai (matlab direct access ki koshish ki gayi hai), 
@@ -73,28 +75,49 @@ function OrderSuccessContent() {
             </div>
           </div>
 
-          {/* <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-stone-200 bg-white p-3 text-center shadow-sm">
-              <FaCheckCircle className="mx-auto mb-2 text-green-600" />
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-700">Confirmed</p>
+          {/* Guest User: To Track Your Order Login First */}
+          {!user ? (
+            <div className="mt-5 rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 text-left shadow-xs space-y-2">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-amber-100 p-2 text-amber-800 shrink-0 mt-0.5">
+                  <FaLock size={14} />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900">
+                    Want to track your order in real-time?
+                  </h4>
+                  <p className="text-xs text-amber-800 font-normal leading-relaxed">
+                    To track your order live (courier movement, dispatch status & delivery hub), please login first with your mobile number.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-1 text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsLoginOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#8c6239] hover:bg-stone-900 px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-xs"
+                >
+                  Login First to Track Order &rarr;
+                </button>
+              </div>
             </div>
-            <div className="rounded-xl border border-stone-200 bg-white p-3 text-center shadow-sm">
-              <FaBoxOpen className="mx-auto mb-2 text-[#8c6239]" />
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-700">Packed</p>
+          ) : (
+            <div className="mt-5 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-left shadow-xs flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block">Live Tracking Active</span>
+                <span className="text-xs font-semibold text-stone-800">You can track your order live in My Orders</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOrdersOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#8c6239] hover:bg-stone-900 px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-xs"
+              >
+                Track Order &rarr;
+              </button>
             </div>
-            <div className="rounded-xl border border-stone-200 bg-white p-3 text-center shadow-sm">
-              <FaTruck className="mx-auto mb-2 text-[#8c6239]" />
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-700">Delivered</p>
-            </div>
-          </div> */}
+          )}
 
-          {/* <div className="mt-6 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-left shadow-sm">
-            <p className="text-sm text-stone-600">
-              You can close this page anytime and continue shopping from the homepage.
-            </p>
-          </div> */}
-
-          <div className="mt-8">
+          <div className="mt-3">
             <Link
               href="/"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-6 py-3 text-[11px] font-bold uppercase tracking-[0.25em] text-white transition-all hover:bg-[#8c6239]"

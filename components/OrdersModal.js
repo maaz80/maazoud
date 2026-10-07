@@ -1,13 +1,275 @@
 "use client";
 
-import React from "react";
-import { FaTimes, FaBoxOpen } from "react-icons/fa";
+import React, { useState } from "react";
+import { 
+  FaTimes, 
+  FaBoxOpen, 
+  FaTruck, 
+  FaLock, 
+  FaChevronDown, 
+  FaChevronUp, 
+  FaSyncAlt, 
+  FaMapMarkerAlt,
+  FaCheck
+} from "react-icons/fa";
 import Image from "next/image";
 import { useCart } from "../context/CartContext";
 import { getOptimizedImageUrl, supabaseLoader } from "../utils/imageHelper";
 
+function FlipkartTrackingTimeline({ order }) {
+  const [trackingData, setTrackingData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchTracking = async () => {
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/track?orderId=${encodeURIComponent(order.id)}`);
+      const data = await res.json();
+      if (data.success) {
+        setTrackingData(data);
+      } else {
+        setError(data.error || "Unable to fetch live tracking details");
+      }
+    } catch (e) {
+      setError("Network error fetching live tracking");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggle = () => {
+    if (!isExpanded && !trackingData) {
+      fetchTracking();
+    }
+    setIsExpanded(!isExpanded);
+  };
+
+  const status = String(order.status || '').toLowerCase();
+  const isCancelled = status === 'cancelled';
+  const isDelivered = status === 'delivered' || (trackingData && trackingData.status === 'Delivered');
+  const isOutForDelivery = trackingData?.currentStatusText?.toLowerCase().includes('out for delivery') || isDelivered;
+  const isShipped = status === 'shipped' || isOutForDelivery || isDelivered;
+
+  const shipmentDetails = typeof order?.shipment_details === 'string'
+    ? (() => { try { return JSON.parse(order.shipment_details); } catch(e) { return {}; } })()
+    : (order?.shipment_details || {});
+
+  const awb = shipmentDetails.zipypost_awb || shipmentDetails.awb || order.shiprocket_awb;
+  const courier = shipmentDetails.zipypost_courier_name || order.shiprocket_courier_name || (shipmentDetails.carrier === 'zipypost' ? 'ZipyPost Partner' : 'Courier Partner');
+
+  const step1Done = true;
+  const step2Done = isShipped;
+  const step3Done = isOutForDelivery;
+  const step4Done = isDelivered;
+
+  return (
+    <div className="bg-white border border-stone-200 rounded-lg p-3 sm:p-4 space-y-3 font-sans shadow-2xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-150 pb-2.5">
+        <div className="flex items-center gap-1.5">
+          <FaTruck className="text-[#8c6239]" size={13} />
+          <span className="text-[11px] font-bold uppercase tracking-wider text-stone-800">
+            Order Tracking Status
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleToggle}
+          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#8c6239] hover:text-stone-900 transition-colors cursor-pointer bg-[#8c6239]/10 hover:bg-[#8c6239]/20 px-2.5 py-1 rounded"
+        >
+          {loading ? (
+            <span className="flex items-center gap-1">
+              <FaSyncAlt className="animate-spin" size={10} /> Fetching Scans...
+            </span>
+          ) : isExpanded ? (
+            <span className="flex items-center gap-1">
+              Hide Scans <FaChevronUp size={9} />
+            </span>
+          ) : (
+            <span className="flex items-center gap-1">
+              Live Scans & Timeline <FaChevronDown size={9} />
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Flipkart 4-Step Stepper */}
+      <div className="pt-2 pb-1 relative">
+        {/* Background Connecting Line Track (Centered at circle height: 20px) */}
+        <div className="absolute top-[20px] left-[12.5%] right-[12.5%] h-1 bg-stone-200 -translate-y-1/2 z-0 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-green-600 transition-all duration-300 rounded-full"
+            style={{
+              width: isCancelled 
+                ? (step3Done ? '66.6%' : step2Done ? '33.3%' : '0%') 
+                : (step4Done ? '100%' : step3Done ? '66.6%' : step2Done ? '33.3%' : '0%')
+            }}
+          />
+        </div>
+
+        {/* 4 Steps Row: items-start keeps all circles perfectly leveled at top */}
+        <div className="flex items-start justify-between relative z-1">
+          {/* Step 1: Confirmed */}
+          <div className="flex flex-col items-center text-center flex-1 min-w-0 px-0.5">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ring-4 ring-white transition-all shadow-xs ${
+              step1Done ? 'bg-green-600 text-white' : 'bg-stone-200 text-stone-500'
+            }`}>
+              <FaCheck size={9} />
+            </div>
+            <span className="text-[10px] font-bold text-stone-800 mt-1.5 leading-tight block">Confirmed</span>
+            <span className="text-[9px] text-stone-400 block font-light leading-tight mt-0.5">Order verified</span>
+          </div>
+
+          {/* Step 2: Shipped */}
+          <div className="flex flex-col items-center text-center flex-1 min-w-0 px-0.5">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ring-4 ring-white transition-all shadow-xs ${
+              step2Done ? 'bg-green-600 text-white' : 'bg-stone-200 text-stone-500'
+            }`}>
+              {step2Done ? <FaCheck size={9} /> : '2'}
+            </div>
+            <span className="text-[10px] font-bold text-stone-800 mt-1.5 leading-tight block">Shipped</span>
+            <span className="text-[9px] text-stone-400 block font-light leading-tight mt-0.5 truncate max-w-[85px]" title={courier}>
+              {step2Done ? courier : 'Preparing'}
+            </span>
+          </div>
+
+          {/* Step 3: Out for Delivery */}
+          <div className="flex flex-col items-center text-center flex-1 min-w-0 px-0.5">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ring-4 ring-white transition-all shadow-xs ${
+              step3Done ? 'bg-green-600 text-white' : 'bg-stone-200 text-stone-500'
+            }`}>
+              {step3Done ? <FaCheck size={9} /> : '3'}
+            </div>
+            <span className="text-[10px] font-bold text-stone-800 mt-1.5 leading-tight block">
+              Out for Delivery
+            </span>
+            <span className="text-[9px] text-stone-400 block font-light leading-tight mt-0.5">Local hub</span>
+          </div>
+
+          {/* Step 4: Delivered */}
+          <div className="flex flex-col items-center text-center flex-1 min-w-0 px-0.5">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ring-4 ring-white transition-all shadow-xs ${
+              isCancelled 
+                ? 'bg-rose-600 text-white' 
+                : step4Done 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-stone-200 text-stone-500'
+            }`}>
+              {isCancelled ? '✕' : step4Done ? <FaCheck size={9} /> : '4'}
+            </div>
+            <span className="text-[10px] font-bold text-stone-800 mt-1.5 leading-tight block">
+              {isCancelled ? 'Cancelled' : 'Delivered'}
+            </span>
+            <span className="text-[9px] text-stone-400 block font-light leading-tight mt-0.5">
+              {isCancelled ? 'Cancelled' : step4Done ? 'Completed' : 'Final Step'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Courier & AWB Badge */}
+      {awb && (
+        <div className="bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 flex flex-wrap items-center justify-between text-[11px] gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+            <span className="text-stone-500 font-medium">Carrier:</span>
+            <span className="font-bold text-stone-850">{courier}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-stone-500 font-medium">Tracking / AWB:</span>
+            <span className="font-mono font-bold text-[#8c6239]">{awb}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Expandable Live Tracking Timeline (Flipkart style scans) */}
+      {isExpanded && (
+        <div className="border-t border-stone-150 pt-3 space-y-2.5">
+          {loading && !trackingData && (
+            <div className="py-4 text-center text-xs text-stone-400 space-y-1">
+              <FaSyncAlt className="animate-spin mx-auto text-[#8c6239]" size={16} />
+              <p>Fetching real-time scans from courier network...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="p-2.5 bg-red-50 text-red-700 text-xs rounded border border-red-200 flex items-center justify-between">
+              <span>{error}</span>
+              <button
+                type="button"
+                onClick={fetchTracking}
+                className="underline font-bold text-[10px] uppercase cursor-pointer"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {trackingData && (
+            <div className="space-y-3">
+              {/* Current Status Highlight */}
+              <div className="bg-green-50 border border-green-200 p-2.5 rounded text-xs flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] font-bold uppercase text-green-800 block">Current Location & Status</span>
+                  <span className="font-bold text-green-950 text-sm">
+                    {trackingData.currentStatusText || order.status}
+                  </span>
+                  {trackingData.currentLocation && (
+                    <span className="text-[10px] text-green-700 block mt-0.5 flex items-center gap-1">
+                      <FaMapMarkerAlt size={9} /> {trackingData.currentLocation}
+                    </span>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="text-[9px] font-bold uppercase text-green-800 block">Expected By</span>
+                  <span className="font-bold text-green-950 text-xs">
+                    {trackingData.expectedDelivery}
+                  </span>
+                </div>
+              </div>
+
+              {/* Scans Checkpoints List */}
+              {trackingData.scans && trackingData.scans.length > 0 ? (
+                <div className="space-y-0 pl-1 pt-1">
+                  <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block mb-2">
+                    Live Checkpoint Timeline
+                  </span>
+                  <div className="border-l-2 border-green-500 pl-3.5 space-y-3 py-1">
+                    {trackingData.scans.map((scan, sIdx) => (
+                      <div key={sIdx} className="relative text-xs">
+                        <div className="absolute -left-[20px] top-1 w-2.5 h-2.5 rounded-full bg-green-600 ring-4 ring-green-100" />
+                        <div className="space-y-0.5">
+                          <p className="font-bold text-stone-850 leading-snug">{scan.activity}</p>
+                          <p className="text-[10px] text-stone-400 font-light flex items-center gap-2">
+                            {scan.location && <span>📍 {scan.location}</span>}
+                            {scan.date && <span>📅 {scan.date} {scan.time || ''}</span>}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 bg-stone-50 rounded border border-stone-200 text-center text-xs text-stone-500">
+                  <p className="font-medium">Shipment registered with courier.</p>
+                  <p className="text-[10px] text-stone-400 mt-0.5">
+                    Live tracking scans will update as soon as the courier picks up the package from warehouse.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function OrdersModal() {
-  const { orders, isOrdersOpen, setIsOrdersOpen } = useCart();
+  const { orders, isOrdersOpen, setIsOrdersOpen, user, setIsLoginOpen } = useCart();
 
   if (!isOrdersOpen) return null;
 
@@ -107,6 +369,28 @@ export default function OrdersModal() {
 
         {/* Content */}
         <div className="p-6 max-h-[70vh] overflow-y-auto">
+          {/* Guest User: To Track Your Order Login First */}
+          {!user && (
+            <div className="mb-4 bg-amber-50/90 border border-amber-200 rounded-lg p-3 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2">
+                <FaLock className="text-amber-700 shrink-0" size={13} />
+                <span className="text-amber-900 font-medium">
+                  To track your order live like Flipkart and get instant delivery updates, please login first.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOrdersOpen(false);
+                  setIsLoginOpen(true);
+                }}
+                className="bg-[#8c6239] hover:bg-stone-900 text-white px-3.5 py-1.5 rounded-full font-bold uppercase tracking-wider text-[10px] shrink-0 transition-all cursor-pointer shadow-xs"
+              >
+                Login First &rarr;
+              </button>
+            </div>
+          )}
+
           {orders.length === 0 ? (
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
               <FaBoxOpen className="text-stone-300" size={48} />
@@ -172,6 +456,9 @@ export default function OrdersModal() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Flipkart Live Tracking Stepper & Scans */}
+                  <FlipkartTrackingTimeline order={order} />
 
                   {/* Order Total & Info */}
                   <div className="border-t border-stone-200 pt-3 flex flex-col md:flex-row justify-between items-start gap-4 text-xs">

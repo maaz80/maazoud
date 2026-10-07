@@ -254,10 +254,27 @@ export function CartProvider({ children }) {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        if (dbOrders) {
-          setOrders(dbOrders);
-          localStorage.setItem("maazoud_orders", JSON.stringify(dbOrders));
-        }
+        
+        // Ensure local orders from current session are safely merged without dropping anything
+        const savedOrders = localStorage.getItem("maazoud_orders");
+        const localOrders = savedOrders ? JSON.parse(savedOrders) : [];
+        
+        const ordersMap = new Map();
+        (dbOrders || []).forEach(o => ordersMap.set(o.id, o));
+        localOrders.forEach(o => {
+          if (!ordersMap.has(o.id)) {
+            ordersMap.set(o.id, o);
+          }
+        });
+
+        const mergedOrders = Array.from(ordersMap.values()).sort((a, b) => {
+          const dateA = new Date(a.created_at || a.date || 0).getTime();
+          const dateB = new Date(b.created_at || b.date || 0).getTime();
+          return dateB - dateA;
+        });
+
+        setOrders(mergedOrders);
+        localStorage.setItem("maazoud_orders", JSON.stringify(mergedOrders));
       } else {
         const savedOrders = localStorage.getItem("maazoud_orders");
         if (savedOrders) {
@@ -289,15 +306,18 @@ export function CartProvider({ children }) {
       if (!savedOrders) return;
       const localOrders = JSON.parse(savedOrders);
       const unlinkedOrderIds = localOrders
-        .filter(o => !o.user_id)
         .map(o => o.id)
         .filter(Boolean);
 
       if (unlinkedOrderIds.length > 0) {
-        await supabase
-          .from("orders")
-          .update({ user_id: userId })
-          .in("id", unlinkedOrderIds);
+        await fetch("/api/orders/sync-guest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: userId,
+            orderIds: unlinkedOrderIds
+          })
+        });
       }
     } catch (err) {
       console.error("Error syncing guest orders on login:", err);
