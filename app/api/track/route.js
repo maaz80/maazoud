@@ -67,7 +67,7 @@ export async function GET(request) {
     const carrier = shipmentDetails?.carrier || (order?.shiprocket_awb ? 'shiprocket' : (shipmentDetails?.zipypost_awb ? 'zipypost' : 'standard'));
     const zipyAwb = shipmentDetails?.zipypost_awb || (carrier === 'zipypost' ? order?.shiprocket_awb : null) || awbParam;
     const srAwb = order?.shiprocket_awb;
-    const courierName = shipmentDetails?.zipypost_courier_name || order?.shiprocket_courier_name || 'Courier Partner';
+    let courierName = shipmentDetails?.zipypost_courier_name || order?.shiprocket_courier_name || 'Courier Partner';
 
     // Estimated delivery date calculation (+7 days from created_at)
     const baseDate = order?.created_at ? new Date(order.created_at) : new Date();
@@ -114,6 +114,10 @@ export async function GET(request) {
               currentStatusText = liveTracking.status || liveTracking.tracking_status_text || currentStatusText;
               currentLocation = liveTracking.location || liveTracking.current_location || currentLocation;
 
+              if (liveTracking.courier) {
+                courierName = liveTracking.courier;
+              }
+
               // Format scans if available
               if (Array.isArray(liveTracking.scans)) {
                 scans = liveTracking.scans.map(s => ({
@@ -131,6 +135,21 @@ export async function GET(request) {
                   activity: s.activity || 'Package in transit',
                   status: s.status || ''
                 }));
+              } else if (Array.isArray(liveTracking.events)) {
+                scans = liveTracking.events.map(s => {
+                  const dt = s.scan_time ? new Date(s.scan_time) : null;
+                  return {
+                    date: dt ? dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+                    time: dt ? dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '',
+                    location: s.location && s.location !== 'null' ? s.location : '',
+                    activity: s.remark && s.remark !== 'InTransit' ? s.remark : (s.scan || 'Package in transit'),
+                    status: s.scan || ''
+                  };
+                });
+                const validLocs = liveTracking.events.filter(e => e.location && e.location !== 'null');
+                if (validLocs.length > 0) {
+                  currentLocation = validLocs[validLocs.length - 1].location;
+                }
               }
             }
           }
@@ -162,8 +181,7 @@ export async function GET(request) {
     const normalizedStatus = (orderStatus || '').toLowerCase();
     const isCancelled = normalizedStatus === 'cancelled';
     const isDelivered = normalizedStatus === 'delivered' || (liveTracking && String(liveTracking.status).toLowerCase() === 'delivered');
-    const isOutForDelivery = normalizedStatus.includes('out for delivery') || (liveTracking && String(liveTracking.status).toLowerCase().includes('out for delivery'));
-    const isShipped = normalizedStatus === 'shipped' || isOutForDelivery || isDelivered;
+    const isShipped = normalizedStatus === 'shipped' || isOutForDelivery || isDelivered || (liveTracking && (String(liveTracking.status).toLowerCase().includes('transit') || String(liveTracking.status).toLowerCase().includes('booked')));
 
     const stepper = [
       {
