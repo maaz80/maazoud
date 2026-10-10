@@ -360,10 +360,11 @@ export async function POST(request) {
         return NextResponse.json({ error: errorMsg }, { status: result.status || 400, headers: corsHeaders });
       }
 
-      const resData = result.data?.data || result.data?.result || result.data || {};
-      const awbNumber = resData.awb_number || resData.awb || resData.tracking_number || result.data?.awb_number;
-      const zipyOrderId = resData.order_id || resData.id || result.data?.order_id;
-      const partnerName = courier_name || resData.courier_name || resData.courier || "ZipyPost Partner";
+      const rawData = result.data || {};
+      const resData = rawData.RESULT || rawData.result || rawData.data || rawData.DATA || rawData;
+      const awbNumber = resData.awb || resData.awb_number || resData.tracking_number || resData.trackingNumber || rawData.awb || rawData.awb_number || rawData.RESULT?.awb || rawData.result?.awb;
+      const zipyOrderId = resData.order_id || resData.id || resData.orderNumber || rawData.order_id || rawData.order_number;
+      const partnerName = courier_name || resData.courier || resData.courier_name || resData.courierName || "ZipyPost Partner";
       const finalCharge = parseFloat(courier_rate || resData.shipping_charge || 0);
 
       // Update Order in Supabase
@@ -376,7 +377,7 @@ export async function POST(request) {
         zipypost_courier_name: partnerName,
         zipypost_charge: finalCharge,
         zipypost_status: 'AWB Assigned',
-        zipypost_response: resData,
+        zipypost_response: rawData,
         shipped_at: new Date().toISOString()
       };
 
@@ -415,7 +416,9 @@ export async function POST(request) {
 
       if (!awb && order_id) {
         const { data: ord } = await supabase.from('orders').select('shipment_details').eq('id', order_id).maybeSingle();
-        awb = ord?.shipment_details?.zipypost_awb;
+        awb = ord?.shipment_details?.zipypost_awb || 
+              ord?.shipment_details?.zipypost_response?.RESULT?.awb ||
+              ord?.shipment_details?.zipypost_response?.result?.awb;
       }
 
       if (!awb) {
@@ -435,7 +438,17 @@ export async function POST(request) {
       }
 
       const labelData = result.data;
-      const labelUrl = labelData?.label_url || labelData?.url || labelData?.pdf_url || labelData?.result?.label_url || labelData?.result?.url || labelData?.label;
+      const labelUrl = labelData?.path || 
+                       labelData?.PATH || 
+                       labelData?.label_url || 
+                       labelData?.url || 
+                       labelData?.pdf_url || 
+                       labelData?.label || 
+                       labelData?.result?.path || 
+                       labelData?.result?.label_url || 
+                       labelData?.result?.url || 
+                       labelData?.RESULT?.path || 
+                       labelData?.RESULT?.label;
 
       if (!labelUrl) {
         return NextResponse.json({ error: "Label URL was not returned by ZipyPost." }, { status: 500, headers: corsHeaders });

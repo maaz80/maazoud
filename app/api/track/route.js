@@ -181,6 +181,7 @@ export async function GET(request) {
     const normalizedStatus = (orderStatus || '').toLowerCase();
     const isCancelled = normalizedStatus === 'cancelled';
     const isDelivered = normalizedStatus === 'delivered' || (liveTracking && String(liveTracking.status).toLowerCase() === 'delivered');
+    const isOutForDelivery = normalizedStatus === 'out for delivery' || (liveTracking && (String(liveTracking.status).toLowerCase().includes('out for delivery') || String(liveTracking.status).toLowerCase().includes('ofd')));
     const isShipped = normalizedStatus === 'shipped' || isOutForDelivery || isDelivered || (liveTracking && (String(liveTracking.status).toLowerCase().includes('transit') || String(liveTracking.status).toLowerCase().includes('booked')));
 
     const stepper = [
