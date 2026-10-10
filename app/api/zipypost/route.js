@@ -294,16 +294,51 @@ export async function POST(request) {
       const parsedWidth = parseFloat(width) || 10.0;
       const parsedHeight = parseFloat(height) || 5.0;
 
-      // Format order items
+      // Format order items and calculate items subtotal
       const rawItems = Array.isArray(order.items) && order.items.length > 0 ? order.items : [
         { product: { name: 'Attar Fragrance' }, quantity: 1, price: totalAmount }
       ];
+
+      const itemsSubtotal = rawItems.reduce((sum, item) => {
+        const itemPrice = parseFloat(item.price || 0);
+        const qty = parseInt(item.quantity, 10) || 1;
+        return sum + (itemPrice * qty);
+      }, 0);
+
+      // Calculate exact Shipping and COD charges breakdown:
+      // Prepaid: shipping_charge = 40, cod_charge = 0
+      // COD: shipping_charge = 40, cod_charge = 30 (Total delivery & handling = 70)
+      let shippingCharge = 0;
+      let codCharge = 0;
+      const diff = Math.round(totalAmount - itemsSubtotal);
+
+      if (isCod) {
+        if (diff >= 70) {
+          shippingCharge = 40;
+          codCharge = diff - 40; // Default ₹30 for ₹70 total
+        } else if (diff > 0) {
+          shippingCharge = Math.min(40, diff);
+          codCharge = Math.max(0, diff - shippingCharge);
+        } else {
+          // If items subtotal was stored equal to total amount
+          shippingCharge = 40;
+          codCharge = 30;
+        }
+      } else {
+        // Prepaid order
+        codCharge = 0;
+        shippingCharge = diff > 0 ? diff : 40;
+      }
+
+      // Base purchase amount (items total)
+      let purchaseAmount = itemsSubtotal > 0 ? itemsSubtotal : parseFloat((totalAmount - (shippingCharge + codCharge)).toFixed(2));
+      if (purchaseAmount <= 0) purchaseAmount = totalAmount;
 
       const formattedItems = rawItems.map((item, idx) => {
         const prodName = item.product?.name || item.name || "Attar";
         const size = item.selectedSize ? ` ${item.selectedSize}` : "";
         const itemWeight = (parsedWeight / rawItems.length);
-        const itemPrice = parseFloat(item.price || (totalAmount / rawItems.length)) || 0;
+        const itemPrice = parseFloat(item.price || (purchaseAmount / rawItems.length)) || 0;
 
         return {
           sku: item.product?.id || item.cartItemId || `SKU-${idx + 1}`,
@@ -318,7 +353,7 @@ export async function POST(request) {
 
       const shipmentPayload = {
         order_number: order.id,
-        purchase_amount: totalAmount,
+        purchase_amount: purchaseAmount,
         purchase_date: new Date(order.created_at || Date.now()).toISOString().split('T')[0],
         billing_details_same_as_shipping: true,
         shipping_details: {
@@ -336,8 +371,8 @@ export async function POST(request) {
         package_width: parsedWidth,
         package_height: parsedHeight,
         package_weight: parsedWeight,
-        shipping_charge: 0,
-        cod_charge: 0,
+        shipping_charge: shippingCharge,
+        cod_charge: codCharge,
         purchase_tax: 0,
         purchase_discount: 0,
         collectable_cod: isCod ? totalAmount : 0,
