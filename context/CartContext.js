@@ -503,6 +503,49 @@ export function CartProvider({ children }) {
   };
 
   const placeOrder = async (orderDetails) => {
+    const formattedItems = cart.map(item => ({
+      cartItemId: item.cartItemId,
+      product: {
+        id: item.product?.id || "unknown",
+        name: item.product?.name || "Attar",
+        image: item.product?.image || ""
+      },
+      quantity: item.quantity,
+      selectedSize: item.selectedSize || "3ml",
+      price: item.price
+    }));
+
+    // Try server API route first
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_name: orderDetails.name,
+          phone: orderDetails.phone,
+          address: orderDetails.address,
+          city: orderDetails.city || "N/A",
+          state: orderDetails.state || "N/A",
+          pincode: orderDetails.pincode || "N/A",
+          payment_method: orderDetails.paymentMethod || "Cash on Delivery (COD)",
+          total_amount: orderDetails.totalAmount || cartTotal,
+          items: formattedItems,
+          user_id: user?.id || null,
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && data.orderId) {
+        const newOrders = [data.order, ...orders];
+        saveOrders(newOrders);
+        await clearCart();
+        return data.orderId;
+      }
+    } catch (apiErr) {
+      console.warn("Direct API route unavailable, using direct Supabase insert:", apiErr);
+    }
+
+    // Direct fallback insert
     const orderId = "ORD-" + Math.floor(100000 + Math.random() * 900000);
     const orderPayload = {
       id: orderId,
@@ -512,20 +555,10 @@ export function CartProvider({ children }) {
       city: orderDetails.city || "N/A",
       state: orderDetails.state || "N/A",
       pincode: orderDetails.pincode || "N/A",
-      payment_method: orderDetails.paymentMethod,
+      payment_method: orderDetails.paymentMethod || "Cash on Delivery (COD)",
       total_amount: orderDetails.totalAmount || cartTotal,
       status: "Processing",
-      items: cart.map(item => ({
-        cartItemId: item.cartItemId,
-        product: {
-          id: item.product.id,
-          name: item.product.name,
-          image: item.product.image
-        },
-        quantity: item.quantity,
-        selectedSize: item.selectedSize,
-        price: item.price
-      })),
+      items: formattedItems,
       user_id: user?.id || null,
       created_at: new Date().toISOString()
     };

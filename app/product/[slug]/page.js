@@ -30,16 +30,31 @@ const normalizeProductSlug = (value = "") => {
 const findProductBySlug = async (slug) => {
   const decodedSlug = decodeURIComponent(String(slug || "")).trim();
   const normalizedTarget = normalizeProductSlug(decodedSlug);
+  const targetWithoutAttar = normalizedTarget.replace(/-attar$/, "");
 
   const { data: allProducts, error } = await supabase.from("products").select("*");
   if (error || !allProducts || allProducts.length === 0) return null;
 
-  const exactMatches = allProducts.filter((product) => {
+  // 1. Exact match on id, slug, or name
+  const exactMatch = allProducts.find((product) => {
     const candidates = [product.id, product.slug, product.name].filter(Boolean).map(String);
     return candidates.some((candidate) => normalizeProductSlug(candidate) === normalizedTarget);
   });
+  if (exactMatch) return exactMatch;
 
-  return exactMatches.length > 0 ? exactMatches[0] : null;
+  // 2. Match without "-attar" suffix (e.g. fruit-bliss-attar -> fruit-bliss)
+  const suffixMatch = allProducts.find((product) => {
+    const candidates = [product.id, product.slug, product.name].filter(Boolean).map(String);
+    return candidates.some((candidate) => normalizeProductSlug(candidate) === targetWithoutAttar);
+  });
+  if (suffixMatch) return suffixMatch;
+
+  // 3. Prefix / startsWith match
+  const prefixMatch = allProducts.find((product) => {
+    const normId = normalizeProductSlug(product.id);
+    return normId && (targetWithoutAttar.startsWith(normId) || normId.startsWith(targetWithoutAttar));
+  });
+  return prefixMatch || null;
 };
 
 async function getProductData(slug) {

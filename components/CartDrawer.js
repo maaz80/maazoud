@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { FaTimes, FaPlus, FaMinus, FaTrash, FaLock, FaSpinner, FaClock } from "react-icons/fa";
+import { FaTimes, FaPlus, FaMinus, FaTrash, FaLock, FaSpinner } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
 import { supabase } from "../utils/supabase";
 import { trackGAEvent } from "../utils/analytics";
@@ -52,13 +52,11 @@ export default function CartDrawer() {
     city: "",
     state: "",
     pincode: "",
-    faxNumber: "", // honeypot spam protection
   });
 
   const [paymentMethod, setPaymentMethod] = useState("prepaid");
   const [errors, setErrors] = useState({});
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-  const [showCodLimitModal, setShowCodLimitModal] = useState(false);
   const [isInternational, setIsInternational] = useState(false);
   const [detectedCountry, setDetectedCountry] = useState("IN");
   const [showInternationalModal, setShowInternationalModal] = useState(false);
@@ -146,7 +144,6 @@ export default function CartDrawer() {
   const captureLead = (dataOverride = null) => {
     try {
       const currentData = dataOverride || formData;
-      if (currentData.faxNumber) return; // Honeypot spam check
       const cleanPhone = (currentData.phone || "").replace(/\D/g, "");
       if (cleanPhone.length < 10) return; // Only capture if valid 10 digits entered
 
@@ -319,7 +316,7 @@ export default function CartDrawer() {
   };
 
   const resetCheckout = () => {
-    setFormData({ name: "", phone: "", address: "", city: "", state: "", pincode: "", faxNumber: "" });
+    setFormData({ name: "", phone: "", address: "", city: "", state: "", pincode: "" });
     setErrors({});
     setShowCheckout(false);
     setPaymentMethod("prepaid");
@@ -446,71 +443,64 @@ export default function CartDrawer() {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // Honeypot validation
-    if (formData.faxNumber) {
-      console.warn("Spam bot detected via client-side honeypot.");
-      // Silent fail to trick bots
-      await clearCart();
-      resetCheckout();
-      setIsCartOpen(false);
-      router.push(`/order-success?orderId=ORD-${Math.floor(100000 + Math.random() * 900000)}`);
-      return;
-    }
-
-    // Client-side local storage limit: 1 COD order per 1 hour
-    if (paymentMethod === "cod") {
-      const lastCodTime = localStorage.getItem("maazoud_last_cod_time");
-      if (lastCodTime && Date.now() - Number(lastCodTime) < 3600000) {
-        setShowCodLimitModal(true);
-        return;
-      }
-    }
-
     const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`;
+    const cleanPhone = (formData.phone || "").replace(/\D/g, "");
 
     if (paymentMethod === "cod") {
       setIsPlacingOrder(true);
       try {
         const checkoutItems = cart.map((item) => ({
-          productId: item.product.id,
+          cartItemId: item.cartItemId,
+          productId: item.product?.id,
+          product: {
+            id: item.product?.id,
+            name: item.product?.name,
+            image: item.product?.image,
+          },
           quantity: item.quantity,
           selectedSize: item.selectedSize || "3ml",
+          price: item.price,
         }));
 
         let orderId = null;
         let createdOrder = null;
 
-        // Try Supabase Edge Function first
+        // 1. Submit to reliable Next.js server route (uses Supabase Service Role Key)
         try {
-          const { data: verifiedOrder, error: verifyError } = await supabase.functions.invoke("razorpay-checkout", {
-            body: {
-              action: "place_cod_order",
-              customer: {
-                name: formData.name,
-                phone: formData.phone,
-                address: fullAddress,
-                city: formData.city,
-                state: formData.state,
-                pincode: formData.pincode,
-                faxNumber: formData.faxNumber, // passed to backend
-              },
+          const res = await fetch("/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              customer_name: formData.name,
+              phone: cleanPhone,
+              address: fullAddress,
+              city: formData.city,
+              state: formData.state,
+              pincode: formData.pincode,
+              payment_method: "Cash on Delivery (COD)",
+              total_amount: cartTotal + 30, // Include COD Fee
               items: checkoutItems,
-            },
+              user_id: user?.id || null,
+              session_id: leadSessionId || (typeof window !== "undefined" ? sessionStorage.getItem("maazoud_lead_session_id") : null),
+            }),
           });
 
-          if (!verifyError && verifiedOrder?.orderId) {
-            orderId = verifiedOrder.orderId;
-            createdOrder = verifiedOrder.order;
+          const data = await res.json();
+          if (res.ok && data.success && data.orderId) {
+            orderId = data.orderId;
+            createdOrder = data.order;
+          } else {
+            console.warn("API route returned error, falling back to direct client placeOrder:", data?.error);
           }
-        } catch (edgeErr) {
-          console.warn("Edge function invocation failed, using direct placeOrder fallback:", edgeErr);
+        } catch (apiErr) {
+          console.warn("API route request failed, falling back to direct client placeOrder:", apiErr);
         }
 
-        // Fallback to direct database insert via placeOrder if Edge function failed or is not active
+        // 2. Direct client fallback via placeOrder if API route was unreachable
         if (!orderId) {
           orderId = await placeOrder({
             name: formData.name,
-            phone: formData.phone,
+            phone: cleanPhone,
             address: fullAddress,
             city: formData.city,
             state: formData.state,
@@ -525,8 +515,9 @@ export default function CartDrawer() {
           await clearCart();
         }
 
-        // Save COD timestamp to local storage for 1-hour rate limit
-        localStorage.setItem("maazoud_last_cod_time", String(Date.now()));
+        if (!orderId) {
+          throw new Error("Unable to save order. Please check your internet connection and try again.");
+        }
 
         // Google Analytics Event Tracking for Purchase Conversion
         trackGAEvent("purchase", {
@@ -535,17 +526,15 @@ export default function CartDrawer() {
           currency: "INR",
           shipping: 40,
           items: cart.map(item => ({
-            item_id: item.product.id,
-            item_name: item.product.name,
+            item_id: item.product?.id,
+            item_name: item.product?.name,
             price: item.price,
             quantity: item.quantity
           }))
         });
 
         await saveProfileData(formData);
-        if (orderId) {
-          markLeadConverted(orderId);
-        }
+        markLeadConverted(orderId);
         resetCheckout();
         setIsCartOpen(false);
         router.push(`/order-success?orderId=${orderId}`);
@@ -715,19 +704,6 @@ export default function CartDrawer() {
                 <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-2">
                   Delivery Details
                 </h3>
-
-                {/* Honeypot field (hidden from screen readers and visual users) */}
-                <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }} aria-hidden="true">
-                  <input
-                    type="text"
-                    name="faxNumber"
-                    tabIndex="-1"
-                    autoComplete="off"
-                    value={formData.faxNumber}
-                    onChange={handleInputChange}
-                    placeholder="Do not fill this field if you are human"
-                  />
-                </div>
 
                 {/* Full Name */}
                 <div>
@@ -971,59 +947,7 @@ export default function CartDrawer() {
         </div>
       </div>
 
-      {/* COD Rate Limit Security Modal */}
-      {showCodLimitModal && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-stone-200 text-center relative space-y-5">
-            <button
-              onClick={() => setShowCodLimitModal(false)}
-              className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 p-1 transition-colors cursor-pointer"
-              aria-label="Close modal"
-            >
-              <FaTimes size={16} />
-            </button>
 
-
-            <div className="w-14 h-14 bg-amber-50 text-[#8c6239] rounded-full flex items-center justify-center mx-auto border border-amber-200/60 shadow-sm">
-              <FaClock size={24} />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-base font-serif font-bold text-stone-900">
-                Cash on Delivery Limit Reached
-              </h3>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                For security reasons, you can only place 1 Cash on Delivery (COD) order per hour. Please choose Prepaid to complete your checkout, or try again later.
-              </p>
-            </div>
-
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-left flex items-start gap-2.5">
-              <span className="text-sm">💡</span>
-              <p className="text-[11px] text-emerald-800 leading-tight font-medium">
-                <strong className="font-bold text-emerald-900">Save ₹30 Extra:</strong> Choose Prepaid payment to complete your order immediately and save ₹30 COD fees!
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
-              <button
-                onClick={() => {
-                  setPaymentMethod("prepaid");
-                  setShowCodLimitModal(false);
-                }}
-                className="flex-1 py-2.5 px-4 bg-[#8c6239] hover:bg-stone-900 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all shadow-sm cursor-pointer"
-              >
-                Pay Online (Save ₹30)
-              </button>
-              <button
-                onClick={() => setShowCodLimitModal(false)}
-                className="py-2.5 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* International Shipping Warning Modal */}
       {showInternationalModal && (

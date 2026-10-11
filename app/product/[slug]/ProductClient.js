@@ -24,22 +24,32 @@ const normalizeProductSlug = (value = "") => {
 const findProductBySlug = async (slug) => {
   const decodedSlug = decodeURIComponent(String(slug || "")).trim();
   const normalizedTarget = normalizeProductSlug(decodedSlug);
+  const targetWithoutAttar = normalizedTarget.replace(/-attar$/, "");
 
   const { data: allProducts, error } = await supabase.from("products").select("*");
   if (error) throw error;
-
   if (!allProducts || allProducts.length === 0) return null;
 
-  const exactMatches = allProducts.filter((product) => {
+  // 1. Exact match on id, slug, or name
+  const exactMatch = allProducts.find((product) => {
     const candidates = [product.id, product.slug, product.name].filter(Boolean).map(String);
     return candidates.some((candidate) => normalizeProductSlug(candidate) === normalizedTarget);
   });
+  if (exactMatch) return exactMatch;
 
-  if (exactMatches.length > 0) {
-    return exactMatches[0];
-  }
+  // 2. Match without "-attar" suffix (e.g. fruit-bliss-attar -> fruit-bliss)
+  const suffixMatch = allProducts.find((product) => {
+    const candidates = [product.id, product.slug, product.name].filter(Boolean).map(String);
+    return candidates.some((candidate) => normalizeProductSlug(candidate) === targetWithoutAttar);
+  });
+  if (suffixMatch) return suffixMatch;
 
-  return null;
+  // 3. Prefix / startsWith match
+  const prefixMatch = allProducts.find((product) => {
+    const normId = normalizeProductSlug(product.id);
+    return normId && (targetWithoutAttar.startsWith(normId) || normId.startsWith(targetWithoutAttar));
+  });
+  return prefixMatch || null;
 };
 
 export default function ProductClient({ slug, initialProduct, initialReviews, initialRelatedProducts, initialBlogs }) {
@@ -52,6 +62,24 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
   const [loading, setLoading] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const gallery = product ? ((product.images && product.images.length > 0) ? product.images : [product.image]) : [];
+
+  const touchStartXRef = React.useRef(null);
+  const handleTouchStart = (e) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e) => {
+    if (touchStartXRef.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartXRef.current - touchEndX;
+    if (Math.abs(diff) > 40 && gallery.length > 1) {
+      if (diff > 0) {
+        setActiveImageIndex((prev) => (prev === gallery.length - 1 ? 0 : prev + 1));
+      } else {
+        setActiveImageIndex((prev) => (prev === 0 ? gallery.length - 1 : prev - 1));
+      }
+    }
+    touchStartXRef.current = null;
+  };
 
 
   // Dynamic Review State
@@ -530,7 +558,11 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 items-start">
 
           <div className="space-y-4 w-full">
-            <div className="relative aspect-square w-full rounded-md border border-stone-200 overflow-hidden bg-stone-50 shadow-sm group">
+            <div 
+              className="relative aspect-square w-full rounded-md border border-stone-200 overflow-hidden bg-stone-50 shadow-sm group select-none"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
               {/* Sliding Track */}
               <div 
                 className="flex w-full h-full transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)" 
@@ -555,14 +587,14 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                 <>
                   <button
                     onClick={() => setActiveImageIndex((prev) => (prev === 0 ? gallery.length - 1 : prev - 1))}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md opacity-0 group-hover:opacity-100 cursor-pointer z-10"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md opacity-90 md:opacity-0 md:group-hover:opacity-100 cursor-pointer z-10"
                     aria-label="Previous image"
                   >
                     <FaArrowLeft size={10} />
                   </button>
                   <button
                     onClick={() => setActiveImageIndex((prev) => (prev === gallery.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md opacity-0 group-hover:opacity-100 cursor-pointer z-10"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-[#8c6239] hover:text-white rounded-full text-black transition-all shadow-md opacity-90 md:opacity-0 md:group-hover:opacity-100 cursor-pointer z-10"
                     aria-label="Next image"
                   >
                     <FaArrowRight size={10} />
@@ -614,11 +646,19 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                   ? product.category.map(c => c.replace("-", " ")).join(", ")
                   : (product.category ? product.category.replace("-", " ") : "top-selling")}
               </span>
-              <div className="flex items-center gap-1.5 text-stone-700 shrink-0 mt-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById("reviews-section");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="flex items-center gap-1.5 text-stone-700 shrink-0 mt-0.5 cursor-pointer hover:text-[#8c6239] transition-colors"
+                title="Read customer reviews"
+              >
                 <FaStar className="text-amber-500" size={14} />
                 <span className="font-bold">{averageRating}</span>
                 <span className="text-stone-600">({totalReviews} reviews)</span>
-              </div>
+              </button>
             </div>
 
             <div className="space-y-1 md:space-y-3">
@@ -757,7 +797,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
           </div>
         </div>
 
-        <section className="border-t border-stone-200 pt-12 grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-16">
+        <section id="reviews-section" className="border-t border-stone-200 pt-12 grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-16">
 
           <div className="lg:col-span-2 space-y-6">
             <h2 className="text-xl font-serif font-bold text-stone-900">

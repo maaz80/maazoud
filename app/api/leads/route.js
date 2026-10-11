@@ -146,13 +146,7 @@ export async function POST(request) {
         pincode,
         cart_items = [],
         cart_total = 0,
-        faxNumber, // Honeypot check
       } = body;
-
-      // Reject bot submissions
-      if (faxNumber) {
-        return NextResponse.json({ success: true, ignored: true }, { headers: corsHeaders });
-      }
 
       const cleanPhone = sanitizePhone(phone);
       if (!cleanPhone || cleanPhone.length < 10) {
