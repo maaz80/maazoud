@@ -62,6 +62,20 @@ export default function CartDrawer() {
   const [isInternational, setIsInternational] = useState(false);
   const [detectedCountry, setDetectedCountry] = useState("IN");
   const [showInternationalModal, setShowInternationalModal] = useState(false);
+  const [leadSessionId, setLeadSessionId] = useState(null);
+  const captureTimeoutRef = React.useRef(null);
+
+  // Initialize checkout lead session id
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      let sid = sessionStorage.getItem("maazoud_lead_session_id");
+      if (!sid) {
+        sid = "lead_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
+        sessionStorage.setItem("maazoud_lead_session_id", sid);
+      }
+      setLeadSessionId(sid);
+    }
+  }, []);
 
 // Fetch user profile on mount if logged in
   useEffect(() => {
@@ -129,13 +143,84 @@ export default function CartDrawer() {
 
   if (!isCartOpen) return null;
 
+  const captureLead = (dataOverride = null) => {
+    try {
+      const currentData = dataOverride || formData;
+      if (currentData.faxNumber) return; // Honeypot spam check
+      const cleanPhone = (currentData.phone || "").replace(/\D/g, "");
+      if (cleanPhone.length < 10) return; // Only capture if valid 10 digits entered
+
+      const currentSid = leadSessionId || (typeof window !== "undefined" ? sessionStorage.getItem("maazoud_lead_session_id") : null);
+
+      fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          session_id: currentSid,
+          customer_name: currentData.name,
+          phone: cleanPhone,
+          address: currentData.address,
+          city: currentData.city,
+          state: currentData.state,
+          pincode: currentData.pincode,
+          cart_items: cart.map((item) => ({
+            id: item.product?.id,
+            name: item.product?.name,
+            selectedSize: item.selectedSize || "3ml",
+            quantity: item.quantity,
+            price: item.price,
+          })),
+          cart_total: cartTotal,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch (e) {
+      // Background capture is completely safe and silent
+    }
+  };
+
+  const markLeadConverted = (orderId) => {
+    try {
+      const currentSid = leadSessionId || (typeof window !== "undefined" ? sessionStorage.getItem("maazoud_lead_session_id") : null);
+      const cleanPhone = (formData.phone || "").replace(/\D/g, "");
+
+      fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "convert",
+          session_id: currentSid,
+          phone: cleanPhone,
+          order_id: orderId,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("maazoud_lead_session_id");
+      }
+    } catch (e) {}
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const updated = { ...formData, [name]: value };
+    setFormData(updated);
     // Clear error
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+
+    // Debounced lead capture after 1.5 seconds of user typing
+    if (captureTimeoutRef.current) clearTimeout(captureTimeoutRef.current);
+    captureTimeoutRef.current = setTimeout(() => {
+      captureLead(updated);
+    }, 1500);
+  };
+
+  const handleInputBlur = () => {
+    captureLead();
   };
 
   
@@ -314,6 +399,8 @@ export default function CartDrawer() {
             saveOrders([verifiedOrder.order, ...orders]);
           }
 
+          markLeadConverted(verifiedOrder.orderId);
+
           // Google Analytics Event Tracking for Purchase Conversion
           trackGAEvent("purchase", {
             transaction_id: verifiedOrder.orderId,
@@ -456,6 +543,9 @@ export default function CartDrawer() {
         });
 
         await saveProfileData(formData);
+        if (orderId) {
+          markLeadConverted(orderId);
+        }
         resetCheckout();
         setIsCartOpen(false);
         router.push(`/order-success?orderId=${orderId}`);
@@ -650,6 +740,7 @@ export default function CartDrawer() {
                     placeholder="e.g. John Doe"
                     value={formData.name}
                     onChange={handleInputChange}
+                    onBlur={handleInputBlur}
                     className={`w-full bg-stone-50 border ${errors.name ? 'border-red-500' : 'border-stone-200'} rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] text-xs`}
                   />
                   {errors.name && <p className="text-[10px] text-red-500 mt-1">{errors.name}</p>}
@@ -666,6 +757,7 @@ export default function CartDrawer() {
                     placeholder="e.g. 9876543210"
                     value={formData.phone}
                     onChange={handleInputChange}
+                    onBlur={handleInputBlur}
                     className={`w-full bg-stone-50 border ${errors.phone ? 'border-red-500' : 'border-stone-200'} rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] text-xs`}
                   />
                   {errors.phone && <p className="text-[10px] text-red-500 mt-1">{errors.phone}</p>}
@@ -682,6 +774,7 @@ export default function CartDrawer() {
                     placeholder="House no., Street, Area"
                     value={formData.address}
                     onChange={handleInputChange}
+                    onBlur={handleInputBlur}
                     className={`w-full bg-stone-50 border ${errors.address ? 'border-red-500' : 'border-stone-200'} rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] text-xs`}
                   />
                   {errors.address && <p className="text-[10px] text-red-500 mt-1">{errors.address}</p>}
@@ -699,6 +792,7 @@ export default function CartDrawer() {
                       placeholder="e.g. Mumbai"
                       value={formData.city}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
                       className={`w-full bg-stone-50 border ${errors.city ? 'border-red-500' : 'border-stone-200'} rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] text-xs`}
                     />
                     {errors.city && <p className="text-[10px] text-red-500 mt-1">{errors.city}</p>}
@@ -713,6 +807,7 @@ export default function CartDrawer() {
                       placeholder="e.g. Maharashtra"
                       value={formData.state}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
                       className={`w-full bg-stone-50 border ${errors.state ? 'border-red-500' : 'border-stone-200'} rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] text-xs`}
                     />
                     {errors.state && <p className="text-[10px] text-red-500 mt-1">{errors.state}</p>}
@@ -730,6 +825,7 @@ export default function CartDrawer() {
                     placeholder="e.g. 400001"
                     value={formData.pincode}
                     onChange={handleInputChange}
+                    onBlur={handleInputBlur}
                     className={`w-full bg-stone-50 border ${errors.pincode ? 'border-red-500' : 'border-stone-200'} rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] text-xs`}
                   />
                   {errors.pincode && <p className="text-[10px] text-red-500 mt-1">{errors.pincode}</p>}
