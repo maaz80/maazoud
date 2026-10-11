@@ -47,19 +47,19 @@ function OrderSuccessContent() {
           <FaTimes size={14} />
         </button>
 
-        <div className="p-8 text-center sm:p-10">
+        <div className="p-6 text-center sm:p-10">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 ring-8 ring-green-100">
             <FaCheckCircle size={42} className="text-green-600" />
           </div>
 
           <div className="space-y-3">
-            <span className="block text-[10px] font-bold uppercase tracking-[0.35em] text-[#8c6239]">
+            {/* <span className="block text-[10px] font-bold uppercase tracking-[0.35em] text-[#8c6239]">
               Payment Confirmed
-            </span>
+            </span> */}
             <h1 className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
               Order Placed Successfully!
             </h1>
-            <p className="mx-auto max-w-md text-sm leading-6 text-stone-500">
+            <p className="mx-auto max-w-md text-sm leading-6 text-stone-500 hidden md:block">
               Your premium attars are being prepared with care. We&apos;ll keep you updated as your order moves forward.
             </p>
           </div>
