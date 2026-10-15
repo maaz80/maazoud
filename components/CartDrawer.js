@@ -61,6 +61,8 @@ export default function CartDrawer() {
   const [detectedCountry, setDetectedCountry] = useState("IN");
   const [showInternationalModal, setShowInternationalModal] = useState(false);
   const [leadSessionId, setLeadSessionId] = useState(null);
+  const [isFetchingPincode, setIsFetchingPincode] = useState(false);
+  const [pincodeAutoFilled, setPincodeAutoFilled] = useState(false);
   const captureTimeoutRef = React.useRef(null);
 
   // Initialize checkout lead session id
@@ -200,13 +202,77 @@ export default function CartDrawer() {
     } catch (e) {}
   };
 
+  // Phone validator: requires minimum 10 digits; allows spaces, +, country codes, and 10+ digits
+  const getPhoneError = (phoneVal) => {
+    const raw = (phoneVal || "").trim();
+    if (!raw) {
+      return "Phone number is required.";
+    }
+
+    const cleanDigits = raw.replace(/\D/g, "");
+    if (cleanDigits.length < 10) {
+      return `Please enter at least 10 digits (currently ${cleanDigits.length}/10 digits).`;
+    }
+
+    return null;
+  };
+
+  // Auto-fetch city & state from 6-digit Indian pincode
+  const fetchPincodeDetails = async (pin) => {
+    const cleanPin = (pin || "").trim();
+    if (!/^\d{6}$/.test(cleanPin)) return;
+
+    setIsFetchingPincode(true);
+    try {
+      const res = await fetch(`/api/pincode?code=${cleanPin}`);
+      const data = await res.json();
+      if (data.success && (data.city || data.state)) {
+        setFormData((prev) => ({
+          ...prev,
+          city: data.city || prev.city,
+          state: data.state || prev.state,
+        }));
+        setPincodeAutoFilled(true);
+        // Clear errors on city, state, pincode
+        setErrors((prev) => ({
+          ...prev,
+          city: "",
+          state: "",
+          pincode: "",
+        }));
+      }
+    } catch (err) {
+      console.warn("Pincode auto-fetch error:", err);
+    } finally {
+      setIsFetchingPincode(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     const updated = { ...formData, [name]: value };
     setFormData(updated);
-    // Clear error
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+
+    if (name === "phone") {
+      const cleanDigits = value.replace(/\D/g, "");
+      if (cleanDigits.length >= 10 && errors.phone) {
+        setErrors((prev) => ({ ...prev, phone: "" }));
+      }
+    } else if (name === "pincode") {
+      const cleanPin = value.trim();
+      if (/^\d{6}$/.test(cleanPin)) {
+        fetchPincodeDetails(cleanPin);
+      } else {
+        setPincodeAutoFilled(false);
+      }
+      if (errors[name]) {
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+      }
+    } else {
+      // Clear error
+      if (errors[name]) {
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+      }
     }
 
     // Debounced lead capture after 1.5 seconds of user typing
@@ -216,20 +282,33 @@ export default function CartDrawer() {
     }, 1500);
   };
 
-  const handleInputBlur = () => {
+  const handleInputBlur = (e) => {
+    const fieldName = e?.target?.name;
+    if (fieldName === "phone") {
+      const phoneErr = getPhoneError(formData.phone);
+      if (phoneErr) {
+        setErrors((prev) => ({ ...prev, phone: phoneErr }));
+      } else {
+        setErrors((prev) => ({ ...prev, phone: "" }));
+      }
+    } else if (fieldName === "pincode") {
+      const cleanPin = (formData.pincode || "").trim();
+      if (/^\d{6}$/.test(cleanPin) && (!formData.city || !formData.state)) {
+        fetchPincodeDetails(cleanPin);
+      }
+    }
     captureLead();
   };
-
-  
 
   // Save profile upon successful order
   const saveProfileData = async (formDataStr) => {
     if (!user) return;
     try {
+      const cleanPhone = (formDataStr.phone || "").replace(/\D/g, "");
       await supabase.from("user_profiles").upsert({
         id: user.id,
         full_name: formDataStr.name,
-        phone: formDataStr.phone,
+        phone: cleanPhone,
         address: formDataStr.address,
         city: formDataStr.city,
         state: formDataStr.state,
@@ -247,11 +326,9 @@ export default function CartDrawer() {
       newErrors.name = "Name must be at least 3 characters.";
     }
 
-    const phoneRegex = /^[6-9]\d{9}$/;
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required.";
-    } else if (!phoneRegex.test(formData.phone.trim())) {
-      newErrors.phone = "Enter a valid 10-digit Indian phone number.";
+    const phoneErr = getPhoneError(formData.phone);
+    if (phoneErr) {
+      newErrors.phone = phoneErr;
     }
 
     if (!formData.address.trim()) {
@@ -320,6 +397,8 @@ export default function CartDrawer() {
     setErrors({});
     setShowCheckout(false);
     setPaymentMethod("prepaid");
+    setIsFetchingPincode(false);
+    setPincodeAutoFilled(false);
   };
 
   // Automated Razorpay Gateway Checkout Flow
@@ -331,6 +410,14 @@ export default function CartDrawer() {
       alert("Failed to load Razorpay payment helper. Please check your internet connection.");
       setIsPlacingOrder(false);
       return;
+    }
+
+    const cleanPhone = (formData.phone || "").replace(/\D/g, "");
+    let razorpayContact = cleanPhone;
+    if (razorpayContact.length === 12 && razorpayContact.startsWith("91")) {
+      razorpayContact = razorpayContact.slice(2);
+    } else if (razorpayContact.length === 11 && razorpayContact.startsWith("0")) {
+      razorpayContact = razorpayContact.slice(1);
     }
 
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_your_razorpay_key_here";
@@ -362,7 +449,7 @@ export default function CartDrawer() {
       order_id: razorpayOrder.razorpayOrderId,
       prefill: {
         name: formData.name,
-        contact: formData.phone,
+        contact: razorpayContact,
         method: "upi" // Auto-opens UPI/QR screen first by default
       },
       theme: {
@@ -378,7 +465,7 @@ export default function CartDrawer() {
               razorpaySignature: response.razorpay_signature,
               customer: {
                 name: formData.name,
-                phone: formData.phone,
+                phone: cleanPhone,
                 address: fullAddress,
                 city: formData.city,
                 state: formData.state,
@@ -413,7 +500,7 @@ export default function CartDrawer() {
           });
 
           await clearCart();
-          await saveProfileData(formData);
+          await saveProfileData({ ...formData, phone: cleanPhone });
           resetCheckout();
           setIsCartOpen(false);
           router.push(`/order-success?orderId=${verifiedOrder.orderId}`);
@@ -533,7 +620,7 @@ export default function CartDrawer() {
           }))
         });
 
-        await saveProfileData(formData);
+        await saveProfileData({ ...formData, phone: cleanPhone });
         markLeadConverted(orderId);
         resetCheckout();
         setIsCartOpen(false);
@@ -724,19 +811,48 @@ export default function CartDrawer() {
 
                 {/* Phone Number */}
                 <div>
-                  <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    placeholder="e.g. 9876543210"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    onBlur={handleInputBlur}
-                    className={`w-full bg-stone-50 border ${errors.phone ? 'border-red-500' : 'border-stone-200'} rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] text-xs`}
-                  />
-                  {errors.phone && <p className="text-[10px] text-red-500 mt-1">{errors.phone}</p>}
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider">
+                      Phone Number *
+                    </label>
+                    {formData.phone && (
+                      <span className={`text-[10px] font-medium transition-colors ${
+                        formData.phone.replace(/\D/g, "").length >= 10 && !errors.phone
+                          ? "text-emerald-600 font-bold"
+                          : "text-stone-400"
+                      }`}>
+                        {formData.phone.replace(/\D/g, "").length >= 10 ? "✓ Minimum 10 digits" : `${formData.phone.replace(/\D/g, "").length}/10 digits`}
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      name="phone"
+                      placeholder="e.g. 98765 43210 or +91 98765 43210"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={`w-full bg-stone-50 border ${
+                        errors.phone
+                          ? 'border-red-500 focus:ring-red-400'
+                          : formData.phone.replace(/\D/g, "").length >= 10
+                          ? 'border-emerald-500 focus:ring-emerald-400'
+                          : 'border-stone-200 focus:ring-[#8c6239]'
+                      } rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 text-xs`}
+                    />
+                    {formData.phone.replace(/\D/g, "").length >= 10 && !errors.phone && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 text-xs font-bold pointer-events-none">
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                  {errors.phone && (
+                    <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1">
+                      <span className="shrink-0">⚠️</span>
+                      <span>{errors.phone}</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Shipping Address */}
@@ -756,7 +872,49 @@ export default function CartDrawer() {
                   {errors.address && <p className="text-[10px] text-red-500 mt-1">{errors.address}</p>}
                 </div>
 
-                {/* City & State */}
+                {/* Pincode (Placed above City & State with Auto-Fill) */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider">
+                      Pincode (6-digit) *
+                    </label>
+                    {isFetchingPincode ? (
+                      <span className="text-[10px] text-[#8c6239] animate-pulse font-medium">
+                        Fetching City & State...
+                      </span>
+                    ) : pincodeAutoFilled && formData.city && formData.state ? (
+                      <span className="text-[10px] text-emerald-600 font-semibold">
+                        ✓ City & State auto-filled
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="pincode"
+                      placeholder="e.g. 400001"
+                      maxLength={6}
+                      value={formData.pincode}
+                      onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={`w-full bg-stone-50 border ${
+                        errors.pincode
+                          ? 'border-red-500 focus:ring-red-400'
+                          : pincodeAutoFilled && formData.city && formData.state
+                          ? 'border-emerald-500 focus:ring-emerald-400'
+                          : 'border-stone-200 focus:ring-[#8c6239]'
+                      } rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 text-xs`}
+                    />
+                    {isFetchingPincode && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <div className="w-3.5 h-3.5 border-2 border-[#8c6239] border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  {errors.pincode && <p className="text-[10px] text-red-500 mt-1">{errors.pincode}</p>}
+                </div>
+
+                {/* City & State (Auto-filled from Pincode, still editable) */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">
@@ -788,23 +946,6 @@ export default function CartDrawer() {
                     />
                     {errors.state && <p className="text-[10px] text-red-500 mt-1">{errors.state}</p>}
                   </div>
-                </div>
-
-                {/* Pincode */}
-                <div>
-                  <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">
-                    Pincode (6-digit) *
-                  </label>
-                  <input
-                    type="text"
-                    name="pincode"
-                    placeholder="e.g. 400001"
-                    value={formData.pincode}
-                    onChange={handleInputChange}
-                    onBlur={handleInputBlur}
-                    className={`w-full bg-stone-50 border ${errors.pincode ? 'border-red-500' : 'border-stone-200'} rounded-md py-2 px-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#8c6239] text-xs`}
-                  />
-                  {errors.pincode && <p className="text-[10px] text-red-500 mt-1">{errors.pincode}</p>}
                 </div>
 
                 {/* Shipping Country (Fixed to India) */}
