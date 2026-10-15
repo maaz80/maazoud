@@ -75,13 +75,33 @@ async function callZipypost(endpoint, method = 'GET', body = null) {
 function parseZipypostError(data, fallback = 'ZipyPost API Error') {
   if (!data) return fallback;
   if (typeof data === 'string') return data;
+
+  let errorDetails = '';
+  if (data.error) {
+    if (typeof data.error === 'string') {
+      errorDetails = data.error;
+    } else if (typeof data.error === 'object') {
+      const messages = Object.entries(data.error).map(([key, val]) => {
+        const valStr = typeof val === 'object' ? JSON.stringify(val) : String(val);
+        if (key === 'booking_process_error') {
+          return `${valStr.replace(/^Error:\s*/i, '')} (This courier partner is not serviceable for this route/pincode. Please select a different courier partner.)`;
+        }
+        return `${key}: ${valStr}`;
+      });
+      errorDetails = messages.join('; ');
+    }
+  }
+
+  if (errorDetails) {
+    if (data.message && typeof data.message === 'string' && data.message !== errorDetails) {
+      return `${data.message}: ${errorDetails}`;
+    }
+    return errorDetails;
+  }
+
   if (data.message) {
     if (typeof data.message === 'string') return data.message;
     return JSON.stringify(data.message);
-  }
-  if (data.error) {
-    if (typeof data.error === 'string') return data.error;
-    return JSON.stringify(data.error);
   }
   return fallback;
 }
