@@ -73,6 +73,25 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-black mt-6 mb-3">Popular Attars</h3>
+            <ul className="space-y-2 text-sm text-stone-550">
+              <li>
+                <Link href="/product/fruit-bliss" className="hover:text-[#8c6239] text-stone-600 hover:underline transition-all">
+                  Fruit Bliss
+                </Link>
+              </li>
+              <li>
+                <Link href="/product/oud-roses" className="hover:text-[#8c6239] text-stone-600 hover:underline transition-all">
+                  Oud Roses
+                </Link>
+              </li>
+              <li>
+                <Link href="/product/melon-oud" className="hover:text-[#8c6239] text-stone-600 hover:underline transition-all">
+                  Melon Oud
+                </Link>
+              </li>
+            </ul>
           </div>
 
           {/* Column 3: Customer Care SEO Pages */}

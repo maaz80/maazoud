@@ -751,37 +751,6 @@ export default function CartDrawer() {
             ) : (
               /* Checkout Delivery Form */
               <form onSubmit={handleCheckoutSubmit} className="space-y-4 pt-2">
-                {/* Pricing Summary Breakdown */}
-                <div className="p-4 bg-stone-50 rounded border border-stone-150/50 space-y-2">
-                  <div className="flex justify-between text-xs text-stone-500 font-light">
-                    <span>Subtotal</span>
-                    <span className="font-semibold text-stone-900">Rs. {cartSubtotal}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-stone-500 font-light">
-                    <span>Delivery Charge</span>
-                    <span className="font-semibold text-stone-900 ">Rs. {deliveryCharge}</span>
-                  </div>
-                  {paymentMethod === "cod" && (
-                    <div className="flex justify-between text-xs text-stone-500 font-light">
-                      <span>COD Fee</span>
-                      <span className="font-semibold text-stone-900">Rs. 30</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm font-bold border-t border-stone-200 pt-2 text-stone-900">
-                    <span>Total Amount</span>
-                    <span className="text-[#8c6239] text-base">Rs. {paymentMethod === "cod" ? cartTotal + 30 : cartTotal}</span>
-                  </div>
-                  {paymentMethod === "prepaid" ? (
-                    <p className="text-[9px] text-emerald-600 font-medium pt-1 text-right">
-                      🎉 You saved ₹30 COD fees by choosing Prepaid!
-                    </p>
-                  ) : (
-                    <p className="text-[9px] text-[#8c6239] font-medium pt-1 text-right">
-                      💡 Choose Prepaid to save ₹30 COD fees.
-                    </p>
-                  )}
-                </div>
-
                 {isInternational && (
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-[10px] text-amber-900 leading-normal font-medium mb-3">
                      <strong>International Visitor:</strong> We only ship orders within India. You can place your order from anywhere as long as the delivery address and phone number are in India.
@@ -966,55 +935,67 @@ export default function CartDrawer() {
                   <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider">
                     Payment Method *
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-2.5">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("prepaid")}
-                      className={`p-3 rounded border text-left cursor-pointer transition-all ${
+                      className={`p-3.5 rounded-lg border-2 text-left cursor-pointer transition-all ${
                         paymentMethod === "prepaid"
-                          ? "border-[#8c6239] bg-stone-50"
-                          : "border-stone-200 bg-white hover:bg-stone-50"
+                          ? "border-emerald-600 bg-emerald-50/30 shadow-xs ring-1 ring-emerald-600/20"
+                          : "border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50/50"
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-stone-900">Prepaid</span>
-                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                          paymentMethod === "prepaid" ? "border-[#8c6239]" : "border-stone-300"
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-sm md:text-base font-extrabold tracking-tight transition-colors ${
+                            paymentMethod === "prepaid" ? "text-emerald-600" : "text-stone-900"
+                          }`}>
+                            Prepaid
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md">
+                            Save ₹30 COD Fee
+                          </span>
+                        </div>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                          paymentMethod === "prepaid" ? "border-emerald-600" : "border-stone-300"
                         }`}>
-                          {paymentMethod === "prepaid" && <div className="w-2.5 h-2.5 rounded-full bg-[#8c6239]" />}
+                          {paymentMethod === "prepaid" && <div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />}
                         </div>
                       </div>
-                      <p className="text-[10px] text-stone-500 mt-1 font-light leading-normal">
-                        Pay online securely
+                      <p className="text-[11px] text-stone-600 mt-1 font-normal leading-snug">
+                        Pay online securely via UPI (Google Pay, PhonePe, Paytm), Cards & Netbanking.
                       </p>
-                      <span className="inline-block mt-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                        Save ₹30 COD Fee
-                      </span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("cod")}
-                      className={`p-3 rounded border text-left cursor-pointer transition-all ${
+                      className={`p-3.5 rounded-lg border-2 text-left cursor-pointer transition-all ${
                         paymentMethod === "cod"
-                          ? "border-[#8c6239] bg-stone-50"
-                          : "border-stone-200 bg-white hover:bg-stone-50"
+                          ? "border-emerald-600 bg-emerald-50/30 shadow-xs ring-1 ring-emerald-600/20"
+                          : "border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50/50"
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-stone-900">COD</span>
-                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                          paymentMethod === "cod" ? "border-[#8c6239]" : "border-stone-300"
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-sm md:text-base font-extrabold tracking-tight transition-colors ${
+                            paymentMethod === "cod" ? "text-emerald-600" : "text-stone-900"
+                          }`}>
+                            COD (Cash on Delivery)
+                          </span>
+                          <span className="text-[10px] font-bold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-md">
+                            +₹30 Fee
+                          </span>
+                        </div>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                          paymentMethod === "cod" ? "border-emerald-600" : "border-stone-300"
                         }`}>
-                          {paymentMethod === "cod" && <div className="w-2.5 h-2.5 rounded-full bg-[#8c6239]" />}
+                          {paymentMethod === "cod" && <div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />}
                         </div>
                       </div>
-                      <p className="text-[10px] text-stone-500 mt-1 font-light leading-normal">
-                        Cash on Delivery
+                      <p className="text-[11px] text-stone-600 mt-1 font-normal leading-snug">
+                        Pay with Cash or UPI when your parcel is delivered at your doorstep.
                       </p>
-                      <span className="inline-block mt-1 text-[9px] font-bold text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
-                        +₹30 Fee
-                      </span>
                     </button>
                   </div>
                   
@@ -1030,6 +1011,37 @@ export default function CartDrawer() {
                         Pay cash upon delivery. COD Handling Fee of ₹30 applies.
                       </p>
                     </div>
+                  )}
+                </div>
+
+                {/* Pricing Summary Breakdown */}
+                <div className="p-4 bg-stone-50 rounded border border-stone-150/50 space-y-2">
+                  <div className="flex justify-between text-xs text-stone-500 font-light">
+                    <span>Subtotal</span>
+                    <span className="font-semibold text-stone-900">Rs. {cartSubtotal}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-stone-500 font-light">
+                    <span>Delivery Charge</span>
+                    <span className="font-semibold text-stone-900 ">Rs. {deliveryCharge}</span>
+                  </div>
+                  {paymentMethod === "cod" && (
+                    <div className="flex justify-between text-xs text-stone-500 font-light">
+                      <span>COD Fee</span>
+                      <span className="font-semibold text-stone-900">Rs. 30</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-bold border-t border-stone-200 pt-2 text-stone-900">
+                    <span>Total Amount</span>
+                    <span className="text-[#8c6239] text-base">Rs. {paymentMethod === "cod" ? cartTotal + 30 : cartTotal}</span>
+                  </div>
+                  {paymentMethod === "prepaid" ? (
+                    <p className="text-[9px] text-emerald-600 font-medium pt-1 text-right">
+                      🎉 You saved ₹30 COD fees by choosing Prepaid!
+                    </p>
+                  ) : (
+                    <p className="text-[9px] text-[#8c6239] font-medium pt-1 text-right">
+                      💡 Choose Prepaid to save ₹30 COD fees.
+                    </p>
                   )}
                 </div>
 

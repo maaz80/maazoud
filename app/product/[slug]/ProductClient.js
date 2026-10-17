@@ -1053,12 +1053,12 @@ function ProductFAQ({ product }) {
         answer: "Our Oud oils are selected for their sophisticated profiles. Cambodian Oud variants (like Dehn Al Oud Yusuf Royale) carry sweet, smooth floral, and mild woody characters. Indian Oud variants (like Imperial Kalakassi Reserve) present a warm, leathery, and deeply complex opening that matures into a spiritual, sweet woody dry-down."
       },
       {
-        question: "How is this premium Oud oil distilled?",
-        answer: "Our Oud is steam-distilled using traditional vintage methods from the resinous heartwood of mature Aquilaria trees. The aging process after distillation ensures the oil loses harsh top notes, resulting in a smooth and rich experience."
+        question: `What makes ${product.name} unique?`,
+        answer: "Our Oud fragrances are expertly formulated using high-grade, concentrated perfume compounds to deliver rich projection, depth, and exceptional longevity without the harshness or alcohol burn of spray perfumes."
       },
       {
         question: "Are these attars safe for daily skin application?",
-        answer: "Absolutely. Our attars are 100% alcohol-free and formulated with premium essential oils and carrier oils. They are exceptionally gentle on the skin, but we always recommend a brief patch test on the wrist if you have highly sensitive skin."
+        answer: "Yes, absolutely. All our attars are 100% alcohol-free concentrated perfume oils, formulated to be gentle and comfortable on the skin. We always recommend a small patch test on the wrist if you have sensitive skin."
       }
     ];
   } else if (isMusk) {
@@ -1068,8 +1068,8 @@ function ProductFAQ({ product }) {
         answer: "This depends on the blend. Our Kashmiri Kasturi Musk presents a warm, dark, powdery, and animalic character inspired by vintage deer musk. White Musk Imperial, on the other hand, is clean, soft, velvety, and soapy, designed specifically for a fresh aura in warm weather."
       },
       {
-        question: "Is this musk ethically and cruelty-free sourced?",
-        answer: "Yes, 100%. To protect wildlife, we do not use real deer musk pods. Instead, we use premium, high-grade botanical musk equivalents and cruelty-free, nature-identical reconstructions blended in rich sandalwood carrier oils."
+        question: "Is this musk cruelty-free?",
+        answer: "Yes, 100%. To protect wildlife, we do not use any animal-derived ingredients. Our musk fragrances are completely cruelty-free, crafted with high-grade, skin-friendly perfume formulations for a long-lasting and clean aroma."
       },
       {
         question: "Will this musk attar stain my clothes?",
@@ -1088,7 +1088,7 @@ function ProductFAQ({ product }) {
       },
       {
         question: "Are these attars 100% alcohol-free?",
-        answer: "Yes, all Maaz Oud attars are 100% alcohol-free and made from natural botanical extracts, essential oils, and premium aged resins."
+        answer: "Yes, all Maaz Oud attars are 100% alcohol-free concentrated perfume oils. They are formulated without alcohol dilution, offering rich aroma, long longevity, and safe skin application."
       },
       {
         question: "How should I apply the attar for best results?",
@@ -1096,7 +1096,7 @@ function ProductFAQ({ product }) {
       },
       {
         question: "Do you offer returns or exchanges?",
-        answer: "To ensure hygiene and the absolute purity of our products for all customers, we do not accept returns on opened fragrance bottles. If you receive a damaged product or have questions about a scent, please contact our support team and we will happily resolve it for you."
+        answer: "To ensure hygiene and safety for all customers, we do not accept returns on opened fragrance bottles. If you receive a damaged product or have questions, please reach out to our support team and we will be happy to assist you."
       }
     ];
   }
