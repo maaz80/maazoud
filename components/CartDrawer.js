@@ -750,7 +750,7 @@ export default function CartDrawer() {
               ))
             ) : (
               /* Checkout Delivery Form */
-              <form onSubmit={handleCheckoutSubmit} className="space-y-4 pt-2">
+              <form id="checkout-form" onSubmit={handleCheckoutSubmit} className="space-y-4 pt-2">
                 {isInternational && (
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-[10px] text-amber-900 leading-normal font-medium mb-3">
                      <strong>International Visitor:</strong> We only ship orders within India. You can place your order from anywhere as long as the delivery address and phone number are in India.
@@ -1045,25 +1045,36 @@ export default function CartDrawer() {
                   )}
                 </div>
 
-                {/* Submit Buttons */}
-                <div className="flex gap-3 pt-4 border-t border-stone-100">
-                  <button
-                    type="button"
-                    onClick={() => setShowCheckout(false)}
-                    className="flex-1 py-2.5 border border-stone-200 hover:bg-stone-50 text-[10px] font-bold uppercase tracking-wider rounded transition-all text-stone-800 cursor-pointer"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 py-2.5 bg-black text-white hover:bg-[#8c6239] text-[10px] font-bold uppercase tracking-wider rounded transition-all cursor-pointer"
-                  >
-                    {paymentMethod === "cod" ? "Confirm COD Order" : "Pay & Confirm"}
-                  </button>
-                </div>
               </form>
             )}
           </div>
+
+          {/* Checkout actions stay visible while delivery details scroll */}
+          {cart.length > 0 && showCheckout && (
+            <div className="shrink-0 border-t border-stone-200 bg-white px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+              <div className="flex items-center justify-between text-sm font-bold text-stone-900 mb-3">
+                <span>Total Payable</span>
+                <span className="text-[#8c6239] text-base">Rs. {paymentMethod === "cod" ? cartTotal + 30 : cartTotal}</span>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCheckout(false)}
+                  className="flex-1 py-3 border border-stone-200 hover:bg-stone-50 text-[10px] font-bold uppercase tracking-wider rounded transition-all text-stone-800 cursor-pointer"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  form="checkout-form"
+                  disabled={isPlacingOrder}
+                  className="flex-1 py-3 bg-black text-white hover:bg-[#8c6239] text-[10px] font-bold uppercase tracking-wider rounded transition-all cursor-pointer disabled:opacity-60"
+                >
+                  {paymentMethod === "cod" ? "Confirm COD Order" : "Pay & Confirm"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Footer (Pricing Summary) */}
           {cart.length > 0 && !showCheckout && (

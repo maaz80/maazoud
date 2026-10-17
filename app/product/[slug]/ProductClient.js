@@ -947,7 +947,7 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
             <div className="space-y-6 divide-y divide-stone-100">
               {currentReviews.length > 0 ? (
                 currentReviews.map((rev) => (
-                  <div key={rev.id || rev.name} className="pt-6 first:pt-0 space-y-2.5">
+                  <div key={rev.id || rev.name} className="pt-1 pb-6 first:pt-0 last:pb-0 space-y-2.5">
                     <div className="flex items-center gap-3.5">
                       <div className="w-9 h-9 rounded-full bg-stone-100 border border-stone-150 flex items-center justify-center shrink-0">
                         <span className="text-xs font-bold text-stone-750">
