@@ -361,7 +361,7 @@ export async function POST(request) {
         const itemPrice = parseFloat(item.price || (purchaseAmount / rawItems.length)) || 0;
 
         return {
-          sku: item.product?.id || item.cartItemId || `SKU-${idx + 1}`,
+          sku: String(item.product?.id || item.cartItemId || `SKU-${idx + 1}`).slice(0, 40),
           item_name: `${prodName}${size}`.trim().slice(0, 50),
           quantity: parseInt(item.quantity, 10) || 1,
           item_weight: parseFloat(itemWeight.toFixed(2)),
