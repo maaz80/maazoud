@@ -3,7 +3,7 @@ import ProductClient from "./ProductClient";
 import { supabase } from "../../../utils/supabase";
 import { PRODUCTS } from "../../../utils/mockData";
 
-export const revalidate = 60; // Dynamic server rendering with ISR
+export const revalidate = 0; // Always load the latest product inventory
 
 export async function generateStaticParams() {
   try {

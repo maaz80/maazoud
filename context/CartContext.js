@@ -334,22 +334,30 @@ export function CartProvider({ children }) {
 
     // Stock check
     const isOverallOOS = Boolean(product.is_out_of_stock || product.in_stock === false);
-    const is3mlOOS = isOverallOOS || Boolean(product.is_out_of_stock_3ml || product.in_stock_3ml === false);
-    const is6mlOOS = isOverallOOS || Boolean(product.is_out_of_stock_6ml || product.in_stock_6ml === false);
+    const is3mlOOS = isOverallOOS || (product.stock_3ml != null && Number(product.stock_3ml) <= 0) || Boolean(product.is_out_of_stock_3ml || product.in_stock_3ml === false);
+    const is6mlOOS = isOverallOOS || (product.stock_6ml != null && Number(product.stock_6ml) <= 0) || Boolean(product.is_out_of_stock_6ml || product.in_stock_6ml === false);
     const isVariantOOS = size === "3ml" ? is3mlOOS : is6mlOOS;
+    const availableStock = size === "3ml" ? product.stock_3ml : product.stock_6ml;
 
     if (isVariantOOS) {
       alert(`Sorry, ${product.name} (${size}) is currently out of stock.`);
       return;
     }
 
+    const existingIndex = cart.findIndex((item) => item.cartItemId === `${product.id}-${size}`);
+    const requestedQuantity = (existingIndex > -1 ? cart[existingIndex].quantity : 0) + quantity;
+    if (availableStock != null && requestedQuantity > Number(availableStock)) {
+      alert(`Only ${availableStock} piece(s) of ${product.name} (${size}) are left.`);
+      return;
+    }
+
     const price = customPrice !== null ? customPrice : product.price;
     const cartItemId = `${product.id}-${size}`;
 
-    const existingIndex = cart.findIndex((item) => item.cartItemId === cartItemId);
     let newCart = [...cart];
     if (existingIndex > -1) {
       newCart[existingIndex].quantity += quantity;
+      newCart[existingIndex].product = product;
     } else {
       newCart.push({ cartItemId, product, quantity, selectedSize: size, price });
     }
@@ -426,6 +434,13 @@ export function CartProvider({ children }) {
   const updateQuantity = async (cartItemId, quantity) => {
     if (quantity <= 0) {
       removeFromCart(cartItemId);
+      return;
+    }
+
+    const cartItem = cart.find((item) => item.cartItemId === cartItemId);
+    const availableStock = cartItem?.selectedSize === "6ml" ? cartItem.product?.stock_6ml : cartItem?.product?.stock_3ml;
+    if (availableStock != null && quantity > Number(availableStock)) {
+      alert(`Only ${availableStock} piece(s) of ${cartItem.product.name} (${cartItem.selectedSize}) are left.`);
       return;
     }
 

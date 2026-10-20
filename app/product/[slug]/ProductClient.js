@@ -91,6 +91,44 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState(false);
 
+  const isOverallOutOfStock = Boolean(product?.is_out_of_stock || product?.in_stock === false);
+  const is3mlOutOfStock = isOverallOutOfStock || (product?.stock_3ml != null && Number(product.stock_3ml) <= 0) || Boolean(product?.is_out_of_stock_3ml || product?.in_stock_3ml === false);
+  const is6mlOutOfStock = isOverallOutOfStock || (product?.stock_6ml != null && Number(product.stock_6ml) <= 0) || Boolean(product?.is_out_of_stock_6ml || product?.in_stock_6ml === false);
+  const isFullyOutOfStock = isOverallOutOfStock || (is3mlOutOfStock && is6mlOutOfStock);
+  const isSelectedVariantOOS = isOverallOutOfStock || (selectedSize === "3ml" ? is3mlOutOfStock : is6mlOutOfStock);
+  const selectedStock = selectedSize === "3ml" ? product?.stock_3ml : product?.stock_6ml;
+
+  useEffect(() => {
+    if (product) {
+      const is3OOS = Boolean(product.is_out_of_stock || product.in_stock === false || (product.stock_3ml != null && Number(product.stock_3ml) <= 0) || product.is_out_of_stock_3ml || product.in_stock_3ml === false);
+      const is6OOS = Boolean(product.is_out_of_stock || product.in_stock === false || (product.stock_6ml != null && Number(product.stock_6ml) <= 0) || product.is_out_of_stock_6ml || product.in_stock_6ml === false);
+      if (is3OOS && !is6OOS) {
+        setSelectedSize("6ml");
+      } else if (is6OOS && !is3OOS) {
+        setSelectedSize("3ml");
+      }
+    }
+  }, [product]);
+
+  useEffect(() => {
+    if (!product?.id) return undefined;
+
+    const inventoryChannel = supabase
+      .channel(`product-inventory-${product.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "products", filter: `id=eq.${product.id}` },
+        ({ new: updatedProduct }) => {
+          if (updatedProduct) setProduct((current) => current ? { ...current, ...updatedProduct } : current);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(inventoryChannel);
+    };
+  }, [product?.id]);
+
   const totalReviews = reviews.length > 0 ? reviews.length : (product?.ratingcount || 0);
   const averageRating = reviews.length > 0
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
@@ -363,24 +401,6 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
     );
   }
 
-  const isOverallOutOfStock = Boolean(product?.is_out_of_stock || product?.in_stock === false);
-  const is3mlOutOfStock = isOverallOutOfStock || Boolean(product?.is_out_of_stock_3ml || product?.in_stock_3ml === false);
-  const is6mlOutOfStock = isOverallOutOfStock || Boolean(product?.is_out_of_stock_6ml || product?.in_stock_6ml === false);
-  const isFullyOutOfStock = isOverallOutOfStock || (is3mlOutOfStock && is6mlOutOfStock);
-  const isSelectedVariantOOS = isOverallOutOfStock || (selectedSize === "3ml" ? is3mlOutOfStock : is6mlOutOfStock);
-
-  useEffect(() => {
-    if (product) {
-      const is3OOS = Boolean(product.is_out_of_stock || product.in_stock === false || product.is_out_of_stock_3ml || product.in_stock_3ml === false);
-      const is6OOS = Boolean(product.is_out_of_stock || product.in_stock === false || product.is_out_of_stock_6ml || product.in_stock_6ml === false);
-      if (is3OOS && !is6OOS) {
-        setSelectedSize("6ml");
-      } else if (is6OOS && !is3OOS) {
-        setSelectedSize("3ml");
-      }
-    }
-  }, [product]);
-
   let currentPrice = 0;
   let currentOriginalPrice = 0;
 
@@ -401,15 +421,18 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
 
   const isComboProduct = Boolean(product?.description && String(product.description).includes('<!-- product-type:combo -->'));
   const isAdded = product ? cart.some(item => item.cartItemId === `${product.id}-${selectedSize}`) : false;
+  const quantityToShow = selectedStock != null
+    ? Math.min(quantity, Math.max(1, Number(selectedStock)))
+    : quantity;
 
   const handleAddToCart = () => {
     if (isSelectedVariantOOS) return;
-    addToCart(product, quantity, selectedSize, currentPrice);
+    addToCart(product, quantityToShow, selectedSize, currentPrice);
   };
 
   const handleBuyNow = () => {
     if (isSelectedVariantOOS) return;
-    triggerBuyNow(product, quantity, selectedSize, currentPrice);
+    triggerBuyNow(product, quantityToShow, selectedSize, currentPrice);
   };
 
   const reviewsPerPage = 4;
@@ -690,26 +713,33 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
                 <div className="flex gap-3">
                   {["3ml", "6ml"].map((size) => {
                     const isVariantOOS = isOverallOutOfStock || (size === "3ml" ? is3mlOutOfStock : is6mlOutOfStock);
+                    const sizeStock = size === "3ml" ? product.stock_3ml : product.stock_6ml;
                     return (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-5 py-2.5 text-xs font-bold border rounded transition-all cursor-pointer flex items-center gap-1.5 ${selectedSize === size
-                          ? isVariantOOS
-                            ? "border-red-500 bg-red-50 text-red-700 font-bold"
-                            : "border-black bg-black text-white"
-                          : isVariantOOS
-                          ? "border-red-200 bg-stone-50 text-stone-400 line-through"
-                          : "border-stone-200 bg-white text-stone-700 hover:border-stone-400"
-                          }`}
-                      >
-                        <span>{size}</span>
-                        {isVariantOOS && (
-                          <span className="text-[10px] uppercase font-bold no-underline text-red-600">
-                            (Out of stock)
+                      <div key={size} className="flex flex-col items-center gap-1">
+                        {sizeStock != null && Number.isFinite(Number(sizeStock)) && (
+                          <span className="text-[10px] font-bold text-red-600">
+                            {sizeStock} {Number(sizeStock) === 1 ? "piece" : "pieces"} left
                           </span>
                         )}
-                      </button>
+                        <button
+                          onClick={() => setSelectedSize(size)}
+                          className={`px-5 py-2.5 text-xs font-bold border rounded transition-all cursor-pointer flex items-center gap-1.5 ${selectedSize === size
+                            ? isVariantOOS
+                              ? "border-red-500 bg-red-50 text-red-700 font-bold"
+                              : "border-black bg-black text-white"
+                            : isVariantOOS
+                            ? "border-red-200 bg-stone-50 text-stone-400 line-through"
+                            : "border-stone-200 bg-white text-stone-700 hover:border-stone-400"
+                            }`}
+                        >
+                          <span>{size}</span>
+                          {isVariantOOS && (
+                            <span className="text-[10px] uppercase font-bold no-underline text-red-600">
+                              (Out of stock)
+                            </span>
+                          )}
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -733,18 +763,18 @@ export default function ProductClient({ slug, initialProduct, initialReviews, in
               <div className={`flex items-center justify-between border border-stone-300 rounded-md ${isSelectedVariantOOS ? "opacity-40 pointer-events-none bg-stone-100" : ""}`}>
                 <button
                   disabled={isSelectedVariantOOS}
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  onClick={() => setQuantity(Math.max(1, quantityToShow - 1))}
                   className="px-3.5 py-2.5 text-stone-500 hover:text-black transition-colors cursor-pointer"
                   aria-label="Decrease quantity"
                 >
                   <FaMinus size={12} />
                 </button>
                 <span className="px-4 text-sm font-bold text-stone-800 select-none">
-                  {quantity}
+                  {quantityToShow}
                 </span>
                 <button
-                  disabled={isSelectedVariantOOS}
-                  onClick={() => setQuantity((q) => q + 1)}
+                  disabled={isSelectedVariantOOS || (selectedStock != null && quantityToShow >= Number(selectedStock))}
+                  onClick={() => setQuantity(quantityToShow + 1)}
                   className="px-3.5 py-2.5 text-stone-500 hover:text-black transition-colors cursor-pointer"
                   aria-label="Increase quantity"
                 >

@@ -63,7 +63,7 @@ const calculateOrder = async (supabase, items) => {
   const productIds = [...new Set(items.map((item) => item.productId))];
   const { data: products, error } = await supabase
     .from("products")
-    .select("id,name,image,price3mloffer,price6mloffer")
+    .select("id,name,image,price3mloffer,price6mloffer,stock_3ml,stock_6ml,is_out_of_stock,in_stock,is_out_of_stock_3ml,in_stock_3ml,is_out_of_stock_6ml,in_stock_6ml")
     .in("id", productIds);
 
   if (error) throw new Error(error.message);
@@ -96,7 +96,33 @@ const calculateOrder = async (supabase, items) => {
   const deliveryCharge = orderItems.length > 0 ? 40 : 0;
   const total = subtotal + deliveryCharge;
 
-  return { subtotal, deliveryCharge, total, amountInPaise: total * 100, orderItems };
+  return { subtotal, deliveryCharge, total, amountInPaise: total * 100, orderItems, products };
+};
+
+// Checkout se pehle stock validate karta hai; final decrement database trigger atomically karega.
+const validateInventory = (items, products) => {
+  const productById = new Map(products.map((product) => [product.id, product]));
+  const requestedByVariant = new Map();
+
+  for (const item of items) {
+    const product = productById.get(item.productId);
+    if (!product) throw new Error("One or more products are not available.");
+
+    const isOverallOut = Boolean(product.is_out_of_stock || product.in_stock === false);
+    const isVariantOut = item.selectedSize === "6ml"
+      ? Boolean(product.is_out_of_stock_6ml || product.in_stock_6ml === false)
+      : Boolean(product.is_out_of_stock_3ml || product.in_stock_3ml === false);
+    const stock = item.selectedSize === "6ml" ? product.stock_6ml : product.stock_3ml;
+    if (isOverallOut || isVariantOut || (stock != null && Number(stock) <= 0)) {
+      throw new Error(`${product.name} (${item.selectedSize}) is out of stock.`);
+    }
+
+    const key = `${item.productId}-${item.selectedSize}`;
+    requestedByVariant.set(key, (requestedByVariant.get(key) || 0) + item.quantity);
+    if (stock != null && requestedByVariant.get(key) > Number(stock)) {
+      throw new Error(`Only ${stock} piece(s) of ${product.name} (${item.selectedSize}) are left.`);
+    }
+  }
 };
 
 // Razorpay API ko server-side secret key ke saath call karta hai.
@@ -174,6 +200,7 @@ serve(async (req) => {
 
     // Step 1: Razorpay order create karta hai aur checkout ke liye order id frontend ko deta hai.
     if (action === "create_order") {
+      validateInventory(items, calculated.products);
       const receipt = `MO-${Date.now().toString().slice(-10)}`;
       const razorpayOrder = await razorpayRequest("/orders", {
         method: "POST",
@@ -260,13 +287,34 @@ serve(async (req) => {
       };
 
       const { error: insertError } = await supabase.from("orders").insert([orderPayload]);
-      if (insertError) throw new Error(insertError.message);
+      if (insertError) {
+        if (insertError.message?.toLowerCase().includes("insufficient stock")) {
+          if (razorpayPayment.status === "captured") {
+            try {
+              await razorpayRequest(`/payments/${razorpayPaymentId}/refund`, {
+                method: "POST",
+                body: JSON.stringify({
+                  amount: calculated.amountInPaise,
+                  notes: { reason: "inventory_unavailable", razorpay_order_id: razorpayOrderId },
+                }),
+              });
+            } catch {
+              throw new Error(`Stock sold out during payment and automatic refund failed. Contact support with payment ID ${razorpayPaymentId}.`);
+            }
+            throw new Error("Stock sold out while payment was processing. A full refund has been initiated.");
+          }
+
+          throw new Error("Stock sold out while payment was processing. No order was placed; contact support if the amount remains deducted.");
+        }
+        throw new Error(insertError.message);
+      }
 
       return json({ orderId, order: orderPayload });
     }
 
     // Step 3: COD order creation using server-verified pricing
     if (action === "place_cod_order") {
+      validateInventory(items, calculated.products);
       const customer = body.customer || {};
       const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
