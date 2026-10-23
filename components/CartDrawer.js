@@ -357,7 +357,6 @@ export default function CartDrawer() {
       "bangladesh", "pakistan", "new york", "california", "america"
     ];
     
-    const addressVal = (formData.address || "").toLowerCase().trim();
     const cityVal = (formData.city || "").toLowerCase().trim();
     const stateVal = (formData.state || "").toLowerCase().trim();
 
@@ -374,13 +373,6 @@ export default function CartDrawer() {
     const cityHasForeign = foreignKeywords.some(keyword => cityVal.includes(keyword));
     if (cityHasForeign) {
       newErrors.city = "We do not deliver to international cities. Domestic shipping only.";
-      hasForeign = true;
-    }
-
-    // Check address field
-    const addressHasForeign = foreignKeywords.some(keyword => addressVal.includes(keyword));
-    if (addressHasForeign) {
-      newErrors.address = "International delivery addresses are not supported. Domestic shipping only.";
       hasForeign = true;
     }
 
