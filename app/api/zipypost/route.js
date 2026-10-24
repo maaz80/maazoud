@@ -116,16 +116,16 @@ function getDeliveredTimestamp(trackInfo) {
   const visit = (value, depth = 0) => {
     if (!value || depth > 7) return null;
     if (Array.isArray(value)) {
-      for (const item of value) {
-        const found = visit(item, depth + 1);
+      for (let index = value.length - 1; index >= 0; index--) {
+        const found = visit(value[index], depth + 1);
         if (found) return found;
       }
       return null;
     }
     if (typeof value !== 'object') return null;
-    const eventStatus = String(value.status || value.tracking_status || value.activity || value.description || '').toLowerCase().replace(/[_-]+/g, ' ');
+    const eventStatus = String(value.status || value.tracking_status || value.activity || value.description || value.scan || value.remark || '').toLowerCase().replace(/[_-]+/g, ' ');
     if (/\bdelivered\b/.test(eventStatus) && !/not delivered|undelivered|attempt|exception|ndr|out for delivery/.test(eventStatus)) {
-      for (const key of ['delivered_date', 'delivery_date', 'delivered_at', 'date', 'event_date', 'scan_date', 'timestamp', 'created_at', 'updated_at']) {
+      for (const key of ['delivered_date', 'delivery_date', 'delivered_at', 'date', 'event_date', 'scan_date', 'scan_time', 'timestamp', 'created_at', 'updated_at']) {
         const candidate = value[key];
         if (candidate && !Number.isNaN(new Date(candidate).getTime())) return new Date(candidate).toISOString();
       }
@@ -618,17 +618,38 @@ export async function POST(request) {
       const isDeliveryException = /\b(exception|delivery attempt|attempted|undelivered|not delivered|failed delivery|ndr|out for delivery)\b/.test(normalizedStatus);
       const isDelivered = !isRto && !isDeliveryException && /\bdelivered\b/.test(normalizedStatus);
       const newOrderStatus = isRto ? 'RTO' : isDeliveryException ? 'Shipped' : isDelivered ? 'Delivered' : order.status;
+      const previousShipmentDetails = order.shipment_details || {};
+      const trackedDeliveredAt = getDeliveredTimestamp(trackInfo);
+      const previousSyncTime = previousShipmentDetails.last_synced_at ? new Date(previousShipmentDetails.last_synced_at).getTime() : NaN;
+      const previousSyncGeneratedDates = [order.delivery_date, previousShipmentDetails.delivered_date]
+        .filter(value => value && Number.isFinite(previousSyncTime) && Math.abs(new Date(value).getTime() - previousSyncTime) < 60000)
+        .map(value => new Date(value).toISOString());
+      const ignoredSyncDates = trackedDeliveredAt
+        ? []
+        : [...new Set([...(previousShipmentDetails.ignored_sync_delivery_dates || []), ...previousSyncGeneratedDates])];
+      const isIgnoredSyncDate = (value) => value && ignoredSyncDates.some(ignored => Math.abs(new Date(value).getTime() - new Date(ignored).getTime()) < 1000);
+      const existingDeliveryAt = previousShipmentDetails.custom_delivery_date
+        || (!isIgnoredSyncDate(order.delivery_date) ? order.delivery_date : null)
+        || (!isIgnoredSyncDate(previousShipmentDetails.delivered_date) ? previousShipmentDetails.delivered_date : null);
       const deliveredAt = isDelivered
-        ? getDeliveredTimestamp(trackInfo) || order.delivery_date || order.shipment_details?.custom_delivery_date || order.shipment_details?.delivered_date || new Date().toISOString()
+        ? trackedDeliveredAt || existingDeliveryAt || (order.status === 'Delivered' ? null : new Date().toISOString())
         : null;
+      const deliveryDateSource = trackedDeliveredAt
+        ? 'courier'
+        : deliveredAt && !existingDeliveryAt && order.status !== 'Delivered'
+          ? 'sync_observed'
+          : deliveredAt
+            ? previousShipmentDetails.delivery_date_source || 'existing'
+            : null;
 
       const updatedDetails = {
-        ...(order.shipment_details || {}),
+        ...previousShipmentDetails,
         carrier: 'zipypost',
         zipypost_status: statusText,
         zipypost_courier_name: courierName,
         zipypost_tracking_info: trackInfo,
-        ...(isDelivered ? { delivered_date: deliveredAt } : {}),
+        ...(deliveredAt ? { delivered_date: deliveredAt, delivery_date_source: deliveryDateSource } : {}),
+        ignored_sync_delivery_dates: ignoredSyncDates,
         last_synced_at: new Date().toISOString()
       };
 
