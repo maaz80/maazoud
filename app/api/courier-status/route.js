@@ -82,7 +82,6 @@ export async function POST(request) {
     };
     if (newInternalStatus === 'Delivered') {
       const deliveredAt = payload.delivered_date || payload.delivery_date || payload.delivered_at || payload.status_date || payload.updated_at || new Date().toISOString();
-      updatePayload.delivery_date = deliveredAt;
       updatePayload.shipment_details = { ...updatedDetails, delivered_date: deliveredAt };
     }
 

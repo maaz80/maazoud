@@ -620,7 +620,7 @@ export async function POST(request) {
       const newOrderStatus = isRto ? 'RTO' : isDeliveryException ? 'Shipped' : isDelivered ? 'Delivered' : order.status;
       const deliveredAt = isDelivered
         ? getDeliveredTimestamp(trackInfo) || order.delivery_date || order.shipment_details?.custom_delivery_date || order.shipment_details?.delivered_date || new Date().toISOString()
-        : order.delivery_date;
+        : null;
 
       const updatedDetails = {
         ...(order.shipment_details || {}),
@@ -632,12 +632,10 @@ export async function POST(request) {
         last_synced_at: new Date().toISOString()
       };
 
-      const updatePayload = {
+      await supabase.from('orders').update({
         status: newOrderStatus,
         shipment_details: updatedDetails
-      };
-      if (deliveredAt) updatePayload.delivery_date = deliveredAt;
-      await supabase.from('orders').update(updatePayload).eq('id', order.id);
+      }).eq('id', order.id);
 
       return NextResponse.json({
         success: true,
