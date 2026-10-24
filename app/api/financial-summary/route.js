@@ -18,6 +18,143 @@ function generateZipypostAuthToken(timestamp) {
   return crypto.createHmac('sha256', privateKey).update(dataToHash).digest('hex');
 }
 
+const toMoney = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const amount = Number(String(value).replace(/[,₹\s]/g, ''));
+  return Number.isFinite(amount) ? amount : null;
+};
+
+const firstMoney = (record, keys) => {
+  for (const key of keys) {
+    const value = toMoney(record?.[key]);
+    if (value !== null) return value;
+  }
+  return null;
+};
+
+const firstValue = (record, keys) => {
+  for (const key of keys) {
+    const value = record?.[key];
+    if (value !== null && value !== undefined && String(value).trim()) return value;
+  }
+  return null;
+};
+
+function collectZipypostChargeRows(payload) {
+  const rows = [];
+  const visited = new Set();
+  const referenceKeys = ['reference_number', 'referenceNumber', 'reference_no', 'awb', 'awb_number', 'awbNumber', 'awb_code', 'tracking_number'];
+  const chargeKeys = ['net_total', 'net_amount', 'net_charge', 'total', 'total_amount', 'shipping_charge', 'forward_charge', 'forward_freight', 'freight', 'rto_charge', 'cod_charge', 'cod', 'cod_reversal', 'cod_charge_reversal', 'refunds', 'credit_notes', 'gst'];
+
+  const visit = (value) => {
+    if (!value || typeof value !== 'object' || visited.has(value)) return;
+    visited.add(value);
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    const hasReference = referenceKeys.some(key => value[key] !== undefined && value[key] !== null);
+    const hasCharge = chargeKeys.some(key => value[key] !== undefined && value[key] !== null);
+    if (hasReference && hasCharge) rows.push(value);
+    Object.values(value).forEach(visit);
+  };
+
+  visit(payload);
+  return rows;
+}
+
+function normalizeZipypostCharge(row) {
+  const netTotal = firstMoney(row, ['net_total', 'net_amount', 'net_charge', 'total_net', 'net_payable', 'total_after_adjustments']);
+  const transactionTotal = firstMoney(row, ['total', 'total_amount', 'transaction_total']);
+  const transactionType = String(firstValue(row, ['type', 'transaction_type', 'charge_type']) || '').toLowerCase();
+  const isRtoTransaction = /\brto\b|return to origin/.test(transactionType);
+  const transactionFreight = firstMoney(row, ['freight', 'freight_amount']);
+  const transactionCod = firstMoney(row, ['cod', 'cod_amount']);
+  const isTransactionRow = Boolean((isRtoTransaction || /\bforward\b/.test(transactionType)) && (transactionTotal !== null || transactionFreight !== null || transactionCod !== null));
+  const gst = firstMoney(row, ['gst', 'gst_amount', 'tax']) || 0;
+  const forwardCharge = firstMoney(row, ['shipping_charge', 'forward_charge', 'forward_freight', 'forward_freight_charge', 'freight_charge']) ?? (!isRtoTransaction && isTransactionRow ? transactionFreight : null);
+  const codCharge = firstMoney(row, ['cod_charge', 'cod_charges']) ?? (isRtoTransaction ? null : transactionCod);
+  const rtoCharge = firstMoney(row, ['rto_charge', 'rto_charges']) ?? (isRtoTransaction ? transactionFreight : null);
+  const refunds = firstMoney(row, ['refunds', 'refund_amount', 'total_refunds', 'refund_total']) || 0;
+  const creditNotes = firstMoney(row, ['credit_notes', 'credit_note', 'credit_amount']) || 0;
+  const codReversal = firstMoney(row, ['cod_reversal', 'cod_reversal_amount', 'cod_charge_reversal', 'cod_charge_reversed', 'cod_fee_refund', 'cod_refund']) ?? (isRtoTransaction && (transactionCod || 0) < 0 ? Math.abs(transactionCod) : 0);
+  const disputeDeductions = firstMoney(row, ['dispute_deductions', 'dispute_deduction', 'weight_dispute_charge']) || 0;
+  const hasComponents = [forwardCharge, codCharge, rtoCharge].some(value => value !== null) || gst !== 0 || refunds !== 0 || creditNotes !== 0 || codReversal !== 0 || disputeDeductions !== 0;
+  const forwardGrossField = row.shipping_charge ?? row.forward_charge;
+  const hasGrossForwardAndRto = forwardGrossField !== null && forwardGrossField !== undefined && row.rto_charge !== null && row.rto_charge !== undefined && !isTransactionRow;
+  const calculatedNet = hasComponents
+    ? (isTransactionRow
+        ? (transactionFreight || 0) + (transactionCod || 0) + gst + disputeDeductions - refunds - creditNotes
+        // In an RTO, the COD line is reversed. The wallet expense is the
+        // forward and return freight; adding the COD column double-counts it.
+        : (forwardCharge || 0) + (rtoCharge || 0) + (hasGrossForwardAndRto ? 0 : gst) + disputeDeductions - refunds - creditNotes)
+    : null;
+  const awb = firstValue(row, ['reference_number', 'referenceNumber', 'reference_no', 'awb', 'awb_number', 'awbNumber', 'awb_code', 'tracking_number']);
+
+  return {
+    awb: awb ? String(awb).trim() : null,
+    forward_charge: forwardCharge,
+    cod_charge: codCharge,
+    rto_charge: rtoCharge,
+    gst,
+    refunds: refunds || 0,
+    credit_notes: creditNotes || 0,
+    cod_reversal: codReversal || 0,
+    dispute_deductions: disputeDeductions || 0,
+    net_charge: netTotal !== null ? netTotal : (isTransactionRow && transactionTotal !== null ? transactionTotal : calculatedNet),
+    is_net_from_ledger: netTotal !== null,
+    is_transaction_row: isTransactionRow,
+    is_awb_summary_row: !isTransactionRow && (netTotal !== null || hasGrossForwardAndRto)
+  };
+}
+
+function aggregateZipypostChargeRows(rows) {
+  const byAwb = new Map();
+  for (const row of rows) {
+    const normalized = normalizeZipypostCharge(row);
+    if (!normalized.awb) continue;
+    const key = normalized.awb.toUpperCase();
+    byAwb.set(key, [...(byAwb.get(key) || []), normalized]);
+  }
+
+  const chargesByAwb = {};
+  for (const [awb, entries] of byAwb.entries()) {
+    // The shipping-charges endpoint may return a net summary row. Prefer that
+    // over transaction detail rows to avoid counting the same AWB twice.
+    const summary = entries.find(entry => entry.is_awb_summary_row);
+    if (summary) {
+      chargesByAwb[awb] = summary;
+      continue;
+    }
+    if (entries.length === 1) {
+      chargesByAwb[awb] = entries[0];
+      continue;
+    }
+
+    const sumField = (key) => {
+      const values = entries.map(entry => entry[key]).filter(value => value !== null && value !== undefined);
+      return values.length ? values.reduce((sum, value) => sum + Number(value || 0), 0) : null;
+    };
+    chargesByAwb[awb] = {
+      awb,
+      forward_charge: sumField('forward_charge'),
+      cod_charge: sumField('cod_charge'),
+      rto_charge: sumField('rto_charge'),
+      gst: sumField('gst') || 0,
+      refunds: sumField('refunds') || 0,
+      credit_notes: sumField('credit_notes') || 0,
+      cod_reversal: sumField('cod_reversal') || 0,
+      dispute_deductions: sumField('dispute_deductions') || 0,
+      net_charge: entries.every(entry => entry.net_charge !== null && entry.net_charge !== undefined)
+        ? entries.reduce((sum, entry) => sum + Number(entry.net_charge || 0), 0)
+        : null,
+      is_net_from_ledger: entries.every(entry => entry.is_net_from_ledger || entry.is_transaction_row),
+      is_transaction_row: true
+    };
+  }
+  return chargesByAwb;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -58,6 +195,9 @@ export async function GET(request) {
         next_due_cod: 0,
         cod_received_in_bank: 0,
         remittances_schedule: [],
+        rto_charges_by_awb: {},
+        rto_charges_connected: false,
+        rto_charges_error: null,
         error: null
       },
       courier_combined: {
@@ -113,7 +253,10 @@ export async function GET(request) {
 
     const { data: allOrders } = await supabase.from('orders').select('*');
     if (allOrders && Array.isArray(allOrders)) {
-      const nonCancelled = allOrders.filter(o => o.status !== 'Cancelled');
+      const nonCancelled = allOrders.filter(o => {
+        const zipyStatus = String(o.shipment_details?.zipypost_status || '').toLowerCase().replace(/[_-]+/g, ' ');
+        return o.status !== 'Cancelled' && String(o.status || '').toLowerCase() !== 'rto' && !(/\brto\b|return to origin|returned to origin|return in transit|return initiated/.test(zipyStatus));
+      });
 
       // 1. Offline / Self Handover Sales
       const isHandDelivered = (o) => {
@@ -539,6 +682,59 @@ export async function GET(request) {
             }
 
             responseData.zipypost.remittances_schedule = zipySchedule;
+          }
+
+          const rtoAwbs = [...new Set((allOrders || []).filter(order => {
+            const status = String(order.status || '').toLowerCase();
+            const shipmentStatus = [
+              order.shipment_details?.zipypost_status,
+              order.shipment_details?.zipypost_tracking_info?.status,
+              order.shipment_details?.zipypost_tracking_info?.tracking_status,
+              order.status,
+              order.zipypost_status
+            ].filter(Boolean).join(' ').toLowerCase().replace(/[_-]+/g, ' ');
+            const isRto = /\brto\b|return to origin|returned to origin|return in transit|return initiated/.test(shipmentStatus);
+            return isRto && (order.shipment_details?.zipypost_awb || order.zipypost_awb);
+          }).map(order => String(order.shipment_details?.zipypost_awb || order.zipypost_awb).trim()).filter(Boolean))];
+
+          if (rtoAwbs.length > 0) {
+            try {
+              const chargesByAwb = {};
+              for (let i = 0; i < rtoAwbs.length; i += 100) {
+                const awbBatch = rtoAwbs.slice(i, i + 100);
+                const chargeTimestamp = Math.floor(Date.now() / 1000).toString();
+                const chargeToken = generateZipypostAuthToken(chargeTimestamp);
+                const query = new URLSearchParams({
+                  lifetime: '1',
+                  page: '1',
+                  limit: '500',
+                  reference_number: awbBatch.join(',')
+                });
+                const chargesRes = await fetch(`${zipyApiBase}/shipping-charges?${query.toString()}`, {
+                  headers: {
+                    'authorization': chargeToken,
+                    'timestamp': chargeTimestamp,
+                    'sellerid': sellerId
+                  },
+                  cache: 'no-store'
+                });
+                if (!chargesRes.ok) {
+                  const errData = await chargesRes.json().catch(() => ({}));
+                  throw new Error(errData.message || errData.error || `ZipyPost shipping charges API returned ${chargesRes.status}`);
+                }
+                const chargeData = await chargesRes.json();
+                if (chargeData.success === false || chargeData.status === false) {
+                  throw new Error(chargeData.message || chargeData.error || 'ZipyPost did not return shipping charge data.');
+                }
+                Object.assign(chargesByAwb, aggregateZipypostChargeRows(collectZipypostChargeRows(chargeData)));
+              }
+              responseData.zipypost.rto_charges_by_awb = chargesByAwb;
+              responseData.zipypost.rto_charges_connected = true;
+            } catch (chargeErr) {
+              responseData.zipypost.rto_charges_error = chargeErr.message;
+            }
+          } else {
+            responseData.zipypost.rto_charges_connected = true;
           }
         }
       }

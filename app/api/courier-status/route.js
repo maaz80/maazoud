@@ -49,11 +49,14 @@ export async function POST(request) {
     // Map webhook status to internal status
     let newInternalStatus = order.status;
     const normalizedStatus = currentStatus ? currentStatus.toString().toLowerCase().trim() : '';
+    const isDeliveryException = /\b(exception|delivery attempt|attempted|undelivered|not delivered|failed delivery|ndr|out for delivery)\b/.test(normalizedStatus);
 
-    if (normalizedStatus.includes('delivered')) {
-      newInternalStatus = 'Delivered';
-    } else if (normalizedStatus.includes('cancel') || normalizedStatus.includes('return') || normalizedStatus.includes('rto')) {
+    if (normalizedStatus.includes('cancel') || normalizedStatus.includes('return') || normalizedStatus.includes('rto')) {
       newInternalStatus = 'Cancelled';
+    } else if (isDeliveryException) {
+      newInternalStatus = 'Shipped';
+    } else if (/\bdelivered\b/.test(normalizedStatus)) {
+      newInternalStatus = 'Delivered';
     } else if (normalizedStatus.includes('pick') || normalizedStatus.includes('transit') || normalizedStatus.includes('shipped') || normalizedStatus.includes('out for delivery')) {
       newInternalStatus = 'Shipped';
     }
@@ -77,6 +80,11 @@ export async function POST(request) {
       shiprocket_status: currentStatus || 'Updated via webhook',
       shipment_details: updatedDetails
     };
+    if (newInternalStatus === 'Delivered') {
+      const deliveredAt = payload.delivered_date || payload.delivery_date || payload.delivered_at || payload.status_date || payload.updated_at || new Date().toISOString();
+      updatePayload.delivery_date = deliveredAt;
+      updatePayload.shipment_details = { ...updatedDetails, delivered_date: deliveredAt };
+    }
 
     const { error: updateError } = await supabase
       .from('orders')

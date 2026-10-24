@@ -106,6 +106,42 @@ function parseZipypostError(data, fallback = 'ZipyPost API Error') {
   return fallback;
 }
 
+function getDeliveredTimestamp(trackInfo) {
+  const directFields = ['delivered_date', 'delivery_date', 'delivered_at', 'deliveredAt', 'delivery_time'];
+  for (const field of directFields) {
+    const value = trackInfo?.[field];
+    if (value && !Number.isNaN(new Date(value).getTime())) return new Date(value).toISOString();
+  }
+
+  const visit = (value, depth = 0) => {
+    if (!value || depth > 7) return null;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = visit(item, depth + 1);
+        if (found) return found;
+      }
+      return null;
+    }
+    if (typeof value !== 'object') return null;
+    const eventStatus = String(value.status || value.tracking_status || value.activity || value.description || '').toLowerCase().replace(/[_-]+/g, ' ');
+    if (/\bdelivered\b/.test(eventStatus) && !/not delivered|undelivered|attempt|exception|ndr|out for delivery/.test(eventStatus)) {
+      for (const key of ['delivered_date', 'delivery_date', 'delivered_at', 'date', 'event_date', 'scan_date', 'timestamp', 'created_at', 'updated_at']) {
+        const candidate = value[key];
+        if (candidate && !Number.isNaN(new Date(candidate).getTime())) return new Date(candidate).toISOString();
+      }
+    }
+    for (const [key, nested] of Object.entries(value)) {
+      if (/history|events|scans|track|activity|result|data/i.test(key)) {
+        const found = visit(nested, depth + 1);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  return visit(trackInfo);
+}
+
 // POST Handler
 export async function POST(request) {
   try {
@@ -575,8 +611,16 @@ export async function POST(request) {
       const statusText = trackInfo.status || 'Shipped';
       const courierName = trackInfo.courier || order.shipment_details?.zipypost_courier_name;
 
-      const isDelivered = statusText.toLowerCase() === 'delivered' || trackInfo.tracking_status === 11 || trackInfo.tracking_status === 5;
-      const newOrderStatus = isDelivered ? 'Delivered' : order.status;
+      // ZipyPost has separate RTO lifecycle statuses (RTO In Transit/Delivered/Lost).
+      // Match those before "Delivered" so an RTO Delivered parcel isn't marked as a sale.
+      const normalizedStatus = `${statusText} ${trackInfo.tracking_status || ''}`.toLowerCase().replace(/[_-]+/g, ' ');
+      const isRto = /\brto\b|return to origin|returned to origin|return in transit|return initiated/.test(normalizedStatus);
+      const isDeliveryException = /\b(exception|delivery attempt|attempted|undelivered|not delivered|failed delivery|ndr|out for delivery)\b/.test(normalizedStatus);
+      const isDelivered = !isRto && !isDeliveryException && /\bdelivered\b/.test(normalizedStatus);
+      const newOrderStatus = isRto ? 'RTO' : isDeliveryException ? 'Shipped' : isDelivered ? 'Delivered' : order.status;
+      const deliveredAt = isDelivered
+        ? getDeliveredTimestamp(trackInfo) || order.delivery_date || order.shipment_details?.custom_delivery_date || order.shipment_details?.delivered_date || new Date().toISOString()
+        : order.delivery_date;
 
       const updatedDetails = {
         ...(order.shipment_details || {}),
@@ -584,13 +628,16 @@ export async function POST(request) {
         zipypost_status: statusText,
         zipypost_courier_name: courierName,
         zipypost_tracking_info: trackInfo,
+        ...(isDelivered ? { delivered_date: deliveredAt } : {}),
         last_synced_at: new Date().toISOString()
       };
 
-      await supabase.from('orders').update({
+      const updatePayload = {
         status: newOrderStatus,
         shipment_details: updatedDetails
-      }).eq('id', order.id);
+      };
+      if (deliveredAt) updatePayload.delivery_date = deliveredAt;
+      await supabase.from('orders').update(updatePayload).eq('id', order.id);
 
       return NextResponse.json({
         success: true,
