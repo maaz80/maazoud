@@ -210,7 +210,8 @@ export async function GET(request) {
         connected: false,
         total_captured: 0,
         total_settled: 0,
-        unsettled_balance: 0,
+        unsettled_balance: null,
+        pending_reconciliation_error: 'Razorpay data is unavailable.',
         settlements_schedule: [],
         pending_schedule: [],
         error: null
@@ -414,20 +415,29 @@ export async function GET(request) {
               const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
               return `${values.year}-${values.month}`;
             }))];
-            const reconItems = (await Promise.all(settlementMonths.map(async monthKey => {
+            const reconResponses = await Promise.all(settlementMonths.map(async monthKey => {
               const [year, month] = monthKey.split('-');
               try {
-                const reconRes = await fetch(`https://api.razorpay.com/v1/settlements/recon/combined?year=${year}&month=${month}&count=1000`, {
-                  headers: { 'Authorization': authHeaderRzp },
-                  cache: 'no-store'
-                });
-                if (!reconRes.ok) return [];
-                const reconData = await reconRes.json();
-                return reconData.items || [];
+                const monthItems = [];
+                let skip = 0;
+                while (true) {
+                  const reconRes = await fetch(`https://api.razorpay.com/v1/settlements/recon/combined?year=${year}&month=${month}&count=1000&skip=${skip}`, {
+                    headers: { 'Authorization': authHeaderRzp },
+                    cache: 'no-store'
+                  });
+                  if (!reconRes.ok) return { ok: false, items: monthItems };
+                  const reconData = await reconRes.json();
+                  const pageItems = reconData.items || [];
+                  monthItems.push(...pageItems);
+                  if (pageItems.length < 1000) break;
+                  skip += pageItems.length;
+                }
+                return { ok: true, items: monthItems };
               } catch (_) {
-                return [];
+                return { ok: false, items: [] };
               }
-            }))).flat();
+            }));
+            const reconItems = reconResponses.flatMap(response => response.items);
             const settlementCustomerNames = new Map();
             for (const reconItem of reconItems) {
               if (reconItem.type !== 'payment' || !reconItem.settlement_id) continue;
@@ -457,34 +467,62 @@ export async function GET(request) {
             });
 
             responseData.razorpay.total_settled = Number(settledSum.toFixed(2));
-            const unsettled = Math.max(0, responseData.razorpay.total_captured - settledSum);
-            responseData.razorpay.unsettled_balance = Number(unsettled.toFixed(2));
+            const reconAvailable = settlementMonths.length === 0 || reconResponses.every(response => response.ok);
+            const processedSettlementIds = new Set(items.filter(item => item.status === 'processed').map(item => item.id));
+            const settledPaymentIds = new Set(reconItems
+              .filter(item => item.type === 'payment' && item.settled === true && processedSettlementIds.has(item.settlement_id))
+              .map(item => item.entity_id)
+              .filter(Boolean));
+            const pendingCapturedItems = reconAvailable
+              ? capturedItems.filter(payment => !settledPaymentIds.has(payment.id))
+              : [];
+            const getPendingPaymentAmounts = (payment) => {
+              const grossPaise = Math.max(0, Number(payment.amount || 0) - Number(payment.amount_refunded || 0));
+              const hasFee = payment.fee !== null && payment.fee !== undefined && Number.isFinite(Number(payment.fee));
+              const feePaise = hasFee ? Math.max(0, Number(payment.fee)) : 0;
+              return {
+                gross_amount: Number((grossPaise / 100).toFixed(2)),
+                fee_amount: Number((feePaise / 100).toFixed(2)),
+                net_amount: Number((Math.max(0, grossPaise - feePaise) / 100).toFixed(2))
+              };
+            };
+            const unsettled = reconAvailable
+              ? pendingCapturedItems.reduce((sum, payment) => sum + getPendingPaymentAmounts(payment).net_amount, 0)
+              : null;
+            responseData.razorpay.unsettled_balance = unsettled === null ? null : Number(unsettled.toFixed(2));
+            responseData.razorpay.pending_reconciliation_error = reconAvailable
+              ? null
+              : 'Could not verify Razorpay settlements, so pending payments are not classified.';
 
             // Build pending schedule for captured payments awaiting bank settlement
             const pendingRzpItems = [];
-            if (unsettled > 0) {
-              let rem = unsettled;
-              for (const p of capturedItems) {
-                if (rem <= 0) break;
-                const pAmt = parseFloat(p.amount) / 100;
+            if (reconAvailable && unsettled > 0) {
+              for (const p of pendingCapturedItems) {
+                const paymentAmounts = getPendingPaymentAmounts(p);
+                if (paymentAmounts.net_amount <= 0) continue;
                 pendingRzpItems.push({
                   id: p.id,
                   order_id: p.order_id || p.notes?.order_id || 'Online Checkout',
                   date: new Date(p.created_at * 1000).toISOString(),
-                  amount: pAmt,
+                  gross_amount: paymentAmounts.gross_amount,
+                  fee_amount: paymentAmounts.fee_amount,
+                  fee_known: p.fee !== null && p.fee !== undefined && Number.isFinite(Number(p.fee)),
+                  amount: paymentAmounts.net_amount,
                   method: p.method ? p.method.toUpperCase() : 'UPI',
                   customer_email: p.email || 'N/A',
                   customer_contact: p.contact || 'N/A',
                   status: 'Captured - Payout Pending'
                 });
-                rem -= pAmt;
               }
             }
             responseData.razorpay.pending_schedule = pendingRzpItems;
+          } else {
+            responseData.razorpay.pending_reconciliation_error = 'Could not fetch Razorpay settlement records.';
           }
         } else {
           const errData = await pRes.json().catch(() => ({}));
           responseData.razorpay.error = errData.error?.description || "Razorpay API Auth Failed.";
+          responseData.razorpay.pending_reconciliation_error = responseData.razorpay.error;
         }
       }
     } catch (rzpErr) {
