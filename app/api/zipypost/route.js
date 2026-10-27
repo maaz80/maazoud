@@ -615,10 +615,59 @@ export async function POST(request) {
       // Match those before "Delivered" so an RTO Delivered parcel isn't marked as a sale.
       const normalizedStatus = `${statusText} ${trackInfo.tracking_status || ''}`.toLowerCase().replace(/[_-]+/g, ' ');
       const isRto = /\brto\b|return to origin|returned to origin|return in transit|return initiated/.test(normalizedStatus);
+      const isRtoInTransit = /\b(?:rto|return|returned)\b.*\bin transit\b|\bin transit\b.*\b(?:rto|return|returned)\b|\brto notified\b|\breturn notified\b/.test(normalizedStatus);
       const isDeliveryException = /\b(exception|delivery attempt|attempted|undelivered|not delivered|failed delivery|ndr|out for delivery)\b/.test(normalizedStatus);
+      const isRtoException = isRto && isDeliveryException;
       const isDelivered = !isRto && !isDeliveryException && /\bdelivered\b/.test(normalizedStatus);
       const newOrderStatus = isRto ? 'RTO' : isDeliveryException ? 'Shipped' : isDelivered ? 'Delivered' : order.status;
       const previousShipmentDetails = order.shipment_details || {};
+      const getExceptionScanTimestamp = () => {
+        const scans = [trackInfo.scans, trackInfo.activities, trackInfo.events].filter(Array.isArray).flat();
+        const matchingScans = scans.map(scan => {
+          const scanStatus = `${scan.status || ''} ${scan.activity || ''} ${scan.status_description || ''} ${scan.remark || ''} ${scan.scan || ''}`.toLowerCase().replace(/[_-]+/g, ' ');
+          if (!/\b(exception|delivery attempt|attempted|undelivered|not delivered|failed delivery|ndr|out for delivery)\b/.test(scanStatus)) return null;
+          const rawDate = scan.scan_time || scan.scan_datetime || scan.date || scan.datetime || scan.timestamp;
+          const dateText = String(rawDate || '').trim();
+          const dmy = dateText.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+          const date = !rawDate
+            ? null
+            : dmy
+              ? new Date(Date.UTC(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]), 12))
+              : new Date(rawDate);
+          if (!date || !Number.isFinite(date.getTime())) return null;
+          const time = String(scan.time || '').match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+          if (time && !dateText.includes('T')) {
+            date.setUTCHours(Number(time[1]), Number(time[2]), Number(time[3] || 0));
+            date.setTime(date.getTime() - 330 * 60 * 1000);
+          }
+          return date;
+        }).filter(Boolean).sort((a, b) => b - a);
+        return matchingScans[0]?.toISOString() || null;
+      };
+      const getRtoTransitScanTimestamp = () => {
+        const scans = [trackInfo.scans, trackInfo.activities, trackInfo.events].filter(Array.isArray).flat();
+        const matchingScans = scans.map(scan => {
+          const scanStatus = `${scan.status || ''} ${scan.activity || ''} ${scan.status_description || ''} ${scan.remark || ''} ${scan.scan || ''}`.toLowerCase().replace(/[_-]+/g, ' ');
+          if (!(/\brto\b|return to origin|returned to origin|return in transit|return initiated|return notified/.test(scanStatus)
+            && (/\bin transit\b|\bnotified\b|\binitiated\b/.test(scanStatus)))) return null;
+          const rawDate = scan.scan_time || scan.scan_datetime || scan.date || scan.datetime || scan.timestamp;
+          const dateText = String(rawDate || '').trim();
+          const dmy = dateText.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+          const date = !rawDate
+            ? null
+            : dmy
+              ? new Date(Date.UTC(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]), 12))
+              : new Date(rawDate);
+          if (!date || !Number.isFinite(date.getTime())) return null;
+          const time = String(scan.time || '').match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+          if (time && !dateText.includes('T')) {
+            date.setUTCHours(Number(time[1]), Number(time[2]), Number(time[3] || 0));
+            date.setTime(date.getTime() - 330 * 60 * 1000);
+          }
+          return date;
+        }).filter(Boolean).sort((a, b) => a - b);
+        return matchingScans[0]?.toISOString() || null;
+      };
       const trackedDeliveredAt = getDeliveredTimestamp(trackInfo);
       const previousSyncTime = previousShipmentDetails.last_synced_at ? new Date(previousShipmentDetails.last_synced_at).getTime() : NaN;
       const previousSyncGeneratedDates = [order.delivery_date, previousShipmentDetails.delivered_date]
@@ -648,6 +697,15 @@ export async function POST(request) {
         zipypost_status: statusText,
         zipypost_courier_name: courierName,
         zipypost_tracking_info: trackInfo,
+        ...(isRtoInTransit && !previousShipmentDetails.rto_in_transit_at
+          ? { rto_in_transit_at: getRtoTransitScanTimestamp() || new Date().toISOString() }
+          : {}),
+        ...(isDeliveryException && !previousShipmentDetails.exception_at
+          ? { exception_at: getExceptionScanTimestamp() || new Date().toISOString() }
+          : {}),
+        ...(isRtoException && !previousShipmentDetails.rto_exception_at
+          ? { rto_exception_at: getExceptionScanTimestamp() || new Date().toISOString() }
+          : {}),
         ...(deliveredAt ? { delivered_date: deliveredAt, delivery_date_source: deliveryDateSource } : {}),
         ignored_sync_delivery_dates: ignoredSyncDates,
         last_synced_at: new Date().toISOString()

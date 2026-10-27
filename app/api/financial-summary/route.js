@@ -407,6 +407,39 @@ export async function GET(request) {
           if (sRes.ok) {
             const sData = await sRes.json();
             const items = (sData.items || []).filter(item => !testSettlementIds.has(item.id));
+            const settlementMonths = [...new Set(items.filter(item => item.status === 'processed').map(item => {
+              const parts = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit'
+              }).formatToParts(new Date(item.created_at * 1000));
+              const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+              return `${values.year}-${values.month}`;
+            }))];
+            const reconItems = (await Promise.all(settlementMonths.map(async monthKey => {
+              const [year, month] = monthKey.split('-');
+              try {
+                const reconRes = await fetch(`https://api.razorpay.com/v1/settlements/recon/combined?year=${year}&month=${month}&count=1000`, {
+                  headers: { 'Authorization': authHeaderRzp },
+                  cache: 'no-store'
+                });
+                if (!reconRes.ok) return [];
+                const reconData = await reconRes.json();
+                return reconData.items || [];
+              } catch (_) {
+                return [];
+              }
+            }))).flat();
+            const settlementCustomerNames = new Map();
+            for (const reconItem of reconItems) {
+              if (reconItem.type !== 'payment' || !reconItem.settlement_id) continue;
+              const paymentReferences = [reconItem.entity_id, reconItem.order_id].filter(Boolean).map(String);
+              const matchingOrder = (allOrders || []).find(order => {
+                const paymentMethod = String(order.payment_method || '');
+                return paymentReferences.some(reference => paymentMethod.includes(reference));
+              });
+              if (!matchingOrder?.customer_name) continue;
+              if (!settlementCustomerNames.has(reconItem.settlement_id)) settlementCustomerNames.set(reconItem.settlement_id, new Set());
+              settlementCustomerNames.get(reconItem.settlement_id).add(matchingOrder.customer_name);
+            }
             let settledSum = 0;
             responseData.razorpay.settlements_schedule = items.map(item => {
               const netAmt = parseFloat(item.amount) / 100;
@@ -418,7 +451,8 @@ export async function GET(request) {
                 tax: Number((parseFloat(item.tax || 0) / 100).toFixed(2)),
                 status: item.status,
                 date: new Date(item.created_at * 1000).toISOString(),
-                utr: item.utr || 'Pending'
+                utr: item.utr || 'Pending',
+                customer_names: [...(settlementCustomerNames.get(item.id) || [])]
               };
             });
 
