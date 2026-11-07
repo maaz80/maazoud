@@ -36,21 +36,40 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <div className="group flex flex-col bg-white border border-stone-200 rounded-md overflow-hidden hover:shadow-md transition-all h-full font-sans">
+    <div className="group relative flex flex-col bg-white border border-stone-200 rounded-md overflow-visible hover:shadow-md transition-all h-full font-sans">
+
+      {product.inspired_by?.trim() && (
+        <span
+          className="absolute -top-5 right-[-50px] md:right-[-69px] z-30 h-24 w-[140px] md:w-[190px] rotate-45"
+          title={`Inspired by ${product.inspired_by.trim()}`}
+        >
+          <Image
+            src="/images/inspired-by-ribbon.png"
+            alt=""
+            fill
+            sizes="190px"
+            className="object-contain"
+          />
+          <span className="absolute inset-0 flex items-center justify-center px-[18%] -mt-1 -rotate-7 text-center text-[7px] md:text-[9px] font-bold uppercase leading-tight tracking-wide text-white flex-col">
+            <span className="max-w-full truncate">Inspired by </span>
+            <span>{product.inspired_by.trim()}</span>
+          </span>
+        </span>
+      )}
 
       {/* Product Image & Gallery Slider */}
-      <Link href={`/product/${product.slug || product.id}`} className="relative aspect-4/4 w-full overflow-hidden block group/img bg-stone-50 border-b border-stone-100">
+      <Link href={`/product/${product.slug || product.id}`} className="relative aspect-4/4 w-full overflow-hidden rounded-t-md block group/img bg-stone-50 border-b border-stone-100">
         {/* Out of stock badge on top left */}
         {isFullyOutOfStock ? (
-          <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded shadow-sm z-20">
+          <span className={`absolute top-3 ${product.inspired_by?.trim() ? 'right-3' : 'left-3'} bg-red-600 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded shadow-sm z-20`}>
             OUT OF STOCK
           </span>
         ) : is3mlOutOfStock && !is6mlOutOfStock ? (
-          <span className="absolute top-3 left-3 bg-amber-700 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded shadow-sm z-20">
+          <span className={`absolute top-3 ${product.inspired_by?.trim() ? 'right-3' : 'left-3'} bg-amber-700 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded shadow-sm z-20`}>
             3ML OUT OF STOCK
           </span>
         ) : is6mlOutOfStock && !is3mlOutOfStock ? (
-          <span className="absolute top-3 left-3 bg-amber-700 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded shadow-sm z-20">
+          <span className={`absolute top-3 ${product.inspired_by?.trim() ? 'right-3' : 'left-3'} bg-amber-700 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded shadow-sm z-20`}>
             6ML OUT OF STOCK
           </span>
         ) : null}
